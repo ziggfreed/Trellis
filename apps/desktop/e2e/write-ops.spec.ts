@@ -172,7 +172,7 @@ test('runs commands from the palette and lists them in the git log', async () =>
   const { app, window } = await launch()
   await openRepo(app, window, repo.path)
 
-  await window.keyboard.press('Control+k')
+  await window.keyboard.press('ControlOrMeta+k')
   await window.keyboard.type('stage all')
   await window.keyboard.press('Enter')
   await showChanges(window)
