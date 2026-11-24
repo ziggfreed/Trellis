@@ -24,6 +24,10 @@ import type { SettingsStore } from '../services/settings-store'
 import { RepoWatcher } from '../services/repo-watcher'
 import { cancelOperation, endOperation, startOperation } from '../services/operations'
 import { getLogPage, keepLogReaders } from '../services/log-cache'
+import { CommandLog } from '../services/command-log'
+import { AskpassServer } from '../services/askpass'
+import { askUser, cancelAllPrompts } from '../services/auth-prompts'
+import { createWriteHandlers } from './write-handlers'
 import {
   assertDiffTarget,
   assertPage,
@@ -54,8 +58,16 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-export function createHandlers(settings: SettingsStore, watcher: RepoWatcher): IpcHandlers {
+export function createHandlers(
+  settings: SettingsStore,
+  watcher: RepoWatcher,
+  commandLog: CommandLog,
+): IpcHandlers {
   return {
+    ...createWriteHandlers(commandLog, (operationId, phase, percent) =>
+      sendToAllWindows('operation:progress', { operationId, phase, percent }),
+    ),
+
     'app:getInfo': () => ({ version: app.getVersion(), platform: process.platform }),
 
     'git:checkInstallation': () => git.checkGitInstallation(),
@@ -188,18 +200,52 @@ export function createHandlers(settings: SettingsStore, watcher: RepoWatcher): I
   }
 }
 
+/** Things started at launch that must be stopped when the app quits. */
+export interface IpcServices {
+  watcher: RepoWatcher
+  dispose: () => void
+}
+
 /**
- * Connect every handler to Electron's `ipcMain`. Call once at start-up.
- * Returns the repo watcher so the caller can stop it when the app quits.
+ * Connect every handler to Electron's `ipcMain` and start the services they
+ * use: the file watcher, the git command log, and the askpass server that
+ * lets git ask the user for passwords. Call once at start-up.
  */
-export function registerIpcHandlers(settings: SettingsStore): RepoWatcher {
+export async function registerIpcHandlers(settings: SettingsStore): Promise<IpcServices> {
   const watcher = new RepoWatcher((path, scope) =>
     sendToAllWindows('repo:changed', { path, scope }),
   )
-  const handlers = createHandlers(settings, watcher)
+  const commandLog = new CommandLog((entry) => sendToAllWindows('git:command', entry))
+
+  // The helper scripts must be real files git can run, so they live in the
+  // user data folder rather than inside the app package.
+  const askpass = new AskpassServer(join(app.getPath('userData'), 'askpass'), (prompt) =>
+    askUser(prompt, (payload) => {
+      const windows = BrowserWindow.getAllWindows()
+      for (const window of windows) window.webContents.send('auth:prompt', payload)
+      return windows.length > 0
+    }),
+  )
+  try {
+    git.setGitEnvironment(await askpass.start())
+  } catch (error) {
+    // Without it, git falls back to saved credentials only; everything else works.
+    console.warn('Could not start the credential prompt helper:', error)
+  }
+
+  const handlers = createHandlers(settings, watcher, commandLog)
   for (const channel of IPC_CHANNELS) {
     const handler = handlers[channel] as (...args: unknown[]) => unknown
     ipcMain.handle(channel, (_event, ...args: unknown[]) => handler(...args))
   }
-  return watcher
+
+  return {
+    watcher,
+    dispose: () => {
+      watcher.dispose()
+      commandLog.dispose()
+      askpass.close()
+      cancelAllPrompts()
+    },
+  }
 }

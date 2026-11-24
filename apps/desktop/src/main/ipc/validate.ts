@@ -3,7 +3,7 @@
  * them as untrusted input and check their shape before using them.
  * Each function throws a TypeError with a clear message if the check fails.
  */
-import type { DiffTarget, LogScope } from '@shared/ipc'
+import type { CheckoutTarget, DiffTarget, LogScope, PushRequest } from '@shared/ipc'
 
 export function assertString(value: unknown, name: string): asserts value is string {
   if (typeof value !== 'string' || value.length === 0) {
@@ -48,4 +48,53 @@ export function assertScope(value: unknown): asserts value is LogScope {
   if (value !== 'all' && value !== 'local' && value !== 'head') {
     throw new TypeError('scope must be all, local or head')
   }
+}
+
+/**
+ * A branch, tag, remote or other ref name. Must not start with "-", or git
+ * would read it as an option (e.g. a branch called "--force").
+ */
+export function assertRefArg(value: unknown, name: string): asserts value is string {
+  assertString(value, name)
+  if (value.startsWith('-')) throw new TypeError(`${name} must not start with "-"`)
+}
+
+/** A stash position: a whole number, 0 or more. */
+export function assertIndex(value: unknown, name: string): asserts value is number {
+  if (!Number.isInteger(value) || (value as number) < 0) {
+    throw new TypeError(`${name} must be a whole number of 0 or more`)
+  }
+}
+
+export function assertOneOf<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  name: string,
+): asserts value is T {
+  if (!allowed.includes(value as T))
+    throw new TypeError(`${name} must be one of ${allowed.join(', ')}`)
+}
+
+export function assertCheckoutTarget(value: unknown): asserts value is CheckoutTarget {
+  const target = value as Partial<{
+    kind: string
+    name: string
+    localName: string
+    sha: string
+  }> | null
+  if (!target || typeof target !== 'object') throw new TypeError('target must be an object')
+  if (target.kind === 'branch') assertRefArg(target.name, 'target.name')
+  else if (target.kind === 'remote-branch') {
+    assertRefArg(target.name, 'target.name')
+    assertRefArg(target.localName, 'target.localName')
+  } else if (target.kind === 'commit') assertSha(target.sha, 'target.sha')
+  else throw new TypeError('target.kind must be branch, remote-branch or commit')
+}
+
+export function assertPushRequest(value: unknown): asserts value is PushRequest {
+  const request = value as Partial<PushRequest> | null
+  if (!request || typeof request !== 'object') throw new TypeError('request must be an object')
+  assertRefArg(request.remote, 'request.remote')
+  assertRefArg(request.branch, 'request.branch')
+  if (request.remoteBranch !== undefined) assertRefArg(request.remoteBranch, 'request.remoteBranch')
 }

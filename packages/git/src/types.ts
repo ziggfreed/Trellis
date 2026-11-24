@@ -203,3 +203,6 @@ export interface FileDiffContents {
   old: FileContent
   new: FileContent
 }
+
+/** Result of an operation that can stop because of merge conflicts. */
+export type MergeResult = { status: 'done' } | { status: 'conflicts' }

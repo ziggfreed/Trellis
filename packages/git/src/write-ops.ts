@@ -9,6 +9,7 @@
 import { GitError, runGit, type RunGitOptions } from './run-git'
 import { parseCloneProgress, type CloneProgress } from './clone'
 import { getRepoOperation } from './repo-state'
+import type { MergeResult } from './types'
 
 // ---------------------------------------------------------------------------
 // Committing
@@ -104,9 +105,6 @@ export async function renameBranch(repoPath: string, from: string, to: string): 
 export async function deleteBranch(repoPath: string, name: string, force = false): Promise<void> {
   await runGit(['branch', force ? '-D' : '-d', name], { cwd: repoPath })
 }
-
-/** Result of an operation that can stop because of merge conflicts. */
-export type MergeResult = { status: 'done' } | { status: 'conflicts' }
 
 /**
  * Run a command that may stop with conflicts (merge, rebase, cherry-pick,

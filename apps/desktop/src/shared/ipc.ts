@@ -25,12 +25,16 @@ import type {
   GitInstallation,
   Ref,
   Remote,
+  MergeResult,
   RepoStatus,
   Stash,
 } from '@trellis/git/types'
+import type { FilePatch } from '@trellis/git/patch'
 
 // Re-export the git types the UI uses, so it can import everything from here.
 export type * from '@trellis/git/types'
+
+export type { FilePatch, Hunk, PatchLine, LineId } from '@trellis/git/patch'
 
 export type ThemePreference = 'light' | 'dark' | 'system'
 
@@ -74,6 +78,38 @@ export interface LogPage {
   commits: Commit[]
   /** False when the end of history has been reached. */
   hasMore: boolean
+}
+
+/** One git command run by the app, for the command log panel. */
+export interface GitCommandEntry {
+  id: number
+  /** When it finished (Unix time in milliseconds). */
+  time: number
+  /** Folder it ran in (usually a repository root). */
+  cwd: string
+  args: string[]
+  /** null if git couldn't be started or was stopped. */
+  exitCode: number | null
+  durationMs: number
+  /** True for commands that only read (status, log...), hidden by default. */
+  readOnly: boolean
+}
+
+/** What to check out. */
+export type CheckoutTarget =
+  | { kind: 'branch'; name: string }
+  /** A remote branch such as "origin/feature", checked out as local branch `localName`. */
+  | { kind: 'remote-branch'; name: string; localName: string }
+  /** A commit, giving a "detached HEAD". */
+  | { kind: 'commit'; sha: string }
+
+export interface PushRequest {
+  remote: string
+  branch: string
+  remoteBranch?: string
+  setUpstream?: boolean
+  /** Force push "with lease" (only if the remote hasn't changed since our last fetch). */
+  force?: boolean
 }
 
 export interface IpcContract {
@@ -122,6 +158,86 @@ export interface IpcContract {
   'repo:init': { args: [dir: string]; result: CreateRepoResult }
   /** Cancel a running long operation (e.g. a clone). */
   'operation:cancel': { args: [operationId: string]; result: void }
+
+  // --- Staging and committing ---------------------------------------------
+  'repo:stage': { args: [path: string, files: string[]]; result: void }
+  'repo:unstage': { args: [path: string, files: string[]]; result: void }
+  /** Throw away working-tree changes. Untracked files are deleted. */
+  'repo:discard': {
+    args: [path: string, files: { path: string; untracked: boolean }[]]
+    result: void
+  }
+  /** The diff of one file as hunks, for hunk and line staging. */
+  'repo:getFilePatch': {
+    args: [path: string, file: string, area: 'staged' | 'unstaged' | 'untracked']
+    result: FilePatch | null
+  }
+  /** Apply a partial patch built in the UI with buildPartialPatch. */
+  'repo:applyPatch': {
+    args: [path: string, patch: string, action: 'stage' | 'unstage' | 'discard']
+    result: void
+  }
+  /** Commit staged changes; returns the new commit's hash. */
+  'repo:commit': {
+    args: [path: string, message: string, options: { amend: boolean }]
+    result: string
+  }
+  'repo:getHeadMessage': { args: [path: string]; result: string | null }
+
+  // --- Branches and history -------------------------------------------------
+  'repo:createBranch': {
+    args: [path: string, name: string, options: { startPoint?: string; checkout: boolean }]
+    result: void
+  }
+  'repo:checkout': { args: [path: string, target: CheckoutTarget]; result: void }
+  'repo:renameBranch': { args: [path: string, from: string, to: string]; result: void }
+  'repo:deleteBranch': { args: [path: string, name: string, force: boolean]; result: void }
+  'repo:merge': {
+    args: [path: string, ref: string, options: { noFastForward: boolean }]
+    result: MergeResult
+  }
+  'repo:rebase': { args: [path: string, onto: string]; result: MergeResult }
+  'repo:cherryPick': { args: [path: string, sha: string]; result: MergeResult }
+  'repo:revert': { args: [path: string, sha: string]; result: MergeResult }
+  'repo:reset': { args: [path: string, sha: string, mode: 'soft' | 'mixed' | 'hard']; result: void }
+  /** Abort, continue or skip the merge/rebase/cherry-pick/revert in progress. */
+  'repo:operation': { args: [path: string, action: 'abort' | 'continue' | 'skip']; result: void }
+
+  // --- Stashes and tags -----------------------------------------------------
+  /** Returns false if there was nothing to stash. */
+  'repo:stash': {
+    args: [path: string, options: { message?: string; includeUntracked: boolean }]
+    result: boolean
+  }
+  /** Apply a stash; with `pop` it's removed afterwards (unless there were conflicts). */
+  'repo:stashApply': { args: [path: string, index: number, pop: boolean]; result: MergeResult }
+  'repo:stashDrop': { args: [path: string, index: number]; result: void }
+  'repo:createTag': {
+    args: [path: string, name: string, sha: string, message?: string]
+    result: void
+  }
+  'repo:deleteTag': { args: [path: string, name: string]; result: void }
+
+  // --- Remotes (progress via 'operation:progress') ----------------------------
+  'repo:fetch': { args: [operationId: string, path: string, remote: string]; result: void }
+  'repo:pull': {
+    args: [operationId: string, path: string, options: { rebase: boolean }]
+    result: MergeResult
+  }
+  'repo:push': { args: [operationId: string, path: string, request: PushRequest]; result: void }
+  'repo:deleteRemoteBranch': {
+    args: [operationId: string, path: string, remote: string, branch: string]
+    result: void
+  }
+  'repo:pushTag': {
+    args: [operationId: string, path: string, remote: string, tag: string]
+    result: void
+  }
+
+  // --- Git command log and credentials --------------------------------------
+  'git:getCommandLog': { args: []; result: GitCommandEntry[] }
+  /** Answer an `auth:prompt` event; null means the user cancelled. */
+  'auth:respond': { args: [id: string, answer: string | null]; result: void }
 }
 
 /** Events pushed from the main process to the UI. */
@@ -134,6 +250,13 @@ export interface IpcEvents {
   'repo:changed': { path: string; scope: 'status' | 'all' }
   /** Progress of a long-running operation started by the UI. */
   'operation:progress': { operationId: string; phase: string; percent: number }
+  /** A git command finished (for the command log panel). */
+  'git:command': GitCommandEntry
+  /**
+   * Git needs the user to type something (username, password, passphrase,
+   * or to confirm an SSH host key). Reply with 'auth:respond'.
+   */
+  'auth:prompt': { id: string; prompt: string; secret: boolean }
 }
 
 export type IpcChannel = keyof IpcContract
@@ -173,11 +296,42 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:clone': true,
   'repo:init': true,
   'operation:cancel': true,
+  'repo:stage': true,
+  'repo:unstage': true,
+  'repo:discard': true,
+  'repo:getFilePatch': true,
+  'repo:applyPatch': true,
+  'repo:commit': true,
+  'repo:getHeadMessage': true,
+  'repo:createBranch': true,
+  'repo:checkout': true,
+  'repo:renameBranch': true,
+  'repo:deleteBranch': true,
+  'repo:merge': true,
+  'repo:rebase': true,
+  'repo:cherryPick': true,
+  'repo:revert': true,
+  'repo:reset': true,
+  'repo:operation': true,
+  'repo:stash': true,
+  'repo:stashApply': true,
+  'repo:stashDrop': true,
+  'repo:createTag': true,
+  'repo:deleteTag': true,
+  'repo:fetch': true,
+  'repo:pull': true,
+  'repo:push': true,
+  'repo:deleteRemoteBranch': true,
+  'repo:pushTag': true,
+  'git:getCommandLog': true,
+  'auth:respond': true,
 }
 export const IPC_CHANNELS = Object.keys(channelMap) as IpcChannel[]
 
 const eventMap: Record<IpcEvent, true> = {
   'repo:changed': true,
   'operation:progress': true,
+  'git:command': true,
+  'auth:prompt': true,
 }
 export const IPC_EVENTS = Object.keys(eventMap) as IpcEvent[]
