@@ -19,19 +19,7 @@ test('opens a repository in a tab and restores it after restart', async () => {
   const repo = createRepo()
 
   let { app, window } = await launch(userData)
-  const started = Date.now()
   await openRepo(app, window, repo.path)
-  await window.getByRole('tab', { name: basename(repo.path) }).waitFor({ timeout: 30_000 })
-  // Diagnostics: print how long opening took and every git command run so far.
-  console.log(`Opened repo tab after ${Date.now() - started} ms`)
-  type Entry = { time: number; durationMs: number; args: string[] }
-  const commands = await window.evaluate(() =>
-    (
-      globalThis as unknown as { trellis: { invoke: (c: string) => Promise<Entry[]> } }
-    ).trellis.invoke('git:getCommandLog'),
-  )
-  for (const c of commands)
-    console.log(`  ${c.time - started} ms  ${c.durationMs} ms  git ${c.args.join(' ')}`)
   await expect(window.getByRole('tab', { name: basename(repo.path) })).toBeVisible()
   await expect(window.getByTestId('status-branch')).toHaveText('main')
   await app.close()

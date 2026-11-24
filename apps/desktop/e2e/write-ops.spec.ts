@@ -41,20 +41,7 @@ test('stages a file and commits it', async () => {
   await window.getByLabel('Commit summary').fill('Update readme')
   await window.getByLabel('Commit description').fill('With more detail')
   await window.getByLabel('Commit summary').press('Control+Enter')
-  try {
-    await expect(window.getByText('Your working tree is clean')).toBeVisible()
-  } catch (error) {
-    // Diagnostics for a Windows-only failure: what does git think?
-    console.log('git status:', JSON.stringify(repo.git('status', '--porcelain=v2', '--branch')))
-    console.log('git log:', JSON.stringify(repo.git('log', '--format=%s')))
-    console.log('changes view:', await window.getByRole('tab', { name: /Changes/ }).textContent())
-    console.log(
-      'page text:',
-      (await window.locator('main, body').first().innerText()).slice(0, 1500),
-    )
-    windowsDiagnostics()
-    throw error
-  }
+  await expect(window.getByText('Your working tree is clean')).toBeVisible()
   expect(repo.git('log', '-1', '--format=%B').trim()).toBe('Update readme\n\nWith more detail')
   await app.close()
 })
@@ -187,54 +174,13 @@ test('runs commands from the palette and lists them in the git log', async () =>
   await openRepo(app, window, repo.path)
 
   await window.keyboard.press('ControlOrMeta+k')
-  await window.keyboard.type('stage all')
+  // Wait for the palette's search box, so no typed characters are lost on slow machines.
+  await window.getByPlaceholder('Type a command…').fill('stage all')
   await window.keyboard.press('Enter')
   await showChanges(window)
   await expect(fileRow(window, 'Staged', 'new.txt')).toBeVisible()
 
   await window.getByRole('button', { name: 'Git log' }).click()
-  try {
-    await expect(window.getByTestId('command-log')).toContainText('git add -A -- new.txt')
-  } catch (error) {
-    // Diagnostics for a Windows-only failure: is the main process recording commands?
-    type Entry = { args: string[]; readOnly: boolean; exitCode: number | null }
-    const entries = await window.evaluate(() =>
-      (
-        globalThis as unknown as { trellis: { invoke: (c: string) => Promise<Entry[]> } }
-      ).trellis.invoke('git:getCommandLog'),
-    )
-    console.log(`command log has ${entries.length} entries:`)
-    for (const e of entries.slice(-15))
-      console.log(`  ${e.readOnly ? 'r' : 'w'} ${e.exitCode} git ${e.args.join(' ')}`)
-    windowsDiagnostics()
-    throw error
-  }
+  await expect(window.getByTestId('command-log')).toContainText('git add -A -- new.txt')
   await app.close()
 })
-
-/** Windows diagnostics: which git processes are still running, and git's config. */
-function windowsDiagnostics() {
-  if (process.platform !== 'win32') return
-  try {
-    const processes = execFileSync(
-      'powershell.exe',
-      [
-        '-NoProfile',
-        '-Command',
-        'Get-CimInstance Win32_Process | Where-Object { $_.Name -match \'git|sh.exe|bash\' } | ForEach-Object { "$($_.ProcessId) $($_.ParentProcessId) $($_.CommandLine)" }',
-      ],
-      { encoding: 'utf8' },
-    )
-    console.log('git-related processes still running:\n' + processes)
-  } catch (error) {
-    console.log('could not list processes', error)
-  }
-  try {
-    console.log(
-      'git config:\n' +
-        execFileSync('git', ['config', '--list', '--show-origin'], { encoding: 'utf8' }),
-    )
-  } catch (error) {
-    console.log('could not read git config', error)
-  }
-}
