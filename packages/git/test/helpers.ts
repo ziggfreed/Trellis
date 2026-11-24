@@ -28,6 +28,9 @@ export async function createTempRepo(options: { bare?: boolean } = {}): Promise<
   await git('config', 'user.name', 'Trellis Test')
   await git('config', 'user.email', 'test@example.com')
   await git('config', 'commit.gpgsign', 'false')
+  // Keep line endings exactly as written, whatever the machine's global git
+  // config says (Windows installs often set core.autocrlf=true).
+  await git('config', 'core.autocrlf', 'false')
 
   return {
     path,

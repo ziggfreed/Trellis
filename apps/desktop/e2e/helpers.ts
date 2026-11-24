@@ -42,6 +42,7 @@ export function createRepo(): TestRepo {
   git('config', 'user.name', 'Trellis Test')
   git('config', 'user.email', 'test@example.com')
   git('config', 'commit.gpgsign', 'false')
+  git('config', 'core.autocrlf', 'false') // same line endings on every OS
   const commit = (message: string) => {
     git('add', '-A')
     git('commit', '-m', message)

@@ -12,7 +12,8 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useRepos } from '@/features/repos/use-repos'
 import { copyToClipboard } from '@/features/repo-actions/actions'
-import { formatCommand, useCommandLogStore } from './command-log-store'
+import { useCommandLogStore } from './command-log-store'
+import { formatCommand } from './format-command'
 
 const time = new Intl.DateTimeFormat(undefined, { timeStyle: 'medium' })
 
