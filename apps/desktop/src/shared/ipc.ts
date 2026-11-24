@@ -27,6 +27,7 @@ import type {
   Ref,
   Remote,
   MergeResult,
+  Worktree,
   BlameResult,
   Comparison,
   FileHistoryEntry,
@@ -65,6 +66,17 @@ export interface Settings {
   diffLayout: 'unified' | 'split'
   /** Folder last used as the destination for cloning. */
   lastCloneFolder: string | null
+  /** Fetch open repositories in the background every N minutes (0 = off). */
+  autoFetchMinutes: number
+  /** Named groups of repositories that can be opened together. */
+  workspaces: Workspace[]
+}
+
+/** A named group of repositories, e.g. "Work" or "Side projects". */
+export interface Workspace {
+  id: string
+  name: string
+  repos: RepoTab[]
 }
 
 export interface AppInfo {
@@ -252,6 +264,16 @@ export interface IpcContract {
   /** What `head` has that `base` doesn't (commits and changed files). */
   'repo:getComparison': { args: [path: string, base: string, head: string]; result: Comparison }
 
+  // --- Worktrees ----------------------------------------------------------------
+  'repo:getWorktrees': { args: [path: string]; result: Worktree[] }
+  /** Create a worktree at `folder` for an existing branch, or a new branch. */
+  'repo:addWorktree': {
+    args: [path: string, folder: string, options: { branch?: string; newBranch?: string }]
+    result: OpenRepoResult
+  }
+  'repo:removeWorktree': { args: [path: string, folder: string, force: boolean]; result: void }
+  'repo:pruneWorktrees': { args: [path: string]; result: void }
+
   // --- Conflicts ----------------------------------------------------------------
   /** Read a working-tree file (e.g. a conflicted one, with its markers). */
   'repo:readWorkingFile': { args: [path: string, file: string]; result: FileContent }
@@ -374,6 +396,10 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:getFileHistory': true,
   'repo:getBlame': true,
   'repo:getComparison': true,
+  'repo:getWorktrees': true,
+  'repo:addWorktree': true,
+  'repo:removeWorktree': true,
+  'repo:pruneWorktrees': true,
   'repo:readWorkingFile': true,
   'repo:saveResolvedFile': true,
   'repo:resolveFileWith': true,

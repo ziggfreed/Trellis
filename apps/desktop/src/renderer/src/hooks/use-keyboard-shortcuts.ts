@@ -9,6 +9,7 @@
  *   Mod+1 ... Mod+9  Jump to tab N
  *   Mod+K, Mod+Shift+P  Command palette
  *   Ctrl+`           Toggle the git command log
+ *   Mod+,            Settings
  *   Mod+Z            Undo the last operation  (Mod+Shift+Z or Ctrl+Y: redo)
  *                    (not while typing in a text box, where it undoes text)
  *
@@ -18,6 +19,7 @@
 import { useEffect } from 'react'
 import { useRepos } from '@/features/repos/use-repos'
 import { repoActions } from '@/features/repos/repo-actions'
+import { openSettings } from '@/features/settings/settings-dialog'
 import { redo, undo } from '@/features/repo-actions/actions'
 import { openCommandPalette } from '@/features/command-palette/command-palette'
 import { toggleCommandLog } from '@/features/command-log/command-log-store'
@@ -45,6 +47,8 @@ export function useKeyboardShortcuts() {
         else void undo(activeTab)
       } else if (event.ctrlKey && key === 'y' && !typing && activeTab) {
         void redo(activeTab)
+      } else if (mod && key === ',') {
+        openSettings()
       } else if ((mod && key === 'k') || (mod && event.shiftKey && key === 'p')) {
         openCommandPalette()
       } else if (event.ctrlKey && event.key === '`') {

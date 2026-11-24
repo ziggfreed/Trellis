@@ -246,12 +246,15 @@ export async function deleteTag(repoPath: string, name: string): Promise<void> {
 export interface RemoteOptions {
   onProgress?: (progress: CloneProgress) => void
   signal?: AbortSignal
+  /** Extra environment variables (e.g. to stop background fetches prompting for passwords). */
+  env?: Record<string, string>
 }
 
 function remoteRunOptions(repoPath: string, options: RemoteOptions): RunGitOptions {
   return {
     cwd: repoPath,
     signal: options.signal,
+    ...(options.env ? { env: options.env } : {}),
     onStderr: (chunk) => {
       const progress = parseCloneProgress(chunk)
       if (progress) options.onProgress?.(progress)

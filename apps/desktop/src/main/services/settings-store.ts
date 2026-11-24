@@ -14,6 +14,8 @@ export const DEFAULT_SETTINGS: Settings = {
   recentRepos: [],
   diffLayout: 'unified',
   lastCloneFolder: null,
+  autoFetchMinutes: 10,
+  workspaces: [],
 }
 
 export class SettingsStore {

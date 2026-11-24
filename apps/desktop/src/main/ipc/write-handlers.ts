@@ -12,6 +12,7 @@
  *
  * Arguments come from the UI, so each handler validates them first.
  */
+import { basename } from 'node:path'
 import * as git from '@trellis/git'
 import type { IpcArgs, IpcChannel, IpcResult } from '@shared/ipc'
 import { runExclusive } from '../services/repo-queue'
@@ -21,6 +22,7 @@ import type { CommandLog } from '../services/command-log'
 import {
   assertCheckoutTarget,
   assertFileInRepo,
+  assertAbsolutePath,
   assertIndex,
   assertOneOf,
   assertPushRequest,
@@ -343,6 +345,40 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       assertRefArg(base, 'base')
       assertRefArg(head, 'head')
       return git.getComparison(path, base, head)
+    },
+
+    // --- Worktrees --------------------------------------------------------------
+    'repo:getWorktrees': (path) => {
+      assertString(path, 'path')
+      return git.getWorktrees(path)
+    },
+
+    'repo:addWorktree': async (path, folder, options) => {
+      assertString(path, 'path')
+      assertAbsolutePath(folder, 'folder')
+      if (options?.branch !== undefined) assertRefArg(options.branch, 'branch')
+      if (options?.newBranch !== undefined) assertRefArg(options.newBranch, 'newBranch')
+      await runExclusive(path, () =>
+        git.addWorktree(path, folder, {
+          ...(options?.branch ? { branch: options.branch } : {}),
+          ...(options?.newBranch ? { newBranch: options.newBranch } : {}),
+        }),
+      )
+      const root = await git.getRepoRoot(folder)
+      return root
+        ? { ok: true, repo: { path: root, name: basename(root) } }
+        : { ok: false, reason: 'not-a-repo', path: folder }
+    },
+
+    'repo:removeWorktree': (path, folder, force) => {
+      assertString(path, 'path')
+      assertAbsolutePath(folder, 'folder')
+      return runExclusive(path, () => git.removeWorktree(path, folder, force === true))
+    },
+
+    'repo:pruneWorktrees': (path) => {
+      assertString(path, 'path')
+      return runExclusive(path, () => git.pruneWorktrees(path))
     },
 
     // --- Conflicts --------------------------------------------------------------

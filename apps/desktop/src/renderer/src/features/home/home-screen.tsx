@@ -1,22 +1,32 @@
-/** Shown when no repository tab is selected: open a repo or pick a recent one. */
-import { Download, FolderGit2, FolderOpen, FolderPlus, X } from 'lucide-react'
-import { toast } from 'sonner'
+/**
+ * The home screen, shown when no repository tab is selected:
+ * - open, clone or create a repository,
+ * - workspaces (named groups of repositories) with their live status,
+ * - recently opened repositories.
+ */
+import { Download, FolderOpen, FolderPlus, MoreHorizontal, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { TrellisLogo } from '@/components/trellis-logo'
-import { openRepoAtPath, useRepos } from '@/features/repos/use-repos'
+import { useRepos } from '@/features/repos/use-repos'
 import { repoActions } from '@/features/repos/repo-actions'
+import { useSettingsStore } from '@/features/settings/settings-store'
+import * as workspaceActions from '@/features/workspaces/workspace-actions'
+import { RepoDashboard } from './repo-dashboard'
 
 export function HomeScreen() {
-  const { recentRepos, removeRecent } = useRepos()
-
-  const openRecent = async (path: string) => {
-    const result = await openRepoAtPath(path)
-    if (result.ok === false) toast.error(result.message)
-  }
+  const { recentRepos, openTabs, removeRecent } = useRepos()
+  const workspaces = useSettingsStore((s) => s.settings.workspaces)
 
   return (
-    <div className="flex h-full items-center justify-center overflow-auto p-8">
-      <div className="w-full max-w-md space-y-8">
+    <div className="h-full overflow-auto p-8">
+      <div className="mx-auto w-full max-w-3xl space-y-8">
         <div className="flex flex-col items-center gap-3 text-center">
           <TrellisLogo className="size-14" />
           <h1 className="text-2xl font-semibold">Welcome to Trellis</h1>
@@ -39,40 +49,98 @@ export function HomeScreen() {
           </div>
         </div>
 
+        {workspaces.map((workspace) => (
+          <RepoDashboard
+            key={workspace.id}
+            testId={`workspace-${workspace.name}`}
+            title={workspace.name}
+            repos={workspace.repos}
+            onRemove={(repo) => workspaceActions.removeFromWorkspace(workspace, repo.path)}
+            removeLabel="Remove from workspace"
+            actions={
+              <>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  onClick={() => void workspaceActions.openWorkspace(workspace)}
+                >
+                  Open all
+                </Button>
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  onClick={() =>
+                    void workspaceActions.fetchRepos(workspace.repos.map((r) => r.path))
+                  }
+                >
+                  <RefreshCw />
+                  Fetch all
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="icon-xs"
+                      variant="ghost"
+                      aria-label={`More actions for ${workspace.name}`}
+                    >
+                      <MoreHorizontal />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      disabled={openTabs.length === 0}
+                      onSelect={() => workspaceActions.addOpenTabsToWorkspace(workspace)}
+                    >
+                      Add open tabs
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => void workspaceActions.renameWorkspace(workspace)}
+                    >
+                      Rename…
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={() => void workspaceActions.deleteWorkspace(workspace)}
+                    >
+                      Delete workspace…
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            }
+          />
+        ))}
+
         {recentRepos.length > 0 && (
-          <section>
-            <h2 className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-              Recent
-            </h2>
-            <ul className="divide-y rounded-lg border" data-testid="recent-repos">
-              {recentRepos.map((repo) => (
-                <li key={repo.path} className="group flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => void openRecent(repo.path)}
-                    className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left hover:bg-accent"
-                  >
-                    <FolderGit2 className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium">{repo.name}</span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {repo.path}
-                      </span>
-                    </span>
-                  </button>
+          <RepoDashboard
+            testId="recent-repos"
+            title="Recent"
+            repos={recentRepos}
+            onRemove={(repo) => removeRecent(repo.path)}
+            removeLabel="Remove from recent"
+            actions={
+              <>
+                {openTabs.length > 0 && (
                   <Button
+                    size="xs"
                     variant="ghost"
-                    size="icon-sm"
-                    aria-label={`Remove ${repo.name} from recent`}
-                    className="mr-1 opacity-0 group-hover:opacity-100"
-                    onClick={() => removeRecent(repo.path)}
+                    onClick={() => void workspaceActions.saveTabsAsWorkspace()}
                   >
-                    <X />
+                    Save open tabs as workspace…
                   </Button>
-                </li>
-              ))}
-            </ul>
-          </section>
+                )}
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  onClick={() => void workspaceActions.fetchRepos(recentRepos.map((r) => r.path))}
+                >
+                  <RefreshCw />
+                  Fetch all
+                </Button>
+              </>
+            }
+          />
         )}
       </div>
     </div>

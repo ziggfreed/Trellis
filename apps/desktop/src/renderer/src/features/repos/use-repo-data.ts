@@ -110,3 +110,10 @@ export function useComparison(path: string, base: string, head: string) {
     queryFn: () => api.invoke('repo:getComparison', path, base, head),
   })
 }
+
+export function useWorktrees(path: string) {
+  return useQuery({
+    queryKey: [...repoKeys.all(path), 'worktrees'],
+    queryFn: () => api.invoke('repo:getWorktrees', path),
+  })
+}

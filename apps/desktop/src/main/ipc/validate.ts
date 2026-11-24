@@ -139,3 +139,9 @@ export function assertFileInRepo(repoPath: string, file: unknown): asserts file 
     throw new TypeError('file must be inside the repository')
   }
 }
+
+/** An absolute folder path (e.g. where to create a worktree). */
+export function assertAbsolutePath(value: unknown, name: string): asserts value is string {
+  assertString(value, name)
+  if (!isAbsolute(value)) throw new TypeError(`${name} must be an absolute path`)
+}

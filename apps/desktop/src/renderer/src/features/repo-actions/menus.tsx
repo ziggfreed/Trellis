@@ -6,7 +6,8 @@
  *
  * The menu items just call functions in ./actions.ts.
  */
-import type { Commit, Ref, Stash } from '@shared/ipc'
+import type { Commit, Ref, Stash, Worktree } from '@shared/ipc'
+import { openRepoAtPath } from '@/features/repos/use-repos'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -302,6 +303,48 @@ export function FileMenu({ repo, path, children }: MenuProps & { path: string })
           <ContextMenuItem onSelect={() => void actions.copyToClipboard(path, 'path')}>
             Copy path
           </ContextMenuItem>
+        </>
+      }
+    >
+      {children}
+    </Menu>
+  )
+}
+
+export function WorktreeMenu({ repo, worktree, children }: MenuProps & { worktree: Worktree }) {
+  return (
+    <Menu
+      items={
+        <>
+          <ContextMenuItem onSelect={() => void openRepoAtPath(worktree.path)}>
+            Open in a tab
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={() =>
+              void runAction(repo, () => api.invoke('repo:showInFolder', worktree.path))
+            }
+          >
+            Show in folder
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => void actions.copyToClipboard(worktree.path, 'path')}>
+            Copy path
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          {worktree.prunable ? (
+            <ContextMenuItem
+              onSelect={() => void runAction(repo, () => api.invoke('repo:pruneWorktrees', repo))}
+            >
+              Forget missing worktrees
+            </ContextMenuItem>
+          ) : (
+            <ContextMenuItem
+              variant="destructive"
+              disabled={worktree.isMain}
+              onSelect={() => void actions.removeWorktree(repo, worktree)}
+            >
+              Remove worktree…
+            </ContextMenuItem>
+          )}
         </>
       }
     >

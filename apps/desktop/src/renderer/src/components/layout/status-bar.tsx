@@ -8,6 +8,7 @@ import {
   Moon,
   Sun,
   SquareTerminal,
+  Settings as SettingsIcon,
 } from 'lucide-react'
 import type { ThemePreference } from '@shared/ipc'
 import {
@@ -22,6 +23,7 @@ import { useStatus } from '@/features/repos/use-repo-data'
 import { shortSha } from '@/lib/format'
 import { useOperationsStore } from '@/features/repo-actions/operations-store'
 import { toggleCommandLog, useCommandLogStore } from '@/features/command-log/command-log-store'
+import { openSettings } from '@/features/settings/settings-dialog'
 
 const THEME_ICONS = { light: Sun, dark: Moon, system: Monitor } as const
 
@@ -42,6 +44,15 @@ export function StatusBar({ gitVersion, repoPath }: StatusBarProps) {
       <RunningOperations />
       <span className="ml-auto">{gitVersion}</span>
       <CommandLogToggle />
+      <button
+        type="button"
+        onClick={openSettings}
+        aria-label="Settings"
+        title="Settings (Ctrl+,)"
+        className="flex items-center hover:text-foreground"
+      >
+        <SettingsIcon className="size-3.5" />
+      </button>
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-1 capitalize hover:text-foreground">
           <ThemeIcon className="size-3.5" />

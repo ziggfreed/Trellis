@@ -6,7 +6,7 @@
  *   open, clone or create a repository.
  */
 import { useState } from 'react'
-import { Download, FolderGit2, FolderOpen, FolderPlus, Plus, X } from 'lucide-react'
+import { Download, FolderGit2, FolderOpen, FolderPlus, Layers, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { TrellisLogo } from '@/components/trellis-logo'
@@ -15,11 +15,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useRepos } from '@/features/repos/use-repos'
 import { repoActions } from '@/features/repos/repo-actions'
+import { saveTabsAsWorkspace } from '@/features/workspaces/workspace-actions'
 import { modKey } from '@/hooks/use-keyboard-shortcuts'
 
 export function TabBar() {
@@ -119,6 +121,11 @@ export function TabBar() {
               <FolderPlus />
               New repository…
               <DropdownMenuShortcut>{modKey}+N</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => void saveTabsAsWorkspace()}>
+              <Layers />
+              Save tabs as workspace…
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -10,7 +10,7 @@
  * results appear in the UI as the repository's data refreshes.
  */
 import { toast } from 'sonner'
-import type { Ref, Stash } from '@shared/ipc'
+import type { Ref, Stash, Worktree } from '@shared/ipc'
 import { api } from '@/lib/api'
 import { queryClient, repoKeys } from '@/lib/query-client'
 import { runAction } from '@/lib/run-action'
@@ -27,6 +27,8 @@ import { remoteBranchShortName } from '@/features/sidebar/group-refs'
 import { planPush } from './push-plan'
 import { trackOperation } from './operations-store'
 import { validateRefName } from './ref-names'
+import { joinPath } from '@/features/create-repo/clone-paths'
+import { openRepoTab } from '@/features/repos/use-repos'
 
 const getStatus = (repo: string) =>
   queryClient.fetchQuery({
@@ -407,6 +409,67 @@ export async function pushTag(repo: string, name: string) {
         api.invoke('repo:pushTag', id, repo, remote.name, name),
       ),
     { success: `Pushed ${name} to ${remote.name}` },
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Worktrees
+// ---------------------------------------------------------------------------
+
+/**
+ * Create a worktree: ask for a branch (new or existing) and a folder (by
+ * default next to the repository, e.g. "myrepo-feature-x"), then open it.
+ */
+export async function addWorktree(repo: string) {
+  const branch = await textDialogWithOptions({
+    title: 'New worktree',
+    description:
+      'A worktree is a second working folder for this repository, with its own checked-out branch.',
+    label: 'Branch',
+    placeholder: 'feature/my-change',
+    validate: validateRefName,
+    confirmLabel: 'Next',
+    checkbox: {
+      label: 'Create a new branch (untick to use an existing one)',
+      defaultChecked: true,
+    },
+  })
+  if (!branch) return
+  const parent = repo.replace(/[\\/][^\\/]+[\\/]?$/, '')
+  const repoName = repo.split(/[\\/]/).filter(Boolean).pop() ?? 'repo'
+  const folder = await textDialog({
+    title: 'New worktree',
+    label: 'Folder',
+    initialValue: joinPath(parent, `${repoName}-${branch.value.replaceAll('/', '-')}`),
+    confirmLabel: 'Create worktree',
+  })
+  if (!folder) return
+  const result = await runAction(repo, () =>
+    api.invoke(
+      'repo:addWorktree',
+      repo,
+      folder,
+      branch.checked ? { newBranch: branch.value } : { branch: branch.value },
+    ),
+  )
+  if (result?.ok) openRepoTab(result.repo)
+}
+
+export async function removeWorktree(repo: string, worktree: Worktree) {
+  const answer = await confirmWithOptions({
+    title: `Remove the worktree at ${worktree.path}?`,
+    description: 'Its folder is deleted. Its branch and commits stay in the repository.',
+    confirmLabel: 'Remove',
+    destructive: true,
+    checkbox: { label: 'Remove even if it has uncommitted changes (they will be lost)' },
+  })
+  if (!answer) return
+  await runAction(
+    repo,
+    () => api.invoke('repo:removeWorktree', repo, worktree.path, answer.checked),
+    {
+      success: 'Worktree removed',
+    },
   )
 }
 

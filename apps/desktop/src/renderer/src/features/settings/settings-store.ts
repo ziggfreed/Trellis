@@ -23,6 +23,8 @@ const INITIAL: Settings = {
   recentRepos: [],
   diffLayout: 'unified',
   lastCloneFolder: null,
+  autoFetchMinutes: 10,
+  workspaces: [],
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({

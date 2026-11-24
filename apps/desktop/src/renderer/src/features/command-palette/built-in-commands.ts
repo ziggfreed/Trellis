@@ -9,6 +9,8 @@ import { repoActions } from '@/features/repos/repo-actions'
 import { useRepoViewStore } from '@/features/repo-view/repo-view-store'
 import { useSettingsStore } from '@/features/settings/settings-store'
 import { toggleCommandLog } from '@/features/command-log/command-log-store'
+import { openSettings } from '@/features/settings/settings-dialog'
+import { openWorkspace, saveTabsAsWorkspace } from '@/features/workspaces/workspace-actions'
 import { groupChanges } from '@/features/changes/group-changes'
 import { stageEntries, unstageEntries } from '@/features/changes/change-actions'
 import { modKey } from '@/hooks/use-keyboard-shortcuts'
@@ -45,6 +47,26 @@ export function builtInCommands(context: CommandContext): Command[] {
       shortcut: `${modKey}+N`,
       run: repoActions.create,
     },
+    {
+      id: 'app.settings',
+      title: 'Settings…',
+      group: 'View',
+      shortcut: `${modKey}+,`,
+      keywords: ['preferences', 'options'],
+      run: openSettings,
+    },
+    {
+      id: 'repo.saveWorkspace',
+      title: 'Save open tabs as workspace…',
+      group: 'Repository',
+      run: () => void saveTabsAsWorkspace(),
+    },
+    ...context.workspaces.map((workspace) => ({
+      id: `repo.openWorkspace.${workspace.id}`,
+      title: `Open workspace: ${workspace.name}`,
+      group: 'Repository',
+      run: () => void openWorkspace(workspace),
+    })),
     {
       id: 'view.commandLog',
       title: 'Toggle git command log',

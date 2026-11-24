@@ -309,3 +309,22 @@ export interface Comparison {
   /** Files changed since the merge base. */
   files: ChangedFile[]
 }
+
+// ---------------------------------------------------------------------------
+// Worktrees
+// ---------------------------------------------------------------------------
+
+export interface Worktree {
+  /** Folder of the worktree (as git reports it, with forward slashes on Windows). */
+  path: string
+  /** Commit checked out there, or null for a brand-new repository. */
+  head: string | null
+  /** Branch checked out there, or null if detached. */
+  branch: string | null
+  /** The original working folder of the repository (listed first by git). */
+  isMain: boolean
+  bare: boolean
+  locked: boolean
+  /** The folder no longer exists; `git worktree prune` will forget it. */
+  prunable: boolean
+}

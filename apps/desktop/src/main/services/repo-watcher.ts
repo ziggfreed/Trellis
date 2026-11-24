@@ -45,6 +45,11 @@ export class RepoWatcher {
     this.send({ type: 'set', paths: this.watched })
   }
 
+  /** The repositories currently being watched (the open tabs). */
+  get watchedPaths(): string[] {
+    return [...this.watched]
+  }
+
   /** Stop watching everything (call before the app quits). */
   dispose(): void {
     this.disposed = true
