@@ -92,6 +92,26 @@ const BASE_ENV: Record<string, string> = {
   LC_ALL: 'C',
   GIT_TERMINAL_PROMPT: '0',
   GIT_OPTIONAL_LOCKS: '0',
+  // Commands like `merge --continue` would otherwise open a text editor and
+  // wait forever. `true` is a shell command that exits immediately, so git
+  // keeps the default message. (Git for Windows runs this through its own sh.)
+  GIT_EDITOR: 'true',
+}
+
+/**
+ * Extra environment variables added to every git command, set once by the
+ * app at start-up. Used to tell git how to ask the user for passwords
+ * (GIT_ASKPASS / SSH_ASKPASS, see the desktop app's askpass service).
+ */
+let appEnv: Record<string, string> = {}
+
+export function setGitEnvironment(env: Record<string, string>): void {
+  appEnv = { ...env }
+}
+
+/** The full environment for a git process. */
+function gitEnv(extra?: Record<string, string>): NodeJS.ProcessEnv {
+  return { ...process.env, ...BASE_ENV, ...appEnv, ...extra }
 }
 
 /** The git executable. Trellis requires git to be installed and on PATH. */
@@ -119,7 +139,7 @@ export function spawnGit(
   const started = Date.now()
   const child = spawn(GIT_BINARY, [...GLOBAL_ARGS, ...args], {
     cwd: options.cwd,
-    env: { ...process.env, ...BASE_ENV, ...options.env },
+    env: gitEnv(options.env),
     windowsHide: true,
   })
   child.on('close', (code) => {
@@ -140,7 +160,7 @@ export function runGitBuffer(
   return new Promise((resolve, reject) => {
     const child = spawn(GIT_BINARY, [...GLOBAL_ARGS, ...args], {
       cwd: options.cwd,
-      env: { ...process.env, ...BASE_ENV, ...options.env },
+      env: gitEnv(options.env),
       signal: options.signal,
       // Never open a console window on Windows.
       windowsHide: true,
