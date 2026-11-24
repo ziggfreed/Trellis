@@ -82,6 +82,12 @@ export class RepoWatcher {
       return
     }
     if (!this.watched.includes(message.repoPath)) return
+    if (message.type === 'ready') {
+      // Starting to watch can take seconds (notably on Windows); refresh in
+      // case anything changed in the meantime.
+      this.onChange(message.repoPath, 'all')
+      return
+    }
     let scope: ChangeScope = null
     for (const path of message.paths) scope = mergeScopes(scope, classifyChange(path))
     if (scope) this.schedule(message.repoPath, scope)

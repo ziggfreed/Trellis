@@ -40,7 +40,19 @@ test('stages a file and commits it', async () => {
   await window.getByLabel('Commit summary').fill('Update readme')
   await window.getByLabel('Commit description').fill('With more detail')
   await window.getByLabel('Commit summary').press('Control+Enter')
-  await expect(window.getByText('Your working tree is clean')).toBeVisible()
+  try {
+    await expect(window.getByText('Your working tree is clean')).toBeVisible()
+  } catch (error) {
+    // Diagnostics for a Windows-only failure: what does git think?
+    console.log('git status:', JSON.stringify(repo.git('status', '--porcelain=v2', '--branch')))
+    console.log('git log:', JSON.stringify(repo.git('log', '--format=%s')))
+    console.log('changes view:', await window.getByRole('tab', { name: /Changes/ }).textContent())
+    console.log(
+      'page text:',
+      (await window.locator('main, body').first().innerText()).slice(0, 1500),
+    )
+    throw error
+  }
   expect(repo.git('log', '-1', '--format=%B').trim()).toBe('Update readme\n\nWith more detail')
   await app.close()
 })
@@ -179,6 +191,20 @@ test('runs commands from the palette and lists them in the git log', async () =>
   await expect(fileRow(window, 'Staged', 'new.txt')).toBeVisible()
 
   await window.getByRole('button', { name: 'Git log' }).click()
-  await expect(window.getByTestId('command-log')).toContainText('git add -A -- new.txt')
+  try {
+    await expect(window.getByTestId('command-log')).toContainText('git add -A -- new.txt')
+  } catch (error) {
+    // Diagnostics for a Windows-only failure: is the main process recording commands?
+    type Entry = { args: string[]; readOnly: boolean; exitCode: number | null }
+    const entries = await window.evaluate(() =>
+      (
+        globalThis as unknown as { trellis: { invoke: (c: string) => Promise<Entry[]> } }
+      ).trellis.invoke('git:getCommandLog'),
+    )
+    console.log(`command log has ${entries.length} entries:`)
+    for (const e of entries.slice(-15))
+      console.log(`  ${e.readOnly ? 'r' : 'w'} ${e.exitCode} git ${e.args.join(' ')}`)
+    throw error
+  }
   await app.close()
 })

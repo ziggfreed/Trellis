@@ -23,4 +23,13 @@ export interface WatchErrorMessage {
   message: string
 }
 
-export type WatcherMessage = ChangesMessage | WatchErrorMessage
+/**
+ * Watcher -> main: a repository is now being watched. Changes made while
+ * watching was starting weren't seen, so main refreshes once.
+ */
+export interface ReadyMessage {
+  type: 'ready'
+  repoPath: string
+}
+
+export type WatcherMessage = ChangesMessage | WatchErrorMessage | ReadyMessage

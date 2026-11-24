@@ -39,6 +39,10 @@ function watch(repoPath: string) {
       },
       { ignore: IGNORE },
     )
+    .then((sub) => {
+      send({ type: 'ready', repoPath })
+      return sub
+    })
     .catch((error: unknown) => {
       send({
         type: 'error',
