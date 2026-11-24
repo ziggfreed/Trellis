@@ -25,6 +25,9 @@ All notable changes to Trellis are listed here. The format follows
 - Opening a repository on Windows froze the app for about 5 seconds while the file watcher started.
 - Git operations on Windows could hang after git had finished, if a helper process kept git's output open.
 - Changes made while a repository was just opening are no longer missed.
+- "Stage all changes" in the command palette could do nothing right after a repository opened.
+- On macOS, right-clicking near the bottom of the window could instantly run the context-menu item under the pointer.
+- On Windows, a mistyped editor command now shows an error instead of silently doing nothing.
 
 ## [0.1.0] - 2026-11-24
 
