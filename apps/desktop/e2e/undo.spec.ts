@@ -17,6 +17,9 @@ test('undoes and redoes a commit', async () => {
   await openRepo(app, window, repo.path)
 
   await window.getByRole('tab', { name: /Changes/ }).click()
+  // Committing does nothing until the staged file has loaded, so wait for it.
+  const staged = window.getByRole('region', { name: 'Staged', exact: true })
+  await expect(staged).toContainText('README.md')
   await window.getByLabel('Commit summary').fill('Change readme')
   await window.getByLabel('Commit summary').press('Control+Enter')
   await expect(window.getByText('Your working tree is clean')).toBeVisible()

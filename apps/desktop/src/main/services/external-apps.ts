@@ -5,7 +5,9 @@
  * programs in order until one starts. Each is started "detached" so it
  * keeps running if Trellis closes.
  */
-import { spawn, type SpawnOptions } from 'node:child_process'
+import { execFile, spawn, type SpawnOptions } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { isAbsolute } from 'node:path'
 
 /** Start a program; resolves false if it isn't installed (so the next one can be tried). */
 function trySpawn(command: string, args: string[], options: SpawnOptions = {}): Promise<boolean> {
@@ -53,6 +55,19 @@ export async function openTerminal(dir: string): Promise<void> {
   throw new Error('Couldn’t find a terminal program to open.')
 }
 
+/**
+ * Whether `program` can be run on Windows. Editors are started through
+ * cmd.exe there, and cmd.exe itself always starts, even when the program
+ * doesn't exist. So we ask `where` first (it searches PATH, including
+ * .cmd/.bat launchers).
+ */
+function windowsProgramExists(program: string): Promise<boolean> {
+  if (isAbsolute(program)) return Promise.resolve(existsSync(program))
+  return new Promise((resolve) => {
+    execFile('where.exe', [program], { windowsHide: true }, (error) => resolve(!error))
+  })
+}
+
 /** Quote an argument for cmd.exe (used on Windows, where editors are often .cmd scripts). */
 const quoteForCmd = (arg: string) => `"${arg.replaceAll('"', '""')}"`
 
@@ -71,7 +86,8 @@ export async function openEditor(
   const windows = process.platform === 'win32'
   const started = windows
     ? // Many editors install a .cmd launcher on Windows, which needs a shell to run.
-      await trySpawn(program, args.map(quoteForCmd), { shell: true, windowsHide: true })
+      (await windowsProgramExists(program)) &&
+      (await trySpawn(program, args.map(quoteForCmd), { shell: true, windowsHide: true }))
     : await trySpawn(program, args)
   if (!started) {
     throw new Error(
