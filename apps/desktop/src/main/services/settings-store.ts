@@ -12,6 +12,8 @@ export const DEFAULT_SETTINGS: Settings = {
   openTabs: [],
   activeTab: null,
   recentRepos: [],
+  diffLayout: 'unified',
+  lastCloneFolder: null,
 }
 
 export class SettingsStore {

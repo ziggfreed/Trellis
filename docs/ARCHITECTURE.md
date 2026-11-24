@@ -30,6 +30,21 @@ React component
 
 The channel name, argument types and result type are declared once in `src/shared/ipc.ts` (`IpcContract`). TypeScript checks both sides against it, so a typo or a wrong argument fails at compile time.
 
+The main process can also **push events** to the UI (`IpcEvents` in the same file), e.g. `repo:changed` when files change or `operation:progress` during a clone. The UI listens with `api.on(event, listener)`, which returns an unsubscribe function.
+
+### Keeping data fresh
+
+```
+file changes on disk
+  └─ RepoWatcher (main/services/repo-watcher.ts, @parcel/watcher)
+       └─ classifyChange(): working-tree file → "status", .git/refs etc → "all"
+            └─ debounced 300 ms → event 'repo:changed' { path, scope }
+                 └─ useRepoSync() (renderer) invalidates the TanStack Query cache
+                      └─ components on screen refetch automatically
+```
+
+The UI tells main which repos to watch (`repo:setWatched`) whenever the open tabs change. If watching fails, data still refreshes when the window regains focus.
+
 ## 3. Packages
 
 | Package                             | Purpose                                                                                                      | Depends on     |
@@ -45,7 +60,8 @@ Planned: `packages/graph-layout` (commit graph lane algorithm), `packages/plugin
 
 - **Settings** (theme, open tabs, recent repos) live in a Zustand store (`features/settings/settings-store.ts`). The main process owns the file on disk (`main/services/settings-store.ts`). The UI updates its copy immediately and sends the change to be saved.
 - **Tab logic** (open, close, reorder, cycle) is in pure functions (`features/repos/tabs-logic.ts`) with unit tests. `use-repos.ts` connects them to the store.
-- **Repo data** (branch etc.) is fetched per repo and refreshed when the window regains focus. In Phase 1 a file watcher replaces this, and TanStack Query takes over caching once there is more data.
+- **Repo data** (status, history, branches, diffs) is loaded with TanStack Query hooks in `features/repos/use-repo-data.ts`. Query keys start with `['repo', path]`, so one repository's data can be refreshed at once.
+- **View state per tab** (History/Changes, selected commit and file) lives in `features/repo-view/repo-view-store.ts`, so switching tabs keeps your place.
 
 ## 5. Security
 
@@ -72,5 +88,6 @@ Plugins will work like VS Code extensions: trusted code that the user chooses to
 ## 8. Build & release
 
 - `electron-vite` builds main, preload and renderer into `apps/desktop/out/`.
+- The only native module is `@parcel/watcher`. Its per-platform binaries are listed in the app's `optionalDependencies` so electron-builder packages them (see the comment in `electron-builder.yml`).
 - `electron-builder` (`apps/desktop/electron-builder.yml`) packages `out/` into installers: NSIS (Windows), DMG (macOS), AppImage and deb (Linux).
 - GitHub Actions (`.github/workflows/ci.yml`) runs lint, type checks, unit and end-to-end tests on all three OSes for every PR, and builds installers on every push to `main` (downloadable from the workflow run's artifacts).

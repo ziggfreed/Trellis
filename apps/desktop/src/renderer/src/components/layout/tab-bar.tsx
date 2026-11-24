@@ -2,16 +2,25 @@
  * The row of repository tabs across the top of the window.
  * - Click to select, middle-click or the X to close.
  * - Drag a tab to reorder it (native HTML drag and drop).
- * - The logo button on the left goes to the home screen; "+" opens a repo.
+ * - The logo button on the left goes to the home screen; "+" opens a menu to
+ *   open, clone or create a repository.
  */
 import { useState } from 'react'
-import { FolderGit2, Plus, X } from 'lucide-react'
-import { toast } from 'sonner'
+import { Download, FolderGit2, FolderOpen, FolderPlus, Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { TrellisLogo } from '@/components/trellis-logo'
 import { cn } from '@/lib/utils'
-import { pickAndOpenRepo, useRepos } from '@/features/repos/use-repos'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useRepos } from '@/features/repos/use-repos'
+import { repoActions } from '@/features/repos/repo-actions'
+import { modKey } from '@/hooks/use-keyboard-shortcuts'
 
 export function TabBar() {
   const { openTabs, activeTab, activate, close, move } = useRepos()
@@ -84,22 +93,35 @@ export function TabBar() {
           )
         })}
 
-        <Tooltip>
-          <TooltipTrigger asChild>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon-sm"
-              aria-label="Open repository"
+              aria-label="Add repository"
               className="m-1 text-muted-foreground"
-              onClick={() =>
-                void pickAndOpenRepo().then((r) => r.ok === false && toast.error(r.message))
-              }
             >
               <Plus />
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>Open repository (Ctrl+O)</TooltipContent>
-        </Tooltip>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onSelect={repoActions.open}>
+              <FolderOpen />
+              Open repository…
+              <DropdownMenuShortcut>{modKey}+O</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={repoActions.clone}>
+              <Download />
+              Clone repository…
+              <DropdownMenuShortcut>{modKey}+Shift+O</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={repoActions.create}>
+              <FolderPlus />
+              New repository…
+              <DropdownMenuShortcut>{modKey}+N</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )

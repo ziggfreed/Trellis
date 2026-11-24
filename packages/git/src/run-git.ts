@@ -1,13 +1,16 @@
 /**
  * Low-level helper that runs the `git` program and collects its output.
  *
- * Every git operation in Trellis goes through `runGit`. Keeping it in one place
- * means we can:
+ * Every git operation in Trellis goes through this file. Keeping it in one
+ * place means we can:
  *   - set a consistent environment (English output, no interactive prompts),
  *   - log every command for the "show git command" panel (see `onGitCommand`),
  *   - cancel long-running commands with an AbortSignal.
  *
- * Higher-level functions (e.g. `getCurrentBranch`) build on this and parse the
+ * Use `runGit` for text output (most commands) and `runGitBuffer` when the
+ * output may be binary, such as file contents from `git show`.
+ *
+ * Higher-level functions (e.g. `getStatus`) build on these and parse the
  * output into typed objects. Prefer adding a new high-level function over
  * calling `runGit` directly from the app.
  */
@@ -29,10 +32,15 @@ export interface RunGitOptions {
   okExitCodes?: number[]
   /** Text to write to git's standard input. */
   stdin?: string
+  /**
+   * Called with each chunk of stderr as it arrives. Git writes progress
+   * information (e.g. during clone) to stderr.
+   */
+  onStderr?: (chunk: string) => void
 }
 
-export interface GitResult {
-  stdout: string
+export interface GitResult<T = string> {
+  stdout: T
   stderr: string
   exitCode: number
 }
@@ -42,7 +50,7 @@ export class GitError extends Error {
   constructor(
     message: string,
     readonly args: readonly string[],
-    readonly result?: GitResult,
+    readonly result?: GitResult<unknown>,
     /** Set when the git program itself could not be found. */
     readonly notInstalled = false,
   ) {
@@ -89,12 +97,25 @@ const BASE_ENV: Record<string, string> = {
 /** The git executable. Trellis requires git to be installed and on PATH. */
 const GIT_BINARY = 'git'
 
-export function runGit(args: readonly string[], options: RunGitOptions): Promise<GitResult> {
+/**
+ * Global options added before every command:
+ * - `core.quotePath=false` prints non-ASCII file names as-is instead of
+ *   escaping them as "\303\251" octal sequences.
+ * - `color.ui=false` guarantees no colour codes in output we parse, whatever
+ *   the user's config says.
+ */
+const GLOBAL_ARGS = ['-c', 'core.quotePath=false', '-c', 'color.ui=false']
+
+/** Run git and return stdout as raw bytes. */
+export function runGitBuffer(
+  args: readonly string[],
+  options: RunGitOptions,
+): Promise<GitResult<Buffer>> {
   const okExitCodes = options.okExitCodes ?? [0]
   const started = Date.now()
 
   return new Promise((resolve, reject) => {
-    const child = spawn(GIT_BINARY, args, {
+    const child = spawn(GIT_BINARY, [...GLOBAL_ARGS, ...args], {
       cwd: options.cwd,
       env: { ...process.env, ...BASE_ENV, ...options.env },
       signal: options.signal,
@@ -107,7 +128,10 @@ export function runGit(args: readonly string[], options: RunGitOptions): Promise
     const stdout: Buffer[] = []
     const stderr: Buffer[] = []
     child.stdout.on('data', (chunk: Buffer) => stdout.push(chunk))
-    child.stderr.on('data', (chunk: Buffer) => stderr.push(chunk))
+    child.stderr.on('data', (chunk: Buffer) => {
+      stderr.push(chunk)
+      options.onStderr?.(chunk.toString('utf8'))
+    })
 
     const notify = (exitCode: number | null) => {
       const event = { args, cwd: options.cwd, exitCode, durationMs: Date.now() - started }
@@ -142,8 +166,8 @@ export function runGit(args: readonly string[], options: RunGitOptions): Promise
         reject(new GitError(`git ${args.join(' ')} was killed (${signal})`, args))
         return
       }
-      const result: GitResult = {
-        stdout: Buffer.concat(stdout).toString('utf8'),
+      const result: GitResult<Buffer> = {
+        stdout: Buffer.concat(stdout),
         stderr: Buffer.concat(stderr).toString('utf8'),
         exitCode: code,
       }
@@ -155,7 +179,16 @@ export function runGit(args: readonly string[], options: RunGitOptions): Promise
       }
     })
 
+    // Writing to stdin can fail with EPIPE if git exits before reading it;
+    // the 'close' handler above reports the real problem, so ignore this.
+    child.stdin.on('error', () => {})
     if (options.stdin !== undefined) child.stdin.end(options.stdin)
     else child.stdin.end()
   })
+}
+
+/** Run git and return stdout as UTF-8 text. */
+export async function runGit(args: readonly string[], options: RunGitOptions): Promise<GitResult> {
+  const result = await runGitBuffer(args, options)
+  return { ...result, stdout: result.stdout.toString('utf8') }
 }

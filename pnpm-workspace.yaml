@@ -3,12 +3,18 @@ packages:
   - packages/*
 
 # pnpm 10 does not run dependency install scripts unless they are listed here.
-# Electron needs its script to download the Electron binary; esbuild needs its
-# platform-specific binary.
+# esbuild needs its script to set up its platform-specific binary.
+#
+# Note: Electron 45+ no longer downloads its binary during install. The root
+# package.json has a `postinstall` script that runs `install-electron` instead,
+# because electron-vite fails if the binary is missing when `pnpm dev` starts.
 onlyBuiltDependencies:
-  - electron
   - esbuild
 
-# Not needed for building; listed so pnpm stops warning about it.
+# Install scripts we deliberately skip (listed so pnpm stops warning):
+# - electron-winstaller: not needed for building.
+# - @parcel/watcher: its script only compiles from source when no prebuilt
+#   binary exists; prebuilt binaries for all our platforms ship as packages.
 ignoredBuiltDependencies:
   - electron-winstaller
+  - '@parcel/watcher'

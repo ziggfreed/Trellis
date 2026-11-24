@@ -8,64 +8,64 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 1. Repository management
 
-| Pri | Feature                                                                                      | Status                    |
-| --- | -------------------------------------------------------------------------------------------- | ------------------------- |
-| P0  | Open a local repo, clone from URL (with progress)                                            | 🟨 open done, clone to do |
-| P0  | Init a new repo                                                                              | ⬜                        |
-| P0  | **Repos as tabs** (reorder, close, restore open tabs on launch)                              | ✅                        |
-| P0  | Recent repos list and "Repository Manager" home screen                                       | 🟨 recent list done       |
-| P1  | **Workspaces**: named groups of repos (e.g. "Work", "Side projects") with one-click open-all | ⬜                        |
-| P1  | Scan a folder to discover and import all repos inside it                                     | ⬜                        |
-| P1  | Dashboard: status of all tracked repos (dirty, ahead/behind, current branch) with bulk fetch | ⬜                        |
-| P1  | Background auto-fetch (configurable interval)                                                | ⬜                        |
-| P2  | Tags/labels and favourites for repos                                                         | ⬜                        |
-| P2  | Split view: two repos side by side                                                           | ⬜                        |
+| Pri | Feature                                                                                      | Status                                    |
+| --- | -------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| P0  | Open a local repo, clone from URL (with progress)                                            | ✅                                        |
+| P0  | Init a new repo                                                                              | ✅                                        |
+| P0  | **Repos as tabs** (reorder, close, restore open tabs on launch)                              | ✅                                        |
+| P0  | Recent repos list and "Repository Manager" home screen                                       | 🟨 recent list done, dashboard is Phase 4 |
+| P1  | **Workspaces**: named groups of repos (e.g. "Work", "Side projects") with one-click open-all | ⬜                                        |
+| P1  | Scan a folder to discover and import all repos inside it                                     | ⬜                                        |
+| P1  | Dashboard: status of all tracked repos (dirty, ahead/behind, current branch) with bulk fetch | ⬜                                        |
+| P1  | Background auto-fetch (configurable interval)                                                | ⬜                                        |
+| P2  | Tags/labels and favourites for repos                                                         | ⬜                                        |
+| P2  | Split view: two repos side by side                                                           | ⬜                                        |
 
 ## 2. Commit graph & history
 
-| Pri | Feature                                                                     | Status |
-| --- | --------------------------------------------------------------------------- | ------ |
-| P0  | **Commit graph** with coloured lanes, merges, branch/tag/HEAD/remote badges | ⬜     |
-| P0  | Virtualised list that stays smooth at 100k+ commits (lazy loading)          | ⬜     |
-| P0  | Commit details panel: message, author, date, parents, changed files, diff   | ⬜     |
-| P1  | Filter graph: by branch, author, path, date range; "current branch only"    | ⬜     |
-| P1  | Search: message, SHA, author, **pickaxe (`-S`/`-G`) content search**        | ⬜     |
-| P1  | Collapse/expand merged branches, hide remote branches                       | ⬜     |
-| P1  | Compare any two commits/branches                                            | ⬜     |
-| P2  | Minimap / timeline scrubber for long histories                              | ⬜     |
-| P2  | Highlight a branch's commits when hovering its badge                        | ⬜     |
-| 💡  | Alternative "branch timeline" view (horizontal, GitKraken/Gource-style)     | ⬜     |
+| Pri | Feature                                                                     | Status                                        |
+| --- | --------------------------------------------------------------------------- | --------------------------------------------- |
+| P0  | **Commit graph** with coloured lanes, merges, branch/tag/HEAD/remote badges | 🟨 ref badges done; lanes in Phase 2          |
+| P0  | Virtualised list that stays smooth at 100k+ commits (lazy loading)          | 🟨 list virtualised + paged; graph in Phase 2 |
+| P0  | Commit details panel: message, author, date, parents, changed files, diff   | ✅                                            |
+| P1  | Filter graph: by branch, author, path, date range; "current branch only"    | ⬜                                            |
+| P1  | Search: message, SHA, author, **pickaxe (`-S`/`-G`) content search**        | ⬜                                            |
+| P1  | Collapse/expand merged branches, hide remote branches                       | ⬜                                            |
+| P1  | Compare any two commits/branches                                            | ⬜                                            |
+| P2  | Minimap / timeline scrubber for long histories                              | ⬜                                            |
+| P2  | Highlight a branch's commits when hovering its badge                        | ⬜                                            |
+| 💡  | Alternative "branch timeline" view (horizontal, GitKraken/Gource-style)     | ⬜                                            |
 
 ## 3. Working copy, staging & committing
 
-| Pri | Feature                                                                          | Status |
-| --- | -------------------------------------------------------------------------------- | ------ |
-| P0  | File status list (staged / unstaged / untracked / conflicted), tree or flat view | ⬜     |
-| P0  | Stage/unstage/discard file                                                       | ⬜     |
-| P0  | **Hunk-level and line-level staging** from the diff view                         | ⬜     |
-| P0  | Commit, amend, commit message editor with subject-length guide                   | ⬜     |
-| P1  | Live auto-refresh via file watcher                                               | ⬜     |
-| P1  | Commit templates, co-author picker, Conventional Commits helper                  | ⬜     |
-| P1  | GPG/SSH commit signing, with verified badges in the graph                        | ⬜     |
-| P1  | Respect and display git hooks output (pre-commit failures shown nicely)          | ⬜     |
-| P2  | Partial discard with confirmation and trash/backup                               | ⬜     |
-| P2  | `.gitignore` editor ("ignore this file / extension / folder")                    | ⬜     |
+| Pri | Feature                                                                          | Status         |
+| --- | -------------------------------------------------------------------------------- | -------------- |
+| P0  | File status list (staged / unstaged / untracked / conflicted), tree or flat view | ✅ (flat list) |
+| P0  | Stage/unstage/discard file                                                       | ⬜             |
+| P0  | **Hunk-level and line-level staging** from the diff view                         | ⬜             |
+| P0  | Commit, amend, commit message editor with subject-length guide                   | ⬜             |
+| P1  | Live auto-refresh via file watcher                                               | ✅             |
+| P1  | Commit templates, co-author picker, Conventional Commits helper                  | ⬜             |
+| P1  | GPG/SSH commit signing, with verified badges in the graph                        | ⬜             |
+| P1  | Respect and display git hooks output (pre-commit failures shown nicely)          | ⬜             |
+| P2  | Partial discard with confirmation and trash/backup                               | ⬜             |
+| P2  | `.gitignore` editor ("ignore this file / extension / folder")                    | ⬜             |
 
 ## 4. Diff viewer
 
-| Pri | Feature                                                                        | Status |
-| --- | ------------------------------------------------------------------------------ | ------ |
-| P0  | Unified and side-by-side, syntax highlighting                                  | ⬜     |
-| P1  | Word-level (intra-line) highlighting, whitespace toggle, context-lines control | ⬜     |
-| P1  | Image diff (side by side, swipe, onion skin)                                   | ⬜     |
-| P2  | Rendered Markdown diff, JSON-aware diff                                        | ⬜     |
-| P2  | Edit the file directly in the diff                                             | ⬜     |
+| Pri | Feature                                                                        | Status             |
+| --- | ------------------------------------------------------------------------------ | ------------------ |
+| P0  | Unified and side-by-side, syntax highlighting                                  | ✅                 |
+| P1  | Word-level (intra-line) highlighting, whitespace toggle, context-lines control | 🟨 intra-line done |
+| P1  | Image diff (side by side, swipe, onion skin)                                   | ⬜                 |
+| P2  | Rendered Markdown diff, JSON-aware diff                                        | ⬜                 |
+| P2  | Edit the file directly in the diff                                             | ⬜                 |
 
 ## 5. Branches, remotes & syncing
 
 | Pri | Feature                                                                                         | Status |
 | --- | ----------------------------------------------------------------------------------------------- | ------ |
-| P0  | Sidebar: local branches, remotes, tags, stashes                                                 | ⬜     |
+| P0  | Sidebar: local branches, remotes, tags, stashes                                                 | ✅     |
 | P0  | Create / checkout / rename / delete branch                                                      | ⬜     |
 | P0  | Fetch / pull (merge or rebase) / push, with progress and ahead/behind counts                    | ⬜     |
 | P0  | Merge branch (with conflict detection)                                                          | ⬜     |

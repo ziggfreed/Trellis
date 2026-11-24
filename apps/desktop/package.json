@@ -16,11 +16,20 @@
     "package": "electron-vite build && electron-builder"
   },
   "dependencies": {
+    "@parcel/watcher": "^2.6.0",
     "@trellis/git": "workspace:*"
   },
   "devDependencies": {
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/language-data": "^6.5.2",
+    "@codemirror/merge": "^6.12.3",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@lezer/highlight": "^1.2.5",
     "@playwright/test": "1.65.1",
     "@tailwindcss/vite": "^4.3.5",
+    "@tanstack/react-query": "^5.108.4",
+    "@tanstack/react-virtual": "^3.14.28",
     "@types/node": "^22.20.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -34,6 +43,7 @@
     "radix-ui": "^1.8.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
+    "react-resizable-panels": "^4.24.1",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.1",
     "tailwindcss": "^4.3.5",
@@ -44,5 +54,13 @@
   },
   "desktopName": "trellis.desktop",
   "author": "Trellis contributors",
-  "homepage": "https://github.com/ziggfreed/trellis"
+  "homepage": "https://github.com/ziggfreed/trellis",
+  "optionalDependencies": {
+    "@parcel/watcher-win32-x64": "2.6.0",
+    "@parcel/watcher-win32-arm64": "2.6.0",
+    "@parcel/watcher-darwin-x64": "2.6.0",
+    "@parcel/watcher-darwin-arm64": "2.6.0",
+    "@parcel/watcher-linux-x64-glibc": "2.6.0",
+    "@parcel/watcher-linux-arm64-glibc": "2.6.0"
+  }
 }
