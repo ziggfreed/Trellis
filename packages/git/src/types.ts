@@ -232,3 +232,24 @@ export interface UndoState {
   undo: { label: string; time: number } | null
   redo: { label: string; time: number } | null
 }
+
+// ---------------------------------------------------------------------------
+// Interactive rebase
+// ---------------------------------------------------------------------------
+
+/**
+ * What to do with a commit during an interactive rebase:
+ * - pick:   keep it as it is
+ * - reword: keep it, with a new message
+ * - squash: combine it into the commit before it, keeping both messages
+ * - fixup:  combine it into the commit before it, keeping only that commit's message
+ * - drop:   remove it
+ */
+export type RebaseAction = 'pick' | 'reword' | 'squash' | 'fixup' | 'drop'
+
+export interface RebasePlanItem {
+  sha: string
+  action: RebaseAction
+  /** New message, for 'reword'. */
+  message?: string
+}

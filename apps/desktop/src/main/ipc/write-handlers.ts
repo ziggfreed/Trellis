@@ -23,6 +23,8 @@ import {
   assertIndex,
   assertOneOf,
   assertPushRequest,
+  assertRebaseBase,
+  assertRebasePlan,
   assertRefArg,
   assertSha,
   assertString,
@@ -310,6 +312,22 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       assertRefArg(tag, 'tag')
       return remoteOperation(operationId, path, sendProgress, (o) =>
         git.pushTag(path, remote, tag, o),
+      )
+    },
+
+    // --- Interactive rebase --------------------------------------------------
+    'repo:getRebaseCommits': (path, base) => {
+      assertString(path, 'path')
+      assertRebaseBase(base)
+      return git.getRebaseCommits(path, base)
+    },
+
+    'repo:interactiveRebase': (path, base, plan) => {
+      assertString(path, 'path')
+      assertRebaseBase(base)
+      assertRebasePlan(plan)
+      return recorded(path, 'Interactive rebase', true, () =>
+        git.interactiveRebase(path, base, plan),
       )
     },
 

@@ -3,7 +3,7 @@
  * them as untrusted input and check their shape before using them.
  * Each function throws a TypeError with a clear message if the check fails.
  */
-import type { CheckoutTarget, DiffTarget, LogScope, PushRequest } from '@shared/ipc'
+import type { CheckoutTarget, DiffTarget, LogScope, PushRequest, RebasePlanItem } from '@shared/ipc'
 
 export function assertString(value: unknown, name: string): asserts value is string {
   if (typeof value !== 'string' || value.length === 0) {
@@ -97,4 +97,23 @@ export function assertPushRequest(value: unknown): asserts value is PushRequest 
   assertRefArg(request.remote, 'request.remote')
   assertRefArg(request.branch, 'request.branch')
   if (request.remoteBranch !== undefined) assertRefArg(request.remoteBranch, 'request.remoteBranch')
+}
+
+/** A rebase base: a commit hash, or 'root' to start from the very first commit. */
+export function assertRebaseBase(value: unknown): asserts value is string {
+  if (value !== 'root') assertSha(value, 'base')
+}
+
+const REBASE_ACTIONS = ['pick', 'reword', 'squash', 'fixup', 'drop'] as const
+
+export function assertRebasePlan(value: unknown): asserts value is RebasePlanItem[] {
+  if (!Array.isArray(value) || value.length === 0)
+    throw new TypeError('plan must be a non-empty array')
+  for (const item of value as Partial<RebasePlanItem>[]) {
+    assertSha(item?.sha, 'plan item sha')
+    assertOneOf(item.action, REBASE_ACTIONS, 'plan item action')
+    if (item.message !== undefined && typeof item.message !== 'string') {
+      throw new TypeError('plan item message must be a string')
+    }
+  }
 }

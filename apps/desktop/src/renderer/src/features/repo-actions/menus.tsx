@@ -20,6 +20,7 @@ import {
 import { shortSha } from '@/lib/format'
 import { remoteBranchShortName } from '@/features/sidebar/group-refs'
 import * as actions from './actions'
+import { openInteractiveRebase } from '@/features/rebase/rebase-store'
 
 interface MenuProps {
   repo: string
@@ -218,6 +219,9 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
             Check out…
           </ContextMenuItem>
           <ContextMenuSeparator />
+          <ContextMenuItem onSelect={() => void openInteractiveRebase(repo, commit)}>
+            Interactive rebase from here…
+          </ContextMenuItem>
           <ContextMenuItem onSelect={() => void actions.cherryPick(repo, commit.sha)}>
             Cherry-pick onto current branch
           </ContextMenuItem>

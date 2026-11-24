@@ -26,6 +26,7 @@ import type {
   Ref,
   Remote,
   MergeResult,
+  RebasePlanItem,
   UndoState,
   RepoStatus,
   Stash,
@@ -237,6 +238,17 @@ export interface IpcContract {
     result: void
   }
 
+  // --- Interactive rebase --------------------------------------------------
+  /** Commits after `base` up to HEAD, oldest first ('root' = from the first commit). */
+  'repo:getRebaseCommits': {
+    args: [path: string, base: string]
+    result: { commits: Commit[]; hasMerges: boolean }
+  }
+  'repo:interactiveRebase': {
+    args: [path: string, base: string, plan: RebasePlanItem[]]
+    result: MergeResult
+  }
+
   // --- Undo / redo ------------------------------------------------------------
   'repo:getUndoState': { args: [path: string]; result: UndoState }
   /** Undo the last operation made in Trellis. Returns its label, or null if none. */
@@ -333,6 +345,8 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:push': true,
   'repo:deleteRemoteBranch': true,
   'repo:pushTag': true,
+  'repo:getRebaseCommits': true,
+  'repo:interactiveRebase': true,
   'repo:getUndoState': true,
   'repo:undo': true,
   'repo:redo': true,
