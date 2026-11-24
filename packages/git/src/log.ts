@@ -53,50 +53,120 @@ export function parseCommits(output: string): Commit[] {
   return commits
 }
 
-export interface LogOptions {
-  /** Maximum commits to return. Default 500. */
-  limit?: number
-  /** Skip this many commits first (for loading more pages). */
-  skip?: number
-  /**
-   * Which commits to include:
-   * - 'all': every local branch, remote branch and tag, plus HEAD (default)
-   * - 'head': only commits reachable from HEAD
-   */
-  scope?: 'all' | 'head'
+/**
+ * Which commits to include in the history:
+ * - 'all':   every local branch, remote branch and tag, plus HEAD (default)
+ * - 'local': local branches and tags plus HEAD, without remote branches
+ * - 'head':  only commits reachable from HEAD (the current branch)
+ */
+export type LogScope = 'all' | 'local' | 'head'
+
+const SCOPE_REVISIONS: Record<LogScope, string[]> = {
+  all: ['--branches', '--remotes', '--tags', 'HEAD'],
+  local: ['--branches', '--tags', 'HEAD'],
+  head: ['HEAD'],
 }
 
 /**
- * Load commit history, newest first, in topological order (a parent never
- * appears before its children), which the commit graph needs.
+ * The revision arguments for `git log` for a scope, or null if there is
+ * nothing to show (a repository with no commits yet).
  *
- * Returns an empty list for a repository with no commits yet.
+ * `git log HEAD` fails when HEAD has no commits, so HEAD is only included
+ * when it points at a commit.
  */
-export async function getLog(repoPath: string, options: LogOptions = {}): Promise<Commit[]> {
-  const { limit = 500, skip = 0, scope = 'all' } = options
-  const revisions = scope === 'all' ? ['--branches', '--remotes', '--tags', 'HEAD'] : ['HEAD']
-
-  // `git log` fails in a repo with no commits, so check first.
+export async function logRevisions(repoPath: string, scope: LogScope): Promise<string[] | null> {
   const head = await runGit(['rev-parse', '--verify', '-q', 'HEAD'], {
     cwd: repoPath,
     okExitCodes: [0, 1, 128],
   })
-  if (head.exitCode !== 0 && scope === 'head') return []
-  // With 'all', an unborn HEAD is fine as long as other refs exist; drop HEAD
-  // from the list so git doesn't fail on it.
-  const revs = head.exitCode === 0 ? revisions : revisions.filter((r) => r !== 'HEAD')
+  if (head.exitCode === 0) return SCOPE_REVISIONS[scope]
+  if (scope === 'head') return null
+  // No HEAD commit: other refs may still exist (e.g. after `git checkout --orphan`).
+  const refs = await runGit(['for-each-ref', '--count=1', '--format=%(refname)'], { cwd: repoPath })
+  return refs.stdout.trim() ? SCOPE_REVISIONS[scope].filter((r) => r !== 'HEAD') : null
+}
 
-  const { stdout } = await runGit(
-    [
-      'log',
-      ...LOG_FORMAT_ARGS,
-      '--topo-order',
-      `--max-count=${limit}`,
-      `--skip=${skip}`,
-      ...revs,
-      '--',
-    ],
-    { cwd: repoPath },
-  )
+/**
+ * Arguments for `git log` that list commits newest first in topological
+ * order (a parent never appears before its children), which the commit
+ * graph needs.
+ */
+export function logArgs(revisions: string[], extra: string[] = []): string[] {
+  return ['log', ...LOG_FORMAT_ARGS, '--topo-order', ...extra, ...revisions, '--']
+}
+
+export interface LogOptions {
+  /** Maximum commits to return. Default 500. */
+  limit?: number
+  /** Skip this many commits first. */
+  skip?: number
+  scope?: LogScope
+}
+
+/**
+ * Load a slice of commit history in one go. Fine for small requests; the app
+ * uses `LogReader` instead, which streams and stays fast deep into history.
+ * Returns an empty list for a repository with no commits yet.
+ */
+export async function getLog(repoPath: string, options: LogOptions = {}): Promise<Commit[]> {
+  const { limit = 500, skip = 0, scope = 'all' } = options
+  const revisions = await logRevisions(repoPath, scope)
+  if (!revisions) return []
+  const { stdout } = await runGit(logArgs(revisions, [`--max-count=${limit}`, `--skip=${skip}`]), {
+    cwd: repoPath,
+  })
   return parseCommits(stdout)
+}
+
+/**
+ * Find commits matching `query` by message, author or hash, newest first.
+ * Matching ignores case, and the query is treated as plain text (not a
+ * regular expression). Returns at most `limit` commit hashes.
+ */
+export async function searchCommits(
+  repoPath: string,
+  query: string,
+  options: { scope?: LogScope; limit?: number } = {},
+): Promise<string[]> {
+  const text = query.trim()
+  if (!text) return []
+  const { scope = 'all', limit = 1000 } = options
+  const revisions = await logRevisions(repoPath, scope)
+  if (!revisions) return []
+
+  const search = (filter: string) =>
+    runGit(
+      [
+        'log',
+        '--format=%H',
+        '--topo-order',
+        '--regexp-ignore-case',
+        '--fixed-strings',
+        filter,
+        `--max-count=${limit}`,
+        ...revisions,
+        '--',
+      ],
+      { cwd: repoPath },
+    ).then((r) => r.stdout.split('\n').filter(Boolean))
+
+  // --grep and --author together would require BOTH to match, so run them
+  // separately and combine the results.
+  const [byMessage, byAuthor] = await Promise.all([
+    search(`--grep=${text}`),
+    search(`--author=${text}`),
+  ])
+
+  // A query that looks like a commit hash (prefix) may match one directly.
+  let bySha: string[] = []
+  if (/^[0-9a-f]{4,40}$/i.test(text)) {
+    const sha = await runGit(['rev-parse', '--verify', '-q', `${text}^{commit}`], {
+      cwd: repoPath,
+      okExitCodes: [0, 1, 128],
+    })
+    if (sha.exitCode === 0) bySha = [sha.stdout.trim()]
+  }
+
+  // Keep git's newest-first order, without duplicates.
+  return [...new Set([...bySha, ...byMessage, ...byAuthor])].slice(0, limit)
 }
