@@ -1,0 +1,11 @@
+{
+  // End-to-end tests run in Node, but the functions they pass to
+  // `window.evaluate()` run inside the app's page, so they need both
+  // Node and browser (DOM) types.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM"],
+    "types": ["node"]
+  },
+  "include": ["e2e", "playwright.config.ts"]
+}

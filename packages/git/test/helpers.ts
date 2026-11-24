@@ -58,3 +58,36 @@ export async function createRepoWithRemote(): Promise<{ repo: TempRepo; remote: 
   await repo.git('push', '-u', 'origin', 'main')
   return { repo, remote }
 }
+
+/**
+ * Quickly add `count` commits on top of `branch` using `git fast-import`,
+ * which writes commits directly instead of running `git commit` each time.
+ * Each commit changes file.txt and has the message "commit <n>".
+ */
+export async function addLinearCommits(repo: TempRepo, count: number, branch = 'main') {
+  const lines: string[] = []
+  const hasCommits =
+    (
+      await runGit(['rev-parse', '--verify', '-q', branch], {
+        cwd: repo.path,
+        okExitCodes: [0, 1, 128],
+      })
+    ).exitCode === 0
+  for (let i = 1; i <= count; i++) {
+    const message = `commit ${i}`
+    const content = `version ${i}\n`
+    lines.push(
+      `commit refs/heads/${branch}`,
+      `committer Trellis Test <test@example.com> ${1_700_000_000 + i} +0000`,
+      `data ${Buffer.byteLength(message)}`,
+      message,
+      ...(i === 1 && hasCommits ? [`from refs/heads/${branch}^0`] : []),
+      `M 100644 inline file.txt`,
+      `data ${Buffer.byteLength(content)}`,
+      content,
+    )
+  }
+  await runGit(['fast-import', '--quiet'], { cwd: repo.path, stdin: lines.join('\n') + '\n' })
+  // fast-import doesn't update the working tree; reset it so status is clean.
+  await runGit(['reset', '--hard', '-q'], { cwd: repo.path, okExitCodes: [0, 128] })
+}

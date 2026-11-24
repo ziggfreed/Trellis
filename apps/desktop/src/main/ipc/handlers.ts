@@ -23,9 +23,11 @@ import {
 import type { SettingsStore } from '../services/settings-store'
 import { RepoWatcher } from '../services/repo-watcher'
 import { cancelOperation, endOperation, startOperation } from '../services/operations'
+import { getLogPage, keepLogReaders } from '../services/log-cache'
 import {
   assertDiffTarget,
   assertPage,
+  assertScope,
   assertSha,
   assertString,
   assertStringArray,
@@ -94,6 +96,7 @@ export function createHandlers(settings: SettingsStore, watcher: RepoWatcher): I
     'repo:setWatched': (paths) => {
       assertStringArray(paths, 'paths')
       watcher.setWatched(paths)
+      keepLogReaders(paths)
     },
 
     'repo:getStatus': (path) => {
@@ -101,12 +104,18 @@ export function createHandlers(settings: SettingsStore, watcher: RepoWatcher): I
       return git.getStatus(path)
     },
 
-    'repo:getLog': async (path, page) => {
+    'repo:getLog': (path, page) => {
       assertString(path, 'path')
       assertPage(page)
-      // Ask for one extra commit to find out whether there are more pages.
-      const commits = await git.getLog(path, { skip: page.skip, limit: page.limit + 1 })
-      return { commits: commits.slice(0, page.limit), hasMore: commits.length > page.limit }
+      assertScope(page.scope)
+      return getLogPage(path, page.scope, page.skip, page.limit)
+    },
+
+    'repo:searchCommits': (path, query, scope) => {
+      assertString(path, 'path')
+      if (typeof query !== 'string') throw new TypeError('query must be a string')
+      assertScope(scope)
+      return git.searchCommits(path, query, { scope })
     },
 
     'repo:getRefs': (path) => {

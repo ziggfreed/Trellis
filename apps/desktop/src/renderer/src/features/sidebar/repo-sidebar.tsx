@@ -19,8 +19,12 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
   const stashes = useStashes(repoPath).data ?? []
   const [view, setView] = useRepoView(repoPath)
 
-  /** Show a commit in the history view. */
-  const select = (sha: string) => setView({ view: 'history', selectedSha: sha, selectedFile: null })
+  /**
+   * Show a commit in the history view. Branches and tags are in the history,
+   * so keep loading it until they're found (`seek`); stashes aren't, so don't.
+   */
+  const select = (sha: string, seek = true) =>
+    setView({ view: 'history', selectedSha: sha, seekSelected: seek, selectedFile: null })
 
   const branches = localBranches(refs)
   const remoteGroups = groupRemoteBranches(refs, remotes)
@@ -76,7 +80,7 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
             label={stash.message}
             title={`${stash.name}: ${stash.message}`}
             selected={view.selectedSha === stash.sha}
-            onClick={() => select(stash.sha)}
+            onClick={() => select(stash.sha, false)}
           />
         ))}
       </Section>

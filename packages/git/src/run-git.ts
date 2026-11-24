@@ -14,7 +14,7 @@
  * output into typed objects. Prefer adding a new high-level function over
  * calling `runGit` directly from the app.
  */
-import { spawn } from 'node:child_process'
+import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
 import { existsSync } from 'node:fs'
 
 export interface RunGitOptions {
@@ -105,6 +105,29 @@ const GIT_BINARY = 'git'
  *   the user's config says.
  */
 const GLOBAL_ARGS = ['-c', 'core.quotePath=false', '-c', 'color.ui=false']
+
+/**
+ * Start git and return the running process, for commands whose output is
+ * read as a stream (see LogReader). Uses the same environment and global
+ * options as `runGit`. The caller must handle the process's events and
+ * kill it when finished.
+ */
+export function spawnGit(
+  args: readonly string[],
+  options: Pick<RunGitOptions, 'cwd' | 'env'>,
+): ChildProcessWithoutNullStreams {
+  const started = Date.now()
+  const child = spawn(GIT_BINARY, [...GLOBAL_ARGS, ...args], {
+    cwd: options.cwd,
+    env: { ...process.env, ...BASE_ENV, ...options.env },
+    windowsHide: true,
+  })
+  child.on('close', (code) => {
+    const event = { args, cwd: options.cwd, exitCode: code, durationMs: Date.now() - started }
+    for (const listener of listeners) listener(event)
+  })
+  return child
+}
 
 /** Run git and return stdout as raw bytes. */
 export function runGitBuffer(

@@ -1,34 +1,59 @@
 /**
- * The list of commits in the History view.
+ * The list of commits in the History view, with the commit graph on the left.
  *
  * Repositories can have hundreds of thousands of commits, so:
- * - commits are loaded in pages of LOG_PAGE_SIZE as you scroll (useLog), and
+ * - commits are loaded in pages as you scroll (useLog, streamed by main), and
  * - only the rows on screen are rendered (TanStack Virtual).
+ * The graph layout is extended page by page (IncrementalLayout).
  *
  * Keyboard: ↑/↓ move the selection when the list has focus.
- * The commit graph column arrives in Phase 2.
  */
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { Commit } from '@shared/ipc'
 import { cn } from '@/lib/utils'
 import { formatDateTime, formatRelativeDate, shortSha } from '@/lib/format'
-import { useLog, useRefs } from '@/features/repos/use-repo-data'
+import { useLog, useRefs, useStatus } from '@/features/repos/use-repo-data'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { refsBySha } from '@/features/sidebar/group-refs'
 import { RefBadge } from './ref-badge'
+import { GraphCell, LANE_WIDTH } from './graph-cell'
+import { IncrementalLayout } from './incremental-layout'
+import type { GraphRow } from '@trellis/graph-layout'
+
+/** Number of lanes a row draws in (its rightmost lane + 1). */
+function rowWidth(row: GraphRow): number {
+  let max = row.lane
+  for (const edge of row.top) max = Math.max(max, edge.from, edge.to)
+  for (const edge of row.bottom) max = Math.max(max, edge.from, edge.to)
+  return max + 1
+}
 
 const ROW_HEIGHT = 28
 /** Start loading the next page when this many rows from the end. */
 const LOAD_MORE_THRESHOLD = 50
+/** Never draw more lanes than this; very wide graphs are cut off at the right. */
+const MAX_GRAPH_LANES = 24
+/** When seeking a commit that isn't loaded, give up after loading this many. */
+const SEEK_LIMIT = 50_000
 
-export function CommitList({ repoPath }: { repoPath: string }) {
-  const log = useLog(repoPath)
-  const refs = useRefs(repoPath).data
+interface CommitListProps {
+  repoPath: string
+  /** Commits matching the current search, or null when not searching. */
+  matches: Set<string> | null
+}
+
+export function CommitList({ repoPath, matches }: CommitListProps) {
   const [view, setView] = useRepoView(repoPath)
+  const log = useLog(repoPath, view.scope)
+  const refs = useRefs(repoPath).data
+  const headSha = useStatus(repoPath).data?.branch.oid ?? null
   const scrollRef = useRef<HTMLDivElement>(null)
+  const [incremental] = useState(() => new IncrementalLayout())
 
-  const commits = useMemo(() => log.data?.pages.flatMap((p) => p.commits) ?? [], [log.data])
+  const pages = log.data?.pages
+  const commits = useMemo(() => pages?.flatMap((p) => p.commits) ?? [], [pages])
+  const graph = useMemo(() => incremental.update(pages ?? []), [incremental, pages])
   const refMap = useMemo(() => refsBySha(refs ?? []), [refs])
   const selectedIndex = commits.findIndex((c) => c.sha === view.selectedSha)
 
@@ -43,21 +68,38 @@ export function CommitList({ repoPath }: { repoPath: string }) {
   })
   const items = virtualizer.getVirtualItems()
 
-  // Load the next page when the user scrolls near the end.
-  const lastIndex = items.at(-1)?.index ?? 0
+  // Size the graph column to the lanes used by the rows on screen, not the
+  // whole history: one wide section deep in the past shouldn't push every
+  // commit message to the right. The width animates as you scroll.
+  let visibleLanes = 1
+  for (const item of items) {
+    const row = graph.rows[item.index]
+    if (row) visibleLanes = Math.max(visibleLanes, rowWidth(row))
+  }
+  const graphLanes = Math.min(visibleLanes, MAX_GRAPH_LANES)
+
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = log
+  const lastIndex = items.at(-1)?.index ?? 0
+  const seeking =
+    view.seekSelected &&
+    view.selectedSha !== null &&
+    selectedIndex === -1 &&
+    commits.length < SEEK_LIMIT
+
+  // Load the next page when the user scrolls near the end, or while looking
+  // for a selected commit that hasn't loaded yet.
   useEffect(() => {
-    if (hasNextPage && !isFetchingNextPage && lastIndex >= commits.length - LOAD_MORE_THRESHOLD) {
-      void fetchNextPage()
-    }
-  }, [lastIndex, commits.length, hasNextPage, isFetchingNextPage, fetchNextPage])
+    const nearEnd = lastIndex >= commits.length - LOAD_MORE_THRESHOLD
+    if (hasNextPage && !isFetchingNextPage && (nearEnd || seeking)) void fetchNextPage()
+  }, [lastIndex, commits.length, hasNextPage, isFetchingNextPage, fetchNextPage, seeking])
 
   // Keep the selected commit visible, e.g. after clicking a branch in the sidebar.
   useEffect(() => {
     if (selectedIndex >= 0) virtualizer.scrollToIndex(selectedIndex, { align: 'auto' })
   }, [selectedIndex, virtualizer])
 
-  const select = (commit: Commit) => setView({ selectedSha: commit.sha, selectedFile: null })
+  const select = (commit: Commit) =>
+    setView({ selectedSha: commit.sha, seekSelected: false, selectedFile: null })
 
   const onKeyDown = (event: React.KeyboardEvent) => {
     const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0
@@ -84,42 +126,75 @@ export function CommitList({ repoPath }: { repoPath: string }) {
       tabIndex={0}
       role="listbox"
       aria-label="Commits"
+      aria-busy={seeking}
       onKeyDown={onKeyDown}
       className="h-full overflow-auto outline-none"
     >
       <div style={{ height: virtualizer.getTotalSize() }} className="relative">
         {items.map((item) => {
           const commit = commits[item.index]!
+          const row = graph.rows[item.index]
           const selected = item.index === selectedIndex
+          const dimmed = matches !== null && !matches.has(commit.sha)
           return (
             <div
               key={commit.sha}
               role="option"
               aria-selected={selected}
               data-testid="commit-row"
+              data-match={matches?.has(commit.sha) || undefined}
               onClick={() => select(commit)}
               style={{ height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
               className={cn(
-                'absolute inset-x-0 top-0 flex cursor-default items-center gap-3 px-3 text-sm',
+                'absolute inset-x-0 top-0 flex cursor-default items-center gap-3 pr-3 pl-2 text-sm',
                 selected ? 'bg-accent' : 'hover:bg-accent/50',
               )}
             >
-              <div className="flex min-w-0 flex-1 items-center gap-1.5">
+              {row && (
+                <div
+                  className="shrink-0 overflow-hidden transition-[width] duration-150"
+                  style={{ width: graphLanes * LANE_WIDTH }}
+                >
+                  <GraphCell
+                    row={row}
+                    lanes={graph.width}
+                    height={ROW_HEIGHT}
+                    isMerge={commit.parents.length > 1}
+                    isHead={commit.sha === headSha}
+                  />
+                </div>
+              )}
+              <div
+                className={cn('flex min-w-0 flex-1 items-center gap-1.5', dimmed && 'opacity-40')}
+              >
                 {refMap.get(commit.sha)?.map((ref) => (
                   <RefBadge key={ref.fullName} gitRef={ref} />
                 ))}
                 <span className="truncate">{commit.subject}</span>
               </div>
-              <span className="w-36 shrink-0 truncate text-xs text-muted-foreground">
+              <span
+                className={cn(
+                  'w-36 shrink-0 truncate text-xs text-muted-foreground',
+                  dimmed && 'opacity-40',
+                )}
+              >
                 {commit.authorName}
               </span>
               <span
-                className="w-28 shrink-0 truncate text-xs text-muted-foreground"
+                className={cn(
+                  'w-28 shrink-0 truncate text-xs text-muted-foreground',
+                  dimmed && 'opacity-40',
+                )}
                 title={formatDateTime(commit.authorDate)}
               >
                 {formatRelativeDate(commit.authorDate)}
               </span>
-              <span className="w-16 shrink-0 font-mono text-xs text-muted-foreground">
+              <span
+                className={cn(
+                  'w-16 shrink-0 font-mono text-xs text-muted-foreground',
+                  dimmed && 'opacity-40',
+                )}
+              >
                 {shortSha(commit.sha)}
               </span>
             </div>

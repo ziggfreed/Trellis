@@ -9,6 +9,7 @@ import { join } from 'node:path'
 import { app, BrowserWindow, shell, nativeTheme } from 'electron'
 import { registerIpcHandlers } from './ipc/handlers'
 import { SettingsStore } from './services/settings-store'
+import { keepLogReaders } from './services/log-cache'
 
 // Tests (and anyone who wants a separate profile) can point Trellis at a
 // different data folder so they don't touch the real settings.
@@ -68,7 +69,10 @@ if (!app.requestSingleInstanceLock()) {
   void app.whenReady().then(() => {
     app.setAppUserModelId('dev.trellis.app') // Windows taskbar grouping
     const watcher = registerIpcHandlers(new SettingsStore(app.getPath('userData')))
-    app.on('will-quit', () => watcher.dispose())
+    app.on('will-quit', () => {
+      watcher.dispose()
+      keepLogReaders([]) // stop any running git log processes
+    })
     createWindow()
 
     // macOS: re-create a window when the dock icon is clicked.

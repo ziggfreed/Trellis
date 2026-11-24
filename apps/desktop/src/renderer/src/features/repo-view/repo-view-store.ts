@@ -4,17 +4,34 @@
  * keeps your place. Not saved to disk.
  */
 import { create } from 'zustand'
-import type { DiffTarget } from '@shared/ipc'
+import type { DiffTarget, LogScope } from '@shared/ipc'
 
 export interface RepoViewState {
   view: 'history' | 'changes'
   /** Selected commit in the history list. */
   selectedSha: string | null
+  /**
+   * If true and the selected commit isn't loaded yet, the history list keeps
+   * loading pages until it finds it (used when jumping to a branch or a
+   * search result far back in history).
+   */
+  seekSelected: boolean
   /** File selected in the commit details or the changes list. */
   selectedFile: DiffTarget | null
+  /** Which branches the history shows. */
+  scope: LogScope
+  /** Text in the history search box. */
+  search: string
 }
 
-const DEFAULT_VIEW: RepoViewState = { view: 'history', selectedSha: null, selectedFile: null }
+const DEFAULT_VIEW: RepoViewState = {
+  view: 'history',
+  selectedSha: null,
+  seekSelected: false,
+  selectedFile: null,
+  scope: 'all',
+  search: '',
+}
 
 interface RepoViewStore {
   byRepo: Record<string, RepoViewState>
