@@ -108,7 +108,10 @@ export function builtInCommands(context: CommandContext): Command[] {
   const path = repo.path
   const setView = (patch: Parameters<ReturnType<typeof useRepoViewStore.getState>['update']>[1]) =>
     useRepoViewStore.getState().update(path, patch)
-  const changes = groupChanges(context.status?.files ?? [])
+  // Read status when the command runs rather than using the palette's
+  // snapshot: right after a repo opens that snapshot may not be loaded yet,
+  // and "Stage all" would silently do nothing.
+  const currentChanges = async () => groupChanges((await api.invoke('repo:getStatus', path)).files)
   const operation = context.status?.operation
 
   commands.push(
@@ -220,13 +223,13 @@ export function builtInCommands(context: CommandContext): Command[] {
       id: 'git.stageAll',
       title: 'Stage all changes',
       group: 'Git',
-      run: () => void stageEntries(path, changes.unstaged),
+      run: () => void currentChanges().then((c) => stageEntries(path, c.unstaged)),
     },
     {
       id: 'git.unstageAll',
       title: 'Unstage all changes',
       group: 'Git',
-      run: () => void unstageEntries(path, changes.staged),
+      run: () => void currentChanges().then((c) => unstageEntries(path, c.staged)),
     },
     { id: 'git.stash', title: 'Stash changes…', group: 'Git', run: () => void actions.stash(path) },
     {
