@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { useSettingsStore } from './settings-store'
+import { ShortcutsEditor } from '@/features/shortcuts/shortcuts-editor'
 
 interface SettingsDialogStore {
   open: boolean
@@ -41,7 +42,7 @@ export function SettingsDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Settings</DialogTitle>
           <DialogDescription>Changes are saved straight away.</DialogDescription>
@@ -73,6 +74,19 @@ export function SettingsDialog() {
             />
           </Field>
           <Field
+            id="setting-editor"
+            label="Code editor"
+            help="The command that starts your editor, e.g. code (VS Code), cursor, subl or idea."
+          >
+            <input
+              id="setting-editor"
+              value={settings.editorCommand}
+              placeholder="code"
+              onChange={(e) => update({ editorCommand: e.target.value })}
+              className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+            />
+          </Field>
+          <Field
             id="setting-autofetch"
             label="Fetch in the background"
             help="Keeps branches and push/pull counts up to date for open repositories. Never asks for passwords."
@@ -84,6 +98,10 @@ export function SettingsDialog() {
               options={AUTO_FETCH_CHOICES.map((c) => ({ value: String(c.value), label: c.label }))}
             />
           </Field>
+          <div className="space-y-2">
+            <Label>Keyboard shortcuts</Label>
+            <ShortcutsEditor />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

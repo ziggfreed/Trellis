@@ -16,6 +16,8 @@ export const DEFAULT_SETTINGS: Settings = {
   lastCloneFolder: null,
   autoFetchMinutes: 10,
   workspaces: [],
+  keybindings: {},
+  editorCommand: '',
 }
 
 export class SettingsStore {

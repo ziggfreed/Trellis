@@ -26,11 +26,13 @@ import { cancelOperation, endOperation, startOperation } from '../services/opera
 import { getLogPage, keepLogReaders } from '../services/log-cache'
 import { CommandLog } from '../services/command-log'
 import { AutoFetcher } from '../services/auto-fetch'
+import { openEditor, openTerminal } from '../services/external-apps'
 import { AskpassServer } from '../services/askpass'
 import { askUser, cancelAllPrompts } from '../services/auth-prompts'
 import { createWriteHandlers } from './write-handlers'
 import {
   assertDiffTarget,
+  assertFileInRepo,
   assertPage,
   assertScope,
   assertSha,
@@ -118,6 +120,17 @@ export function createHandlers(
       if (relative(path, full).startsWith('..')) throw new Error('File is outside the repository')
       const error = await shell.openPath(full)
       if (error) throw new Error(error)
+    },
+
+    'shell:openTerminal': (path) => {
+      assertString(path, 'path')
+      return openTerminal(path)
+    },
+
+    'shell:openEditor': (path, file) => {
+      assertString(path, 'path')
+      if (file !== undefined) assertFileInRepo(path, file)
+      return openEditor(path, file, settings.get().editorCommand)
     },
 
     'repo:setWatched': (paths) => {

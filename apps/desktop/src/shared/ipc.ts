@@ -70,6 +70,10 @@ export interface Settings {
   autoFetchMinutes: number
   /** Named groups of repositories that can be opened together. */
   workspaces: Workspace[]
+  /** Keyboard shortcut overrides: action id -> shortcut ("" turns it off). */
+  keybindings: Record<string, string>
+  /** Command that starts the user's code editor, e.g. "code" (empty = VS Code). */
+  editorCommand: string
 }
 
 /** A named group of repositories, e.g. "Work" or "Side projects". */
@@ -145,6 +149,10 @@ export interface IpcContract {
   'repo:resolve': { args: [path: string]; result: OpenRepoResult }
   /** Open the repo folder in the system file manager. */
   'repo:showInFolder': { args: [path: string]; result: void }
+  /** Open the user's terminal program in the repository folder. */
+  'shell:openTerminal': { args: [path: string]; result: void }
+  /** Open the repository (and optionally one file) in the user's code editor. */
+  'shell:openEditor': { args: [path: string, file?: string]; result: void }
   /** Open a file from the repository in its default app (e.g. to resolve conflicts). */
   'repo:openFile': { args: [path: string, file: string]; result: void }
   /**
@@ -353,6 +361,8 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:resolve': true,
   'repo:showInFolder': true,
   'repo:openFile': true,
+  'shell:openTerminal': true,
+  'shell:openEditor': true,
   'repo:setWatched': true,
   'repo:getStatus': true,
   'repo:getLog': true,

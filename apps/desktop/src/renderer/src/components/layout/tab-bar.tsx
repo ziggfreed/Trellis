@@ -22,7 +22,7 @@ import {
 import { useRepos } from '@/features/repos/use-repos'
 import { repoActions } from '@/features/repos/repo-actions'
 import { saveTabsAsWorkspace } from '@/features/workspaces/workspace-actions'
-import { modKey } from '@/hooks/use-keyboard-shortcuts'
+import { shortcutLabel } from '@/features/shortcuts/shortcut-label'
 
 export function TabBar() {
   const { openTabs, activeTab, activate, close, move } = useRepos()
@@ -110,17 +110,17 @@ export function TabBar() {
             <DropdownMenuItem onSelect={repoActions.open}>
               <FolderOpen />
               Open repository…
-              <DropdownMenuShortcut>{modKey}+O</DropdownMenuShortcut>
+              <DropdownMenuShortcut>{shortcutLabel('repo.open')}</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={repoActions.clone}>
               <Download />
               Clone repository…
-              <DropdownMenuShortcut>{modKey}+Shift+O</DropdownMenuShortcut>
+              <DropdownMenuShortcut>{shortcutLabel('repo.clone')}</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={repoActions.create}>
               <FolderPlus />
               New repository…
-              <DropdownMenuShortcut>{modKey}+N</DropdownMenuShortcut>
+              <DropdownMenuShortcut>{shortcutLabel('repo.new')}</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => void saveTabsAsWorkspace()}>

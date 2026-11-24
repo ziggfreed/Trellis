@@ -31,7 +31,7 @@ export interface Command {
   /** Heading the command is listed under, e.g. "Git" or "View". */
   group: string
   /** Shortcut to show next to it (display only; shortcuts are handled elsewhere). */
-  shortcut?: string
+  shortcut?: string | undefined
   /** Extra words that should find this command in a search. */
   keywords?: string[]
   /** Run the command, OR return a picker to choose from first. */

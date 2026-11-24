@@ -48,6 +48,9 @@ importers:
         specifier: workspace:*
         version: link:../../packages/graph-layout
     devDependencies:
+      '@codemirror/lang-javascript':
+        specifier: 6.2.5
+        version: 6.2.5
       '@codemirror/language':
         specifier: ^6.13.1
         version: 6.13.1
@@ -63,6 +66,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.43.15
         version: 6.43.15
+      '@lezer/common':
+        specifier: 1.5.6
+        version: 1.5.6
       '@lezer/highlight':
         specifier: ^1.2.5
         version: 1.2.5

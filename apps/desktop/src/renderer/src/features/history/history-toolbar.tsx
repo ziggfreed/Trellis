@@ -5,7 +5,7 @@
  * highlighted in the list; ↑/↓ buttons (or Enter / Shift+Enter in the box)
  * jump between them, loading more history if a match is further back.
  */
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import { ChevronDown, ChevronUp, Search, X } from 'lucide-react'
 import type { LogScope } from '@shared/ipc'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
-import { modKey } from '@/hooks/use-keyboard-shortcuts'
+import { shortcutLabel } from '@/features/shortcuts/shortcut-label'
 
 export const SCOPE_LABELS: Record<LogScope, string> = {
   all: 'All branches',
@@ -34,20 +34,6 @@ interface HistoryToolbarProps {
 export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
   const [view, setView] = useRepoView(repoPath)
   const inputRef = useRef<HTMLInputElement>(null)
-
-  // Mod+F focuses the search box.
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      const mod = navigator.userAgent.includes('Mac') ? event.metaKey : event.ctrlKey
-      if (mod && event.key.toLowerCase() === 'f') {
-        event.preventDefault()
-        inputRef.current?.focus()
-        inputRef.current?.select()
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
 
   const position = matches && view.selectedSha ? matches.indexOf(view.selectedSha) : -1
 
@@ -102,7 +88,7 @@ export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
               if (e.key === 'Enter') jump(e.shiftKey ? -1 : 1)
               if (e.key === 'Escape') setView({ search: '' })
             }}
-            placeholder={`Search commits (${modKey}+F)`}
+            placeholder={`Search commits${shortcutLabel('history.search') ? ` (${shortcutLabel('history.search')})` : ''}`}
             aria-label="Search commits"
             className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />

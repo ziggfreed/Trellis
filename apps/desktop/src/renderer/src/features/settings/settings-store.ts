@@ -25,6 +25,8 @@ const INITIAL: Settings = {
   lastCloneFolder: null,
   autoFetchMinutes: 10,
   workspaces: [],
+  keybindings: {},
+  editorCommand: '',
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({

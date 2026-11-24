@@ -13,7 +13,8 @@ import { openSettings } from '@/features/settings/settings-dialog'
 import { openWorkspace, saveTabsAsWorkspace } from '@/features/workspaces/workspace-actions'
 import { groupChanges } from '@/features/changes/group-changes'
 import { stageEntries, unstageEntries } from '@/features/changes/change-actions'
-import { modKey } from '@/hooks/use-keyboard-shortcuts'
+import { shortcutLabel } from '@/features/shortcuts/shortcut-label'
+import { openInEditor, openInTerminal } from '@/features/repo-actions/open-external'
 import * as actions from '@/features/repo-actions/actions'
 import { openRepoTab } from '@/features/repos/use-repos'
 import { splitCommitMessage } from '@/features/changes/commit-message'
@@ -30,28 +31,28 @@ export function builtInCommands(context: CommandContext): Command[] {
       id: 'repo.open',
       title: 'Open repository…',
       group: 'Repository',
-      shortcut: `${modKey}+O`,
+      shortcut: shortcutLabel('repo.open'),
       run: repoActions.open,
     },
     {
       id: 'repo.clone',
       title: 'Clone repository…',
       group: 'Repository',
-      shortcut: `${modKey}+Shift+O`,
+      shortcut: shortcutLabel('repo.clone'),
       run: repoActions.clone,
     },
     {
       id: 'repo.new',
       title: 'New repository…',
       group: 'Repository',
-      shortcut: `${modKey}+N`,
+      shortcut: shortcutLabel('repo.new'),
       run: repoActions.create,
     },
     {
       id: 'app.settings',
       title: 'Settings…',
       group: 'View',
-      shortcut: `${modKey}+,`,
+      shortcut: shortcutLabel('settings'),
       keywords: ['preferences', 'options'],
       run: openSettings,
     },
@@ -71,7 +72,7 @@ export function builtInCommands(context: CommandContext): Command[] {
       id: 'view.commandLog',
       title: 'Toggle git command log',
       group: 'View',
-      shortcut: 'Ctrl+`',
+      shortcut: shortcutLabel('commandLog'),
       keywords: ['terminal', 'output', 'history'],
       run: toggleCommandLog,
     },
@@ -127,11 +128,41 @@ export function builtInCommands(context: CommandContext): Command[] {
       id: 'view.search',
       title: 'Search commits',
       group: 'View',
-      shortcut: `${modKey}+F`,
+      shortcut: shortcutLabel('history.search'),
       run: () => {
         setView({ view: 'history' })
         focusLater('[aria-label="Search commits"]')
       },
+    },
+    {
+      id: 'git.undo',
+      title: 'Undo last operation',
+      group: 'Git',
+      shortcut: shortcutLabel('undo'),
+      run: () => void actions.undo(path),
+    },
+    {
+      id: 'git.redo',
+      title: 'Redo',
+      group: 'Git',
+      shortcut: shortcutLabel('redo'),
+      run: () => void actions.redo(path),
+    },
+    {
+      id: 'repo.terminal',
+      title: 'Open in terminal',
+      group: 'Repository',
+      shortcut: shortcutLabel('terminal'),
+      keywords: ['shell', 'console', 'command line'],
+      run: () => void openInTerminal(path),
+    },
+    {
+      id: 'repo.editor',
+      title: 'Open in editor',
+      group: 'Repository',
+      shortcut: shortcutLabel('editor'),
+      keywords: ['vs code', 'code'],
+      run: () => void openInEditor(path),
     },
     {
       id: 'git.fetch',
