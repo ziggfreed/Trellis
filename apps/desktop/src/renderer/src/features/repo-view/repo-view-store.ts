@@ -22,6 +22,11 @@ export interface RepoViewState {
   scope: LogScope
   /** Text in the history search box. */
   search: string
+  /** Commit message being written (kept while switching tabs). */
+  commitSummary: string
+  commitDescription: string
+  /** Amend the last commit instead of creating a new one. */
+  amend: boolean
 }
 
 const DEFAULT_VIEW: RepoViewState = {
@@ -31,6 +36,9 @@ const DEFAULT_VIEW: RepoViewState = {
   selectedFile: null,
   scope: 'all',
   search: '',
+  commitSummary: '',
+  commitDescription: '',
+  amend: false,
 }
 
 interface RepoViewStore {

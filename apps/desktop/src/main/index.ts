@@ -66,11 +66,11 @@ if (!app.requestSingleInstanceLock()) {
     }
   })
 
-  void app.whenReady().then(() => {
+  void app.whenReady().then(async () => {
     app.setAppUserModelId('dev.trellis.app') // Windows taskbar grouping
-    const watcher = registerIpcHandlers(new SettingsStore(app.getPath('userData')))
+    const services = await registerIpcHandlers(new SettingsStore(app.getPath('userData')))
     app.on('will-quit', () => {
-      watcher.dispose()
+      services.dispose()
       keepLogReaders([]) // stop any running git log processes
     })
     createWindow()

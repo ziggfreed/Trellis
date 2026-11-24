@@ -7,6 +7,7 @@
  * https://git-scm.com/docs/git-status#_porcelain_format_version_2
  */
 import { runGit } from './run-git'
+import { getRepoOperation } from './repo-state'
 import type { ChangeKind, RepoStatus } from './types'
 
 /**
@@ -44,6 +45,7 @@ export function parseStatus(output: string): RepoStatus {
   const status: RepoStatus = {
     branch: { head: null, oid: null, upstream: null, ahead: 0, behind: 0 },
     files: [],
+    operation: null,
   }
   const entries = output.split('\0')
 
@@ -120,5 +122,7 @@ export async function getStatus(repoPath: string): Promise<RepoStatus> {
     ['status', '--porcelain=v2', '--branch', '-z', '--untracked-files=all'],
     { cwd: repoPath },
   )
-  return parseStatus(stdout)
+  const status = parseStatus(stdout)
+  status.operation = await getRepoOperation(repoPath)
+  return status
 }

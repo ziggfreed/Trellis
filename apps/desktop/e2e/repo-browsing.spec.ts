@@ -72,7 +72,7 @@ test('the changes view updates live when files change on disk', async () => {
   await expect(window.getByTestId('change-count')).toHaveText('2')
 
   await list.getByRole('button', { name: /README\.md/ }).click()
-  await expect(window.getByTestId('diff-viewer')).toContainText('# changed')
+  await expect(window.getByTestId('patch-view')).toContainText('# changed')
 
   // Committing in a terminal should update history too.
   repo.commit('commit from terminal')

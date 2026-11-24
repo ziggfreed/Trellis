@@ -1,6 +1,6 @@
 {
   "name": "@trellis/desktop",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "Trellis: a fast, extensible, open-source git client.",
   "license": "MIT",
@@ -37,6 +37,7 @@
     "@vitejs/plugin-react": "^6.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "electron": "^45.4.1",
     "electron-builder": "^26.18.0",
     "electron-vite": "^6.0.0",

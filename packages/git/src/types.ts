@@ -68,9 +68,14 @@ export interface BranchStatus {
   behind: number
 }
 
+/** A multi-step operation that is in progress (usually stopped for conflicts). */
+export type RepoOperation = 'merge' | 'rebase' | 'cherry-pick' | 'revert'
+
 export interface RepoStatus {
   branch: BranchStatus
   files: FileStatus[]
+  /** The merge/rebase/cherry-pick/revert in progress, or null. */
+  operation: RepoOperation | null
 }
 
 // ---------------------------------------------------------------------------
@@ -198,3 +203,6 @@ export interface FileDiffContents {
   old: FileContent
   new: FileContent
 }
+
+/** Result of an operation that can stop because of merge conflicts. */
+export type MergeResult = { status: 'done' } | { status: 'conflicts' }

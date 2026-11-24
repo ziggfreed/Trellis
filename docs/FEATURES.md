@@ -39,18 +39,18 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 3. Working copy, staging & committing
 
-| Pri | Feature                                                                          | Status         |
-| --- | -------------------------------------------------------------------------------- | -------------- |
-| P0  | File status list (staged / unstaged / untracked / conflicted), tree or flat view | ✅ (flat list) |
-| P0  | Stage/unstage/discard file                                                       | ⬜             |
-| P0  | **Hunk-level and line-level staging** from the diff view                         | ⬜             |
-| P0  | Commit, amend, commit message editor with subject-length guide                   | ⬜             |
-| P1  | Live auto-refresh via file watcher                                               | ✅             |
-| P1  | Commit templates, co-author picker, Conventional Commits helper                  | ⬜             |
-| P1  | GPG/SSH commit signing, with verified badges in the graph                        | ⬜             |
-| P1  | Respect and display git hooks output (pre-commit failures shown nicely)          | ⬜             |
-| P2  | Partial discard with confirmation and trash/backup                               | ⬜             |
-| P2  | `.gitignore` editor ("ignore this file / extension / folder")                    | ⬜             |
+| Pri | Feature                                                                          | Status                                    |
+| --- | -------------------------------------------------------------------------------- | ----------------------------------------- |
+| P0  | File status list (staged / unstaged / untracked / conflicted), tree or flat view | ✅ (flat list)                            |
+| P0  | Stage/unstage/discard file                                                       | ✅                                        |
+| P0  | **Hunk-level and line-level staging** from the diff view                         | ✅                                        |
+| P0  | Commit, amend, commit message editor with subject-length guide                   | ✅                                        |
+| P1  | Live auto-refresh via file watcher                                               | ✅                                        |
+| P1  | Commit templates, co-author picker, Conventional Commits helper                  | ⬜                                        |
+| P1  | GPG/SSH commit signing, with verified badges in the graph                        | ⬜                                        |
+| P1  | Respect and display git hooks output (pre-commit failures shown nicely)          | 🟨 hook failures shown in the error toast |
+| P2  | Partial discard with confirmation and trash/backup                               | ⬜                                        |
+| P2  | `.gitignore` editor ("ignore this file / extension / folder")                    | ⬜                                        |
 
 ## 4. Diff viewer
 
@@ -64,21 +64,21 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 5. Branches, remotes & syncing
 
-| Pri | Feature                                                                                         | Status |
-| --- | ----------------------------------------------------------------------------------------------- | ------ |
-| P0  | Sidebar: local branches, remotes, tags, stashes                                                 | ✅     |
-| P0  | Create / checkout / rename / delete branch                                                      | ⬜     |
-| P0  | Fetch / pull (merge or rebase) / push, with progress and ahead/behind counts                    | ⬜     |
-| P0  | Merge branch (with conflict detection)                                                          | ⬜     |
-| P0  | Auth: use system git credential helpers + SSH agent; prompt for credentials when needed         | ⬜     |
-| P1  | **Drag and drop** in the graph: drag branch onto branch to merge/rebase, drag to remote to push | ⬜     |
-| P1  | Cherry-pick, revert, reset (soft/mixed/hard) from context menu                                  | ⬜     |
-| P1  | Stash: save (with message, include untracked), apply/pop/drop, view diff                        | ⬜     |
-| P1  | Tags: create (annotated/lightweight), push, delete                                              | ⬜     |
-| P1  | Manage remotes (add/edit/remove)                                                                | ⬜     |
-| P1  | Force push with `--force-with-lease` safety by default                                          | ⬜     |
-| P2  | Prune stale branches helper ("delete all branches merged into main")                            | ⬜     |
-| P2  | Git-flow / trunk-based helpers                                                                  | ⬜     |
+| Pri | Feature                                                                                         | Status                                    |
+| --- | ----------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| P0  | Sidebar: local branches, remotes, tags, stashes                                                 | ✅                                        |
+| P0  | Create / checkout / rename / delete branch                                                      | ✅                                        |
+| P0  | Fetch / pull (merge or rebase) / push, with progress and ahead/behind counts                    | ✅                                        |
+| P0  | Merge branch (with conflict detection)                                                          | ✅                                        |
+| P0  | Auth: use system git credential helpers + SSH agent; prompt for credentials when needed         | ✅ helpers + askpass prompts (HTTPS, SSH) |
+| P1  | **Drag and drop** in the graph: drag branch onto branch to merge/rebase, drag to remote to push | ⬜ Phase 4                                |
+| P1  | Cherry-pick, revert, reset (soft/mixed/hard) from context menu                                  | ✅                                        |
+| P1  | Stash: save (with message, include untracked), apply/pop/drop, view diff                        | ✅                                        |
+| P1  | Tags: create (annotated/lightweight), push, delete                                              | ✅                                        |
+| P1  | Manage remotes (add/edit/remove)                                                                | ⬜                                        |
+| P1  | Force push with `--force-with-lease` safety by default                                          | ✅                                        |
+| P2  | Prune stale branches helper ("delete all branches merged into main")                            | ⬜                                        |
+| P2  | Git-flow / trunk-based helpers                                                                  | ⬜                                        |
 
 ## 6. Advanced git
 
@@ -97,19 +97,19 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 7. UX & productivity
 
-| Pri | Feature                                                                                | Status |
-| --- | -------------------------------------------------------------------------------------- | ------ |
-| P0  | **Command palette** (Ctrl/Cmd+K / Ctrl+Shift+P) for every action                       | ⬜     |
-| P0  | Dark/light/system themes (shadcn tokens)                                               | ✅     |
-| P1  | **Undo / redo** for git operations (backed by reflog and operation log snapshots)      | ⬜     |
-| P1  | **"Show git command"**: every action logs the exact command it ran, in a console panel | ⬜     |
-| P1  | Built-in terminal panel (xterm.js) opened at the repo root                             | ⬜     |
-| P1  | Customisable keyboard shortcuts, keyboard-first navigation (j/k in graph)              | ⬜     |
-| P1  | Toast notifications and an activity/operations panel with cancel                       | ⬜     |
-| P1  | "Open in…" editor / file manager / terminal integrations                               | ⬜     |
-| P2  | Custom themes (and themes as plugins)                                                  | ⬜     |
-| P2  | Onboarding and in-app "git explained" tooltips for beginners                           | ⬜     |
-| P2  | i18n                                                                                   | ⬜     |
+| Pri | Feature                                                                                | Status                          |
+| --- | -------------------------------------------------------------------------------------- | ------------------------------- |
+| P0  | **Command palette** (Ctrl/Cmd+K / Ctrl+Shift+P) for every action                       | ✅                              |
+| P0  | Dark/light/system themes (shadcn tokens)                                               | ✅                              |
+| P1  | **Undo / redo** for git operations (backed by reflog and operation log snapshots)      | ⬜                              |
+| P1  | **"Show git command"**: every action logs the exact command it ran, in a console panel | ✅                              |
+| P1  | Built-in terminal panel (xterm.js) opened at the repo root                             | ⬜                              |
+| P1  | Customisable keyboard shortcuts, keyboard-first navigation (j/k in graph)              | ⬜                              |
+| P1  | Toast notifications and an activity/operations panel with cancel                       | 🟨 toasts + status bar progress |
+| P1  | "Open in…" editor / file manager / terminal integrations                               | ⬜                              |
+| P2  | Custom themes (and themes as plugins)                                                  | ⬜                              |
+| P2  | Onboarding and in-app "git explained" tooltips for beginners                           | ⬜                              |
+| P2  | i18n                                                                                   | ⬜                              |
 
 ## 8. Plugin system
 

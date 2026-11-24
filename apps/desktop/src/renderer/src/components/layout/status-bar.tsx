@@ -1,5 +1,14 @@
 /** The thin bar along the bottom: current branch, git version and theme switcher. */
-import { ArrowDown, ArrowUp, GitBranch, Monitor, Moon, Sun } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  GitBranch,
+  Loader2,
+  Monitor,
+  Moon,
+  Sun,
+  SquareTerminal,
+} from 'lucide-react'
 import type { ThemePreference } from '@shared/ipc'
 import {
   DropdownMenu,
@@ -11,6 +20,8 @@ import {
 import { useSettingsStore } from '@/features/settings/settings-store'
 import { useStatus } from '@/features/repos/use-repo-data'
 import { shortSha } from '@/lib/format'
+import { useOperationsStore } from '@/features/repo-actions/operations-store'
+import { toggleCommandLog, useCommandLogStore } from '@/features/command-log/command-log-store'
 
 const THEME_ICONS = { light: Sun, dark: Moon, system: Monitor } as const
 
@@ -28,7 +39,9 @@ export function StatusBar({ gitVersion, repoPath }: StatusBarProps) {
   return (
     <footer className="flex h-6 shrink-0 items-center gap-4 border-t bg-sidebar px-3 text-xs text-muted-foreground">
       {repoPath && <BranchStatus repoPath={repoPath} />}
+      <RunningOperations />
       <span className="ml-auto">{gitVersion}</span>
+      <CommandLogToggle />
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-1 capitalize hover:text-foreground">
           <ThemeIcon className="size-3.5" />
@@ -73,5 +86,41 @@ function BranchStatus({ repoPath }: { repoPath: string }) {
         </span>
       )}
     </span>
+  )
+}
+
+/** "Pushing main to origin… Writing objects 45%" while remote operations run. */
+function RunningOperations() {
+  const running = useOperationsStore((s) => s.running)
+  const latest = running.at(-1)
+  if (!latest) return null
+  return (
+    <span
+      className="flex min-w-0 items-center gap-1.5"
+      role="status"
+      data-testid="running-operation"
+    >
+      <Loader2 className="size-3 shrink-0 animate-spin" />
+      <span className="truncate">
+        {latest.label}…{latest.phase ? ` ${latest.phase} ${latest.percent ?? 0}%` : ''}
+        {running.length > 1 ? ` (+${running.length - 1} more)` : ''}
+      </span>
+    </span>
+  )
+}
+
+function CommandLogToggle() {
+  const open = useCommandLogStore((s) => s.open)
+  return (
+    <button
+      type="button"
+      onClick={toggleCommandLog}
+      aria-pressed={open}
+      title="Show the git commands Trellis runs (Ctrl+`)"
+      className={`flex items-center gap-1 hover:text-foreground ${open ? 'text-foreground' : ''}`}
+    >
+      <SquareTerminal className="size-3.5" />
+      Git log
+    </button>
   )
 }

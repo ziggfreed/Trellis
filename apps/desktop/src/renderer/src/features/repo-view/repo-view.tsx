@@ -24,8 +24,12 @@ import { RepoSidebar } from '@/features/sidebar/repo-sidebar'
 import { HistoryPanel } from '@/features/history/history-panel'
 import { CommitDetails } from '@/features/history/commit-details'
 import { ChangesList } from '@/features/changes/changes-list'
+import { CommitBox } from '@/features/changes/commit-box'
+import { PatchView } from '@/features/changes/patch-view'
 import { DiffPanel } from '@/features/diff/diff-panel'
 import { useRepoView } from './repo-view-store'
+import { RepoToolbar } from '@/features/repo-toolbar/repo-toolbar'
+import { OperationBanner } from '@/features/repo-toolbar/operation-banner'
 
 export function RepoView({ repo }: { repo: RepoTab }) {
   const [view, setView] = useRepoView(repo.path)
@@ -59,17 +63,21 @@ export function RepoView({ repo }: { repo: RepoTab }) {
                 </span>
               )}
             </ViewTab>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto text-muted-foreground"
-              title={repo.path}
-              onClick={() => void api.invoke('repo:showInFolder', repo.path)}
-            >
-              <FolderOpen />
-              Show in folder
-            </Button>
+            <div className="ml-auto flex items-center gap-1">
+              <RepoToolbar repoPath={repo.path} />
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground"
+                title={`Show in folder: ${repo.path}`}
+                aria-label="Show in folder"
+                onClick={() => void api.invoke('repo:showInFolder', repo.path)}
+              >
+                <FolderOpen />
+              </Button>
+            </div>
           </div>
+          <OperationBanner repoPath={repo.path} />
 
           <div className="min-h-0 flex-1">
             {view.view === 'history' ? (
@@ -93,11 +101,27 @@ export function RepoView({ repo }: { repo: RepoTab }) {
             ) : (
               <ResizablePanelGroup orientation="horizontal" id="changes-layout">
                 <ResizablePanel defaultSize="35%" minSize="20%">
-                  <ChangesList repoPath={repo.path} />
+                  <div className="flex h-full min-h-0 flex-col">
+                    <div className="min-h-0 flex-1">
+                      <ChangesList repoPath={repo.path} />
+                    </div>
+                    <CommitBox repoPath={repo.path} />
+                  </div>
                 </ResizablePanel>
                 <ResizableHandle />
                 <ResizablePanel minSize="30%">
-                  <DiffPanel repoPath={repo.path} target={view.selectedFile} />
+                  {view.selectedFile && view.selectedFile.kind !== 'commit' ? (
+                    <PatchView
+                      key={`${view.selectedFile.kind}:${view.selectedFile.path}`}
+                      repoPath={repo.path}
+                      file={view.selectedFile.path}
+                      area={view.selectedFile.kind}
+                    />
+                  ) : (
+                    <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                      Select a file to see its changes.
+                    </p>
+                  )}
                 </ResizablePanel>
               </ResizablePanelGroup>
             )}
