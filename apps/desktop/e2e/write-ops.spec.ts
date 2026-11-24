@@ -20,8 +20,9 @@ async function showChanges(window: Page) {
 
 /** The changes-list row (li) for a file in a section ("Staged", "Unstaged"...). */
 function fileRow(window: Page, section: string, file: string) {
+  // exact: "Staged" must not also match "Unstaged".
   return window
-    .getByRole('region', { name: section })
+    .getByRole('region', { name: section, exact: true })
     .getByRole('listitem')
     .filter({ hasText: file })
 }
@@ -51,6 +52,7 @@ test('stages a file and commits it', async () => {
       'page text:',
       (await window.locator('main, body').first().innerText()).slice(0, 1500),
     )
+    windowsDiagnostics()
     throw error
   }
   expect(repo.git('log', '-1', '--format=%B').trim()).toBe('Update readme\n\nWith more detail')
@@ -93,7 +95,7 @@ test('discards changes after confirming', async () => {
   await openRepo(app, window, repo.path)
   await showChanges(window)
 
-  await window.getByRole('region', { name: 'Unstaged' }).hover()
+  await window.getByRole('region', { name: 'Unstaged', exact: true }).hover()
   await window.getByRole('button', { name: 'Discard all' }).click()
   await expect(window.getByRole('dialog')).toContainText('can’t be undone')
   await window.getByRole('button', { name: 'Discard', exact: true }).click()
@@ -204,7 +206,35 @@ test('runs commands from the palette and lists them in the git log', async () =>
     console.log(`command log has ${entries.length} entries:`)
     for (const e of entries.slice(-15))
       console.log(`  ${e.readOnly ? 'r' : 'w'} ${e.exitCode} git ${e.args.join(' ')}`)
+    windowsDiagnostics()
     throw error
   }
   await app.close()
 })
+
+/** Windows diagnostics: which git processes are still running, and git's config. */
+function windowsDiagnostics() {
+  if (process.platform !== 'win32') return
+  try {
+    const processes = execFileSync(
+      'powershell.exe',
+      [
+        '-NoProfile',
+        '-Command',
+        'Get-CimInstance Win32_Process | Where-Object { $_.Name -match \'git|sh.exe|bash\' } | ForEach-Object { "$($_.ProcessId) $($_.ParentProcessId) $($_.CommandLine)" }',
+      ],
+      { encoding: 'utf8' },
+    )
+    console.log('git-related processes still running:\n' + processes)
+  } catch (error) {
+    console.log('could not list processes', error)
+  }
+  try {
+    console.log(
+      'git config:\n' +
+        execFileSync('git', ['config', '--list', '--show-origin'], { encoding: 'utf8' }),
+    )
+  } catch (error) {
+    console.log('could not read git config', error)
+  }
+}
