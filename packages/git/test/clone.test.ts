@@ -8,7 +8,8 @@ import { createRepoWithRemote, createTempDir, type TempRepo } from './helpers'
 const cleanups: (TempRepo | string)[] = []
 afterEach(async () => {
   for (const item of cleanups.splice(0)) {
-    if (typeof item === 'string') await rm(item, { recursive: true, force: true })
+    if (typeof item === 'string')
+      await rm(item, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
     else await item.cleanup()
   }
 })

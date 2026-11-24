@@ -44,7 +44,8 @@ export async function createTempRepo(options: { bare?: boolean } = {}): Promise<
       await git('commit', '-m', message)
       return (await git('rev-parse', 'HEAD')).trim()
     },
-    cleanup: () => rm(path, { recursive: true, force: true }),
+    // Windows can keep files locked for a moment after git exits, so retry.
+    cleanup: () => rm(path, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }),
   }
 }
 

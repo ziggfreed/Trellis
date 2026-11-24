@@ -35,7 +35,7 @@ describe('getRepoRoot', () => {
     try {
       expect(await getRepoRoot(dir)).toBeNull()
     } finally {
-      await rm(dir, { recursive: true, force: true })
+      await rm(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
     }
   })
 
