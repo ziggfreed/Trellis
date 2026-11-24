@@ -5,6 +5,35 @@ import { cn } from '@/lib/utils'
 import { CheckIcon, ChevronRightIcon, CircleIcon } from 'lucide-react'
 import { ContextMenu as ContextMenuPrimitive } from 'radix-ui'
 
+/**
+ * Trellis change: only select an item when the click starts on it.
+ *
+ * Radix also selects an item when the mouse button is *released* over it
+ * ("press, drag, release"). On macOS the context menu opens on mouse-down,
+ * so if the menu appears under the pointer (e.g. pushed up near the bottom
+ * of the window) the release instantly picks whatever item is there.
+ * Windows and Linux open the menu on release, so they never had this
+ * behaviour; this makes macOS match them.
+ */
+function useClickStartsOnItem(props: {
+  onPointerDown?: React.PointerEventHandler<HTMLDivElement>
+  onPointerUp?: React.PointerEventHandler<HTMLDivElement>
+}) {
+  const pressed = React.useRef(false)
+  return {
+    onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => {
+      props.onPointerDown?.(event)
+      pressed.current = true
+    },
+    onPointerUp: (event: React.PointerEvent<HTMLDivElement>) => {
+      props.onPointerUp?.(event)
+      // preventDefault stops Radix's release-to-select handler.
+      if (!pressed.current) event.preventDefault()
+      pressed.current = false
+    },
+  }
+}
+
 function ContextMenu({ ...props }: React.ComponentProps<typeof ContextMenuPrimitive.Root>) {
   return <ContextMenuPrimitive.Root data-slot="context-menu" {...props} />
 }
@@ -100,6 +129,7 @@ function ContextMenuItem({
   inset?: boolean
   variant?: 'default' | 'destructive'
 }) {
+  const clickStartsOnItem = useClickStartsOnItem(props)
   return (
     <ContextMenuPrimitive.Item
       data-slot="context-menu-item"
@@ -110,6 +140,7 @@ function ContextMenuItem({
         className,
       )}
       {...props}
+      {...clickStartsOnItem}
     />
   )
 }
@@ -120,6 +151,7 @@ function ContextMenuCheckboxItem({
   checked,
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.CheckboxItem>) {
+  const clickStartsOnItem = useClickStartsOnItem(props)
   return (
     <ContextMenuPrimitive.CheckboxItem
       data-slot="context-menu-checkbox-item"
@@ -129,6 +161,7 @@ function ContextMenuCheckboxItem({
       )}
       checked={checked}
       {...props}
+      {...clickStartsOnItem}
     >
       <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
         <ContextMenuPrimitive.ItemIndicator>
@@ -145,6 +178,7 @@ function ContextMenuRadioItem({
   children,
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.RadioItem>) {
+  const clickStartsOnItem = useClickStartsOnItem(props)
   return (
     <ContextMenuPrimitive.RadioItem
       data-slot="context-menu-radio-item"
@@ -153,6 +187,7 @@ function ContextMenuRadioItem({
         className,
       )}
       {...props}
+      {...clickStartsOnItem}
     >
       <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
         <ContextMenuPrimitive.ItemIndicator>

@@ -46,6 +46,26 @@ test('shows blame and file history from a file’s menu', async () => {
   await app.close()
 })
 
+test('releasing a right-click over a menu item doesn’t pick it', async () => {
+  // On macOS the menu opens on mouse-down, so it can appear under the
+  // pointer; releasing the button there must not run the item.
+  const repo = repoWithHistory()
+  const { app, window } = await launch()
+  await openRepo(app, window, repo.path)
+  await window.getByTestId('commit-row').filter({ hasText: 'add line two' }).click()
+  const file = window.getByTestId('commit-details').getByRole('button', { name: /app\.txt/ })
+  await file.hover()
+  await window.mouse.down({ button: 'right' })
+  const item = window.getByRole('menuitem', { name: 'File history' })
+  const box = (await item.boundingBox())!
+  await window.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await window.mouse.up({ button: 'right' })
+  await expect(item).toBeVisible() // the menu is still open
+  await expect(window.getByTestId('file-history')).toHaveCount(0)
+  await window.keyboard.press('Escape')
+  await app.close()
+})
+
 test('compares a branch with the current branch', async () => {
   const repo = repoWithHistory()
   const { app, window } = await launch()
