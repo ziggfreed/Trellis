@@ -1,0 +1,97 @@
+# Runs on every pull request and every push to main.
+#   checks  - lint, formatting and type checking (fast, Linux only)
+#   test    - unit + end-to-end tests on Windows, macOS and Linux
+#   package - builds installers for all three platforms (main branch only)
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint & typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+
+  test:
+    name: Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Unit tests
+        run: pnpm test
+      - name: End-to-end tests (Linux, virtual display)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm test:e2e
+      - name: End-to-end tests
+        if: runner.os != 'Linux'
+        run: pnpm test:e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.os }}
+          path: apps/desktop/playwright-report
+          retention-days: 7
+
+  package:
+    name: Package (${{ matrix.os }})
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: [checks, test]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build installers (unsigned)
+        run: pnpm package --publish never
+        env:
+          # Code signing is not set up yet; stop electron-builder looking for certificates.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trellis-${{ runner.os }}
+          path: |
+            apps/desktop/release/*/*.exe
+            apps/desktop/release/*/*.dmg
+            apps/desktop/release/*/*.AppImage
+            apps/desktop/release/*/*.deb
+          retention-days: 14

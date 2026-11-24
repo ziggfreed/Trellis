@@ -1,0 +1,21 @@
+{
+  "name": "@trellis/git",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Typed wrapper around the git command-line program. No Electron or React here, so it is easy to unit test.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "vitest": "^5.1.1"
+  }
+}

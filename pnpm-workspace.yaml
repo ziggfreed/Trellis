@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+
+# pnpm 10 does not run dependency install scripts unless they are listed here.
+# Electron needs its script to download the Electron binary; esbuild needs its
+# platform-specific binary.
+onlyBuiltDependencies:
+  - electron
+  - esbuild
+
+# Not needed for building; listed so pnpm stops warning about it.
+ignoredBuiltDependencies:
+  - electron-winstaller

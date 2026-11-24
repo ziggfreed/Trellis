@@ -1,0 +1,33 @@
+# Packaging config: turns the built app (out/) into installers.
+# Run `pnpm package` from the repo root. Output goes to apps/desktop/release/.
+# Docs: https://www.electron.build/configuration
+appId: dev.trellis.app
+productName: Trellis
+executableName: trellis
+copyright: Copyright © Trellis contributors
+directories:
+  output: release/${version}
+  buildResources: build
+files:
+  - out/**
+  - package.json
+# Everything the app needs is bundled into out/ by electron-vite.
+npmRebuild: false
+win:
+  target: [nsis]
+  artifactName: ${productName}-${version}-setup-${arch}.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+mac:
+  target: [dmg]
+  category: public.app-category.developer-tools
+  artifactName: ${productName}-${version}-${arch}.${ext}
+linux:
+  target: [AppImage, deb]
+  category: Development
+  maintainer: Trellis contributors
+  executableName: trellis
+  syncDesktopName: true
+  artifactName: ${productName}-${version}-${arch}.${ext}
+publish: null
