@@ -25,6 +25,7 @@ import { Dialogs } from '@/features/dialogs/dialogs'
 import { AuthPrompt } from '@/features/auth/auth-prompt'
 import { CommandPalette } from '@/features/command-palette/command-palette'
 import { RebaseDialog } from '@/features/rebase/rebase-dialog'
+import { DropMenu } from '@/features/drag-drop/drop-menu'
 import { CommandLogPanel } from '@/features/command-log/command-log-panel'
 import { useCommandLogStore } from '@/features/command-log/command-log-store'
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
@@ -83,6 +84,7 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
       <AuthPrompt />
       <CommandPalette />
       <RebaseDialog />
+      <DropMenu />
     </div>
   )
 }

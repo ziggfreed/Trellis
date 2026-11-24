@@ -198,6 +198,8 @@ export interface IpcContract {
     result: void
   }
   'repo:checkout': { args: [path: string, target: CheckoutTarget]; result: void }
+  /** Point a (not checked out) branch at another commit. */
+  'repo:moveBranch': { args: [path: string, name: string, target: string]; result: void }
   'repo:renameBranch': { args: [path: string, from: string, to: string]; result: void }
   'repo:deleteBranch': { args: [path: string, name: string, force: boolean]; result: void }
   'repo:merge': {
@@ -350,6 +352,7 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:getHeadMessage': true,
   'repo:createBranch': true,
   'repo:checkout': true,
+  'repo:moveBranch': true,
   'repo:renameBranch': true,
   'repo:deleteBranch': true,
   'repo:merge': true,

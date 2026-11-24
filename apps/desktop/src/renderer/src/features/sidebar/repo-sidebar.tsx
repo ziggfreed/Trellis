@@ -14,6 +14,7 @@ import { useRefs, useRemotes, useStashes } from '@/features/repos/use-repo-data'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { BranchMenu, RemoteBranchMenu, StashMenu, TagMenu } from '@/features/repo-actions/menus'
 import { checkoutBranch } from '@/features/repo-actions/actions'
+import { draggableRef } from '@/features/drag-drop/drop-menu'
 import { groupRemoteBranches, localBranches, remoteBranchShortName, sortedTags } from './group-refs'
 
 export function RepoSidebar({ repoPath }: { repoPath: string }) {
@@ -39,6 +40,7 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
         {branches.map((branch) => (
           <BranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
             <Item
+              {...draggableRef(branch)}
               label={branch.name}
               selected={view.selectedSha === branch.sha}
               onClick={() => select(branch.sha)}
@@ -57,6 +59,7 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
             {group.branches.map((branch) => (
               <RemoteBranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
                 <Item
+                  {...draggableRef(branch)}
                   label={remoteBranchShortName(branch)}
                   selected={view.selectedSha === branch.sha}
                   onClick={() => select(branch.sha)}

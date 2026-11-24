@@ -21,6 +21,7 @@ import {
   getStashes,
   getStatus,
   merge,
+  moveBranch,
   pull,
   push,
   pushTag,
@@ -122,6 +123,19 @@ describe('branches', () => {
     await checkoutBranch(repo.path, 'main')
     await expect(deleteBranch(repo.path, 'wip')).rejects.toThrow()
     await deleteBranch(repo.path, 'wip', true)
+  })
+
+  it('moves a branch to another commit', async () => {
+    const repo = await repoWithCommit()
+    const base = (await repo.git('rev-parse', 'HEAD')).trim()
+    await createBranch(repo.path, 'pointer')
+    await repo.write('more.txt', 'x')
+    await repo.commit('more')
+    const tip = (await repo.git('rev-parse', 'HEAD')).trim()
+    expect((await getRefs(repo.path)).find((r) => r.name === 'pointer')?.sha).toBe(base)
+    await moveBranch(repo.path, 'pointer', tip)
+    expect((await getRefs(repo.path)).find((r) => r.name === 'pointer')?.sha).toBe(tip)
+    await expect(moveBranch(repo.path, 'main', base)).rejects.toThrow() // the checked-out branch
   })
 
   it('checks out a commit as a detached HEAD', async () => {

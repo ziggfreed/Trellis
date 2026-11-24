@@ -8,6 +8,7 @@
  *
  * Keyboard: ↑/↓ move the selection when the list has focus.
  * Right-click a commit for actions (branch, tag, cherry-pick, revert, reset...).
+ * Drag a branch label onto another row to merge, rebase or move it.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
@@ -19,6 +20,7 @@ import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { refsBySha } from '@/features/sidebar/group-refs'
 import { RefBadge } from './ref-badge'
 import { CommitMenu } from '@/features/repo-actions/menus'
+import { handleRefDrop, isRefDrag } from '@/features/drag-drop/drop-menu'
 import { GraphCell, LANE_WIDTH } from './graph-cell'
 import { IncrementalLayout } from './incremental-layout'
 import type { GraphRow } from '@trellis/graph-layout'
@@ -52,6 +54,8 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
   const headSha = useStatus(repoPath).data?.branch.oid ?? null
   const scrollRef = useRef<HTMLDivElement>(null)
   const [incremental] = useState(() => new IncrementalLayout())
+  /** Row a branch is being dragged over, to highlight it. */
+  const [dropIndex, setDropIndex] = useState<number | null>(null)
 
   const pages = log.data?.pages
   const commits = useMemo(() => pages?.flatMap((p) => p.commits) ?? [], [pages])
@@ -146,10 +150,26 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
                 data-testid="commit-row"
                 data-match={matches?.has(commit.sha) || undefined}
                 onClick={() => select(commit)}
+                onDragOver={(event) => {
+                  if (!isRefDrag(event)) return
+                  event.preventDefault()
+                  setDropIndex(item.index)
+                }}
+                onDragLeave={() => setDropIndex((i) => (i === item.index ? null : i))}
+                onDrop={(event) => {
+                  setDropIndex(null)
+                  if (!isRefDrag(event)) return
+                  event.preventDefault()
+                  // Dropped on a branch label? Use that branch as the target.
+                  const label = (event.target as HTMLElement).closest('[data-ref]')
+                  const ref = refs?.find((r) => r.fullName === label?.getAttribute('data-ref'))
+                  void handleRefDrop(repoPath, event, { sha: commit.sha, ...(ref ? { ref } : {}) })
+                }}
                 style={{ height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
                 className={cn(
                   'absolute inset-x-0 top-0 flex cursor-default items-center gap-3 pr-3 pl-2 text-sm',
                   selected ? 'bg-accent' : 'hover:bg-accent/50 data-[state=open]:bg-accent/50',
+                  dropIndex === item.index && 'ring-2 ring-brand ring-inset',
                 )}
               >
                 {row && (

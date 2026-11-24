@@ -164,6 +164,13 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       })
     },
 
+    'repo:moveBranch': (path, name, target) => {
+      assertString(path, 'path')
+      assertRefArg(name, 'name')
+      assertRefArg(target, 'target')
+      return recorded(path, `Move ${name}`, false, () => git.moveBranch(path, name, target))
+    },
+
     'repo:renameBranch': (path, from, to) => {
       assertString(path, 'path')
       assertRefArg(from, 'from')
