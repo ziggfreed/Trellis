@@ -11,7 +11,7 @@
  */
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ExternalLink, Minus, Plus, Undo2 } from 'lucide-react'
+import { Minus, Plus, Undo2 } from 'lucide-react'
 import {
   allLineIds,
   buildPartialPatch,
@@ -29,6 +29,7 @@ import { FilePath } from '@/components/file-path'
 import { confirmDialog } from '@/features/dialogs/dialog-store'
 import { useStatus } from '@/features/repos/use-repo-data'
 import { selectRange, toggleLine } from './line-selection'
+import { ConflictEditor } from '@/features/conflicts/conflict-editor'
 
 /** Stop rendering lines after this many, to keep huge diffs responsive. */
 const MAX_LINES = 5000
@@ -79,35 +80,10 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
 
   if (conflicted) {
     return (
-      <div className="flex h-full flex-col">
+      <div className="flex h-full min-h-0 flex-col">
         {header}
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center text-sm">
-          <p className="max-w-sm">
-            This file has conflicts. Open it, choose what to keep between the
-            <code className="mx-1 rounded bg-muted px-1">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> and
-            <code className="mx-1 rounded bg-muted px-1">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>{' '}
-            markers, then mark it as resolved.
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                void runAction(repoPath, () => api.invoke('repo:openFile', repoPath, file))
-              }
-            >
-              <ExternalLink />
-              Open file
-            </Button>
-            <Button
-              size="sm"
-              onClick={() =>
-                void runAction(repoPath, () => api.invoke('repo:stage', repoPath, [file]))
-              }
-            >
-              Mark as resolved
-            </Button>
-          </div>
+        <div className="min-h-0 flex-1">
+          <ConflictEditor repoPath={repoPath} file={file} />
         </div>
       </div>
     )

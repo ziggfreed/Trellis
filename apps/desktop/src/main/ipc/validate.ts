@@ -3,6 +3,7 @@
  * them as untrusted input and check their shape before using them.
  * Each function throws a TypeError with a clear message if the check fails.
  */
+import { isAbsolute, relative, resolve } from 'node:path'
 import type { CheckoutTarget, DiffTarget, LogScope, PushRequest, RebasePlanItem } from '@shared/ipc'
 
 export function assertString(value: unknown, name: string): asserts value is string {
@@ -115,5 +116,17 @@ export function assertRebasePlan(value: unknown): asserts value is RebasePlanIte
     if (item.message !== undefined && typeof item.message !== 'string') {
       throw new TypeError('plan item message must be a string')
     }
+  }
+}
+
+/**
+ * A file path relative to the repository that stays inside it, so the UI
+ * can never read or write files elsewhere on disk (e.g. "../../secret").
+ */
+export function assertFileInRepo(repoPath: string, file: unknown): asserts file is string {
+  assertString(file, 'file')
+  const rel = relative(repoPath, resolve(repoPath, file))
+  if (rel === '' || rel.startsWith('..') || isAbsolute(rel)) {
+    throw new TypeError('file must be inside the repository')
   }
 }

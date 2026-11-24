@@ -37,12 +37,17 @@ function shellQuote(path: string): string {
  * Build the todo list. `messageFile(i)` gives the path of the file holding
  * the new message for plan item i (only called for rewords).
  */
-export function buildRebaseTodo(plan: readonly RebasePlanItem[], messageFile: (index: number) => string): string {
+export function buildRebaseTodo(
+  plan: readonly RebasePlanItem[],
+  messageFile: (index: number) => string,
+): string {
   const lines: string[] = []
   plan.forEach((item, index) => {
     if (item.action === 'reword') {
       lines.push(`pick ${item.sha}`)
-      lines.push(`exec git commit --amend --cleanup=whitespace --quiet -F ${shellQuote(messageFile(index))}`)
+      lines.push(
+        `exec git commit --amend --cleanup=whitespace --quiet -F ${shellQuote(messageFile(index))}`,
+      )
     } else {
       lines.push(`${item.action} ${item.sha}`)
     }
@@ -61,11 +66,17 @@ export interface RebaseCommits {
  * The commits from `base` (exclusive) to HEAD, oldest first. Pass 'root' to
  * include every commit back to the first one.
  */
-export async function getRebaseCommits(repoPath: string, base: string | 'root'): Promise<RebaseCommits> {
+export async function getRebaseCommits(
+  repoPath: string,
+  base: string | 'root',
+): Promise<RebaseCommits> {
   const range = base === 'root' ? ['HEAD'] : [`${base}..HEAD`]
-  const { stdout } = await runGit(['log', ...LOG_FORMAT_ARGS, '--reverse', '--topo-order', ...range, '--'], {
-    cwd: repoPath,
-  })
+  const { stdout } = await runGit(
+    ['log', ...LOG_FORMAT_ARGS, '--reverse', '--topo-order', ...range, '--'],
+    {
+      cwd: repoPath,
+    },
+  )
   const commits = parseCommits(stdout)
   return { commits, hasMerges: commits.some((c) => c.parents.length > 1) }
 }
@@ -84,9 +95,12 @@ export async function interactiveRebase(
 
   // Files live in the .git folder so they still exist if the rebase stops
   // for conflicts and is continued later.
-  const { stdout } = await runGit(['rev-parse', '--path-format=absolute', '--git-path', 'trellis/rebase'], {
-    cwd: repoPath,
-  })
+  const { stdout } = await runGit(
+    ['rev-parse', '--path-format=absolute', '--git-path', 'trellis/rebase'],
+    {
+      cwd: repoPath,
+    },
+  )
   const dir = stdout.trim()
   await rm(dir, { recursive: true, force: true })
   await mkdir(dir, { recursive: true })

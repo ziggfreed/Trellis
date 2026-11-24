@@ -20,6 +20,7 @@ import { respond } from '../services/auth-prompts'
 import type { CommandLog } from '../services/command-log'
 import {
   assertCheckoutTarget,
+  assertFileInRepo,
   assertIndex,
   assertOneOf,
   assertPushRequest,
@@ -313,6 +314,29 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       return remoteOperation(operationId, path, sendProgress, (o) =>
         git.pushTag(path, remote, tag, o),
       )
+    },
+
+    // --- Conflicts --------------------------------------------------------------
+    'repo:readWorkingFile': (path, file) => {
+      assertString(path, 'path')
+      assertFileInRepo(path, file)
+      return git.readWorkingFile(path, file)
+    },
+
+    'repo:saveResolvedFile': (path, file, content) => {
+      assertString(path, 'path')
+      assertFileInRepo(path, file)
+      if (typeof content !== 'string') throw new TypeError('content must be a string')
+      return recorded(path, `Resolve ${file}`, true, () =>
+        git.saveResolvedFile(path, file, content),
+      )
+    },
+
+    'repo:resolveFileWith': (path, file, choice) => {
+      assertString(path, 'path')
+      assertFileInRepo(path, file)
+      assertOneOf(choice, ['current', 'incoming', 'delete'] as const, 'choice')
+      return recorded(path, `Resolve ${file}`, true, () => git.resolveFileWith(path, file, choice))
     },
 
     // --- Interactive rebase --------------------------------------------------

@@ -21,6 +21,7 @@ import type {
   LogScope,
   CommitDetails,
   DiffTarget,
+  FileContent,
   FileDiffContents,
   GitInstallation,
   Ref,
@@ -238,6 +239,17 @@ export interface IpcContract {
     result: void
   }
 
+  // --- Conflicts ----------------------------------------------------------------
+  /** Read a working-tree file (e.g. a conflicted one, with its markers). */
+  'repo:readWorkingFile': { args: [path: string, file: string]; result: FileContent }
+  /** Write the resolved contents of a conflicted file and stage it. */
+  'repo:saveResolvedFile': { args: [path: string, file: string, content: string]; result: void }
+  /** Resolve a whole conflicted file by keeping one side, or deleting it. */
+  'repo:resolveFileWith': {
+    args: [path: string, file: string, choice: 'current' | 'incoming' | 'delete']
+    result: void
+  }
+
   // --- Interactive rebase --------------------------------------------------
   /** Commits after `base` up to HEAD, oldest first ('root' = from the first commit). */
   'repo:getRebaseCommits': {
@@ -345,6 +357,9 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:push': true,
   'repo:deleteRemoteBranch': true,
   'repo:pushTag': true,
+  'repo:readWorkingFile': true,
+  'repo:saveResolvedFile': true,
+  'repo:resolveFileWith': true,
   'repo:getRebaseCommits': true,
   'repo:interactiveRebase': true,
   'repo:getUndoState': true,

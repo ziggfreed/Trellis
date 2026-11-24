@@ -27,10 +27,19 @@ async function setup() {
   }
   return { r: repo, base }
 }
-const messages = async (r: TempRepo) => (await r.git('log', '--format=%B%x00')).split('\0').map((m) => m.trim()).filter(Boolean)
+const messages = async (r: TempRepo) =>
+  (await r.git('log', '--format=%B%x00'))
+    .split('\0')
+    .map((m) => m.trim())
+    .filter(Boolean)
 const files = async (r: TempRepo) => (await r.git('ls-files')).trim().split('\n')
 
-async function plan(r: TempRepo, base: string, actions: Record<string, Partial<RebasePlanItem>>, order?: string[]) {
+async function plan(
+  r: TempRepo,
+  base: string,
+  actions: Record<string, Partial<RebasePlanItem>>,
+  order?: string[],
+) {
   const { commits } = await getRebaseCommits(r.path, base)
   const bySubject = new Map(commits.map((c) => [c.subject, c]))
   const subjects = order ?? commits.map((c) => c.subject)
@@ -103,7 +112,11 @@ describe('interactiveRebase', () => {
 })
 
 describe('validateRebasePlan', () => {
-  const item = (action: RebasePlanItem['action'], message?: string): RebasePlanItem => ({ sha: 'a', action, message })
+  const item = (action: RebasePlanItem['action'], message?: string): RebasePlanItem => ({
+    sha: 'a',
+    action,
+    message,
+  })
   it('rejects plans git would refuse', () => {
     expect(validateRebasePlan([item('drop'), item('drop')])).toMatch(/kept/)
     expect(validateRebasePlan([item('squash'), item('pick')])).toMatch(/first commit/)

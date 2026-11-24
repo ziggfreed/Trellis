@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { assertDiffTarget, assertPage, assertScope, assertSha, assertStringArray } from './validate'
+import {
+  assertFileInRepo,
+  assertDiffTarget,
+  assertPage,
+  assertScope,
+  assertSha,
+  assertStringArray,
+} from './validate'
 
 describe('IPC argument validation', () => {
   it('accepts valid diff targets', () => {
@@ -33,5 +40,12 @@ describe('IPC argument validation', () => {
   it('checks string arrays', () => {
     expect(() => assertStringArray(['a', 'b'], 'x')).not.toThrow()
     expect(() => assertStringArray(['a', 1], 'x')).toThrow()
+  })
+
+  it('keeps file paths inside the repository', () => {
+    expect(() => assertFileInRepo('/repo', 'src/a.ts')).not.toThrow()
+    expect(() => assertFileInRepo('/repo', '../outside.txt')).toThrow()
+    expect(() => assertFileInRepo('/repo', '/etc/passwd')).toThrow()
+    expect(() => assertFileInRepo('/repo', '.')).toThrow()
   })
 })
