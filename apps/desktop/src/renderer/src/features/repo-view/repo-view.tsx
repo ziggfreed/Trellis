@@ -28,6 +28,8 @@ import { CommitBox } from '@/features/changes/commit-box'
 import { PatchView } from '@/features/changes/patch-view'
 import { DiffPanel } from '@/features/diff/diff-panel'
 import { useRepoView } from './repo-view-store'
+import { RepoToolbar } from '@/features/repo-toolbar/repo-toolbar'
+import { OperationBanner } from '@/features/repo-toolbar/operation-banner'
 
 export function RepoView({ repo }: { repo: RepoTab }) {
   const [view, setView] = useRepoView(repo.path)
@@ -61,17 +63,21 @@ export function RepoView({ repo }: { repo: RepoTab }) {
                 </span>
               )}
             </ViewTab>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto text-muted-foreground"
-              title={repo.path}
-              onClick={() => void api.invoke('repo:showInFolder', repo.path)}
-            >
-              <FolderOpen />
-              Show in folder
-            </Button>
+            <div className="ml-auto flex items-center gap-1">
+              <RepoToolbar repoPath={repo.path} />
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground"
+                title={`Show in folder: ${repo.path}`}
+                aria-label="Show in folder"
+                onClick={() => void api.invoke('repo:showInFolder', repo.path)}
+              >
+                <FolderOpen />
+              </Button>
+            </div>
           </div>
+          <OperationBanner repoPath={repo.path} />
 
           <div className="min-h-0 flex-1">
             {view.view === 'history' ? (

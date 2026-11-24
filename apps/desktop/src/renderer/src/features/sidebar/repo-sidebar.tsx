@@ -3,7 +3,8 @@
  * stashes. Clicking an item selects its commit in the history.
  *
  * Each section can be collapsed; the open/closed state is kept per section
- * name for the session.
+ * name for the session. Right-click any item for actions (check out, merge,
+ * delete...); double-click a branch to check it out.
  */
 import { useState } from 'react'
 import { Archive, ChevronRight, Cloud, GitBranch, Tag, type LucideIcon } from 'lucide-react'
@@ -11,6 +12,8 @@ import type { Ref } from '@shared/ipc'
 import { cn } from '@/lib/utils'
 import { useRefs, useRemotes, useStashes } from '@/features/repos/use-repo-data'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
+import { BranchMenu, RemoteBranchMenu, StashMenu, TagMenu } from '@/features/repo-actions/menus'
+import { checkoutBranch } from '@/features/repo-actions/actions'
 import { groupRemoteBranches, localBranches, remoteBranchShortName, sortedTags } from './group-refs'
 
 export function RepoSidebar({ repoPath }: { repoPath: string }) {
@@ -34,15 +37,17 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
     <nav className="h-full overflow-y-auto py-2 text-sm" aria-label="Repository">
       <Section title="Branches" icon={GitBranch} count={branches.length}>
         {branches.map((branch) => (
-          <Item
-            key={branch.fullName}
-            label={branch.name}
-            selected={view.selectedSha === branch.sha}
-            onClick={() => select(branch.sha)}
-            strong={branch.isHead}
-            title={branch.upstream ? `Tracking ${branch.upstream}` : 'No upstream branch'}
-            trailing={<AheadBehind branch={branch} />}
-          />
+          <BranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
+            <Item
+              label={branch.name}
+              selected={view.selectedSha === branch.sha}
+              onClick={() => select(branch.sha)}
+              onDoubleClick={() => !branch.isHead && void checkoutBranch(repoPath, branch.name)}
+              strong={branch.isHead}
+              title={`${branch.upstream ? `Tracking ${branch.upstream}` : 'No upstream branch'}. Double-click to check out; right-click for more.`}
+              trailing={<AheadBehind branch={branch} />}
+            />
+          </BranchMenu>
         ))}
       </Section>
 
@@ -50,13 +55,14 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
         {remoteGroups.map((group) => (
           <Section key={group.remote} title={group.remote} nested count={group.branches.length}>
             {group.branches.map((branch) => (
-              <Item
-                key={branch.fullName}
-                label={remoteBranchShortName(branch)}
-                selected={view.selectedSha === branch.sha}
-                onClick={() => select(branch.sha)}
-                indent
-              />
+              <RemoteBranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
+                <Item
+                  label={remoteBranchShortName(branch)}
+                  selected={view.selectedSha === branch.sha}
+                  onClick={() => select(branch.sha)}
+                  indent
+                />
+              </RemoteBranchMenu>
             ))}
           </Section>
         ))}
@@ -64,24 +70,26 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
 
       <Section title="Tags" icon={Tag} count={tags.length} defaultOpen={false}>
         {tags.map((tag) => (
-          <Item
-            key={tag.fullName}
-            label={tag.name}
-            selected={view.selectedSha === tag.sha}
-            onClick={() => select(tag.sha)}
-          />
+          <TagMenu key={tag.fullName} repo={repoPath} tag={tag}>
+            <Item
+              label={tag.name}
+              selected={view.selectedSha === tag.sha}
+              onClick={() => select(tag.sha)}
+            />
+          </TagMenu>
         ))}
       </Section>
 
       <Section title="Stashes" icon={Archive} count={stashes.length} defaultOpen={false}>
         {stashes.map((stash) => (
-          <Item
-            key={stash.sha}
-            label={stash.message}
-            title={`${stash.name}: ${stash.message}`}
-            selected={view.selectedSha === stash.sha}
-            onClick={() => select(stash.sha, false)}
-          />
+          <StashMenu key={stash.sha} repo={repoPath} stash={stash}>
+            <Item
+              label={stash.message}
+              title={`${stash.name}: ${stash.message}. Right-click to apply or delete.`}
+              selected={view.selectedSha === stash.sha}
+              onClick={() => select(stash.sha, false)}
+            />
+          </StashMenu>
         ))}
       </Section>
     </nav>
@@ -131,31 +139,36 @@ function Section(props: {
   )
 }
 
-function Item(props: {
+interface ItemProps extends React.ComponentProps<'button'> {
   label: string
-  title?: string
   selected: boolean
   strong?: boolean
   indent?: boolean
   trailing?: React.ReactNode
-  onClick: () => void
-}) {
+}
+
+/**
+ * One row in the sidebar. Extra props (event handlers, ref) are passed to the
+ * button, which lets context menus wrap it.
+ */
+function Item({ label, selected, strong, indent, trailing, title, className, ...rest }: ItemProps) {
   return (
     <button
       type="button"
-      title={props.title ?? props.label}
-      onClick={props.onClick}
+      title={title ?? label}
+      {...rest}
       className={cn(
-        'flex w-full items-center gap-2 py-1 pr-2 text-left hover:bg-sidebar-accent',
-        props.indent ? 'pl-12' : 'pl-8',
-        props.selected && 'bg-sidebar-accent',
+        'flex w-full items-center gap-2 py-1 pr-2 text-left hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent',
+        indent ? 'pl-12' : 'pl-8',
+        selected && 'bg-sidebar-accent',
+        className,
       )}
     >
-      {props.strong && (
+      {strong && (
         <span className="size-1.5 shrink-0 rounded-full bg-brand" aria-label="Current branch" />
       )}
-      <span className={cn('truncate', props.strong && 'font-semibold')}>{props.label}</span>
-      {props.trailing}
+      <span className={cn('truncate', strong && 'font-semibold')}>{label}</span>
+      {trailing}
     </button>
   )
 }

@@ -22,6 +22,10 @@ import { RepoView } from '@/features/repo-view/repo-view'
 import { GitMissingScreen } from '@/features/git-check/git-missing-screen'
 import { CloneDialog } from '@/features/create-repo/clone-dialog'
 import { Dialogs } from '@/features/dialogs/dialogs'
+import { AuthPrompt } from '@/features/auth/auth-prompt'
+import { CommandPalette } from '@/features/command-palette/command-palette'
+import { CommandLogPanel } from '@/features/command-log/command-log-panel'
+import { useCommandLogStore } from '@/features/command-log/command-log-store'
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
 
 export function App() {
@@ -61,6 +65,8 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
   const { activeRepo } = useRepos()
   useKeyboardShortcuts()
   useRepoSync()
+  const connectCommandLog = useCommandLogStore((s) => s.connect)
+  useEffect(() => connectCommandLog(), [connectCommandLog])
 
   return (
     <div className="flex h-full flex-col">
@@ -69,9 +75,12 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
         {/* `key` gives each repo a fresh view, so state never leaks between tabs. */}
         {activeRepo ? <RepoView key={activeRepo.path} repo={activeRepo} /> : <HomeScreen />}
       </div>
+      <CommandLogPanel />
       <StatusBar gitVersion={gitVersion} repoPath={activeRepo?.path ?? null} />
       <CloneDialog />
       <Dialogs />
+      <AuthPrompt />
+      <CommandPalette />
     </div>
   )
 }

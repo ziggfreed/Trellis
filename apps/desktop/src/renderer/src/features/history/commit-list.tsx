@@ -7,6 +7,7 @@
  * The graph layout is extended page by page (IncrementalLayout).
  *
  * Keyboard: ↑/↓ move the selection when the list has focus.
+ * Right-click a commit for actions (branch, tag, cherry-pick, revert, reset...).
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
@@ -17,6 +18,7 @@ import { useLog, useRefs, useStatus } from '@/features/repos/use-repo-data'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { refsBySha } from '@/features/sidebar/group-refs'
 import { RefBadge } from './ref-badge'
+import { CommitMenu } from '@/features/repo-actions/menus'
 import { GraphCell, LANE_WIDTH } from './graph-cell'
 import { IncrementalLayout } from './incremental-layout'
 import type { GraphRow } from '@trellis/graph-layout'
@@ -137,67 +139,68 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
           const selected = item.index === selectedIndex
           const dimmed = matches !== null && !matches.has(commit.sha)
           return (
-            <div
-              key={commit.sha}
-              role="option"
-              aria-selected={selected}
-              data-testid="commit-row"
-              data-match={matches?.has(commit.sha) || undefined}
-              onClick={() => select(commit)}
-              style={{ height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
-              className={cn(
-                'absolute inset-x-0 top-0 flex cursor-default items-center gap-3 pr-3 pl-2 text-sm',
-                selected ? 'bg-accent' : 'hover:bg-accent/50',
-              )}
-            >
-              {row && (
-                <div
-                  className="shrink-0 overflow-hidden transition-[width] duration-150"
-                  style={{ width: graphLanes * LANE_WIDTH }}
-                >
-                  <GraphCell
-                    row={row}
-                    lanes={graph.width}
-                    height={ROW_HEIGHT}
-                    isMerge={commit.parents.length > 1}
-                    isHead={commit.sha === headSha}
-                  />
-                </div>
-              )}
+            <CommitMenu key={commit.sha} repo={repoPath} commit={commit}>
               <div
-                className={cn('flex min-w-0 flex-1 items-center gap-1.5', dimmed && 'opacity-40')}
+                role="option"
+                aria-selected={selected}
+                data-testid="commit-row"
+                data-match={matches?.has(commit.sha) || undefined}
+                onClick={() => select(commit)}
+                style={{ height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
+                className={cn(
+                  'absolute inset-x-0 top-0 flex cursor-default items-center gap-3 pr-3 pl-2 text-sm',
+                  selected ? 'bg-accent' : 'hover:bg-accent/50 data-[state=open]:bg-accent/50',
+                )}
               >
-                {refMap.get(commit.sha)?.map((ref) => (
-                  <RefBadge key={ref.fullName} gitRef={ref} />
-                ))}
-                <span className="truncate">{commit.subject}</span>
+                {row && (
+                  <div
+                    className="shrink-0 overflow-hidden transition-[width] duration-150"
+                    style={{ width: graphLanes * LANE_WIDTH }}
+                  >
+                    <GraphCell
+                      row={row}
+                      lanes={graph.width}
+                      height={ROW_HEIGHT}
+                      isMerge={commit.parents.length > 1}
+                      isHead={commit.sha === headSha}
+                    />
+                  </div>
+                )}
+                <div
+                  className={cn('flex min-w-0 flex-1 items-center gap-1.5', dimmed && 'opacity-40')}
+                >
+                  {refMap.get(commit.sha)?.map((ref) => (
+                    <RefBadge key={ref.fullName} gitRef={ref} />
+                  ))}
+                  <span className="truncate">{commit.subject}</span>
+                </div>
+                <span
+                  className={cn(
+                    'w-36 shrink-0 truncate text-xs text-muted-foreground',
+                    dimmed && 'opacity-40',
+                  )}
+                >
+                  {commit.authorName}
+                </span>
+                <span
+                  className={cn(
+                    'w-28 shrink-0 truncate text-xs text-muted-foreground',
+                    dimmed && 'opacity-40',
+                  )}
+                  title={formatDateTime(commit.authorDate)}
+                >
+                  {formatRelativeDate(commit.authorDate)}
+                </span>
+                <span
+                  className={cn(
+                    'w-16 shrink-0 font-mono text-xs text-muted-foreground',
+                    dimmed && 'opacity-40',
+                  )}
+                >
+                  {shortSha(commit.sha)}
+                </span>
               </div>
-              <span
-                className={cn(
-                  'w-36 shrink-0 truncate text-xs text-muted-foreground',
-                  dimmed && 'opacity-40',
-                )}
-              >
-                {commit.authorName}
-              </span>
-              <span
-                className={cn(
-                  'w-28 shrink-0 truncate text-xs text-muted-foreground',
-                  dimmed && 'opacity-40',
-                )}
-                title={formatDateTime(commit.authorDate)}
-              >
-                {formatRelativeDate(commit.authorDate)}
-              </span>
-              <span
-                className={cn(
-                  'w-16 shrink-0 font-mono text-xs text-muted-foreground',
-                  dimmed && 'opacity-40',
-                )}
-              >
-                {shortSha(commit.sha)}
-              </span>
-            </div>
+            </CommitMenu>
           )
         })}
       </div>
