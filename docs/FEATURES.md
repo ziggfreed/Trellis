@@ -8,18 +8,18 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 1. Repository management
 
-| Pri | Feature                                                                                      | Status                                    |
-| --- | -------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| P0  | Open a local repo, clone from URL (with progress)                                            | ✅                                        |
-| P0  | Init a new repo                                                                              | ✅                                        |
-| P0  | **Repos as tabs** (reorder, close, restore open tabs on launch)                              | ✅                                        |
-| P0  | Recent repos list and "Repository Manager" home screen                                       | 🟨 recent list done, dashboard is Phase 4 |
-| P1  | **Workspaces**: named groups of repos (e.g. "Work", "Side projects") with one-click open-all | ⬜                                        |
-| P1  | Scan a folder to discover and import all repos inside it                                     | ⬜                                        |
-| P1  | Dashboard: status of all tracked repos (dirty, ahead/behind, current branch) with bulk fetch | ⬜                                        |
-| P1  | Background auto-fetch (configurable interval)                                                | ⬜                                        |
-| P2  | Tags/labels and favourites for repos                                                         | ⬜                                        |
-| P2  | Split view: two repos side by side                                                           | ⬜                                        |
+| Pri | Feature                                                                                      | Status |
+| --- | -------------------------------------------------------------------------------------------- | ------ |
+| P0  | Open a local repo, clone from URL (with progress)                                            | ✅     |
+| P0  | Init a new repo                                                                              | ✅     |
+| P0  | **Repos as tabs** (reorder, close, restore open tabs on launch)                              | ✅     |
+| P0  | Recent repos list and "Repository Manager" home screen                                       | ✅     |
+| P1  | **Workspaces**: named groups of repos (e.g. "Work", "Side projects") with one-click open-all | ✅     |
+| P1  | Scan a folder to discover and import all repos inside it                                     | ⬜     |
+| P1  | Dashboard: status of all tracked repos (dirty, ahead/behind, current branch) with bulk fetch | ✅     |
+| P1  | Background auto-fetch (configurable interval)                                                | ✅     |
+| P2  | Tags/labels and favourites for repos                                                         | ⬜     |
+| P2  | Split view: two repos side by side                                                           | ⬜     |
 
 ## 2. Commit graph & history
 
@@ -31,7 +31,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | P1  | Filter graph: by branch, author, path, date range; "current branch only"    | 🟨 all / local / current branch done         |
 | P1  | Search: message, SHA, author, **pickaxe (`-S`/`-G`) content search**        | 🟨 message, author, hash done; pickaxe to do |
 | P1  | Collapse/expand merged branches, hide remote branches                       | ⬜                                           |
-| P1  | Compare any two commits/branches                                            | ⬜                                           |
+| P1  | Compare any two commits/branches                                            | ✅                                           |
 | P2  | Minimap / timeline scrubber for long histories                              | ⬜                                           |
 | P2  | Keep the checked-out branch in the leftmost graph lane                      | ⬜                                           |
 | P2  | Highlight a branch's commits when hovering its badge                        | ⬜                                           |
@@ -71,7 +71,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | P0  | Fetch / pull (merge or rebase) / push, with progress and ahead/behind counts                    | ✅                                        |
 | P0  | Merge branch (with conflict detection)                                                          | ✅                                        |
 | P0  | Auth: use system git credential helpers + SSH agent; prompt for credentials when needed         | ✅ helpers + askpass prompts (HTTPS, SSH) |
-| P1  | **Drag and drop** in the graph: drag branch onto branch to merge/rebase, drag to remote to push | ⬜ Phase 4                                |
+| P1  | **Drag and drop** in the graph: drag branch onto branch to merge/rebase, drag to remote to push | ✅                                        |
 | P1  | Cherry-pick, revert, reset (soft/mixed/hard) from context menu                                  | ✅                                        |
 | P1  | Stash: save (with message, include untracked), apply/pop/drop, view diff                        | ✅                                        |
 | P1  | Tags: create (annotated/lightweight), push, delete                                              | ✅                                        |
@@ -84,11 +84,11 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 | Pri | Feature                                                                           | Status |
 | --- | --------------------------------------------------------------------------------- | ------ |
-| P1  | **Interactive rebase editor**: drag to reorder, squash, fixup, reword, drop, edit | ⬜     |
-| P1  | **Conflict resolution UI**: ours/theirs/both per hunk, 3-way merge editor         | ⬜     |
-| P1  | Blame view with "blame prior revision" navigation                                 | ⬜     |
-| P1  | File history (follows renames)                                                    | ⬜     |
-| P1  | **Worktrees**: list, create, open as tab, remove                                  | ⬜     |
+| P1  | **Interactive rebase editor**: drag to reorder, squash, fixup, reword, drop, edit | ✅     |
+| P1  | **Conflict resolution UI**: ours/theirs/both per hunk, 3-way merge editor         | ✅     |
+| P1  | Blame view with "blame prior revision" navigation                                 | ✅     |
+| P1  | File history (follows renames)                                                    | ✅     |
+| P1  | **Worktrees**: list, create, open as tab, remove                                  | ✅     |
 | P2  | Submodules: view status, init/update, open submodule as tab                       | ⬜     |
 | P2  | Git LFS: status, lock/unlock                                                      | ⬜     |
 | P2  | Bisect assistant (mark good/bad visually)                                         | ⬜     |
@@ -97,19 +97,19 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 7. UX & productivity
 
-| Pri | Feature                                                                                | Status                          |
-| --- | -------------------------------------------------------------------------------------- | ------------------------------- |
-| P0  | **Command palette** (Ctrl/Cmd+K / Ctrl+Shift+P) for every action                       | ✅                              |
-| P0  | Dark/light/system themes (shadcn tokens)                                               | ✅                              |
-| P1  | **Undo / redo** for git operations (backed by reflog and operation log snapshots)      | ⬜                              |
-| P1  | **"Show git command"**: every action logs the exact command it ran, in a console panel | ✅                              |
-| P1  | Built-in terminal panel (xterm.js) opened at the repo root                             | ⬜                              |
-| P1  | Customisable keyboard shortcuts, keyboard-first navigation (j/k in graph)              | ⬜                              |
-| P1  | Toast notifications and an activity/operations panel with cancel                       | 🟨 toasts + status bar progress |
-| P1  | "Open in…" editor / file manager / terminal integrations                               | ⬜                              |
-| P2  | Custom themes (and themes as plugins)                                                  | ⬜                              |
-| P2  | Onboarding and in-app "git explained" tooltips for beginners                           | ⬜                              |
-| P2  | i18n                                                                                   | ⬜                              |
+| Pri | Feature                                                                                | Status                                                     |
+| --- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| P0  | **Command palette** (Ctrl/Cmd+K / Ctrl+Shift+P) for every action                       | ✅                                                         |
+| P0  | Dark/light/system themes (shadcn tokens)                                               | ✅                                                         |
+| P1  | **Undo / redo** for git operations (backed by reflog and operation log snapshots)      | ✅                                                         |
+| P1  | **"Show git command"**: every action logs the exact command it ran, in a console panel | ✅                                                         |
+| P1  | Built-in terminal panel (xterm.js) opened at the repo root                             | 🟨 open external terminal done; embedded terminal deferred |
+| P1  | Customisable keyboard shortcuts, keyboard-first navigation (j/k in graph)              | ✅                                                         |
+| P1  | Toast notifications and an activity/operations panel with cancel                       | 🟨 toasts + status bar progress                            |
+| P1  | "Open in…" editor / file manager / terminal integrations                               | ✅                                                         |
+| P2  | Custom themes (and themes as plugins)                                                  | ⬜                                                         |
+| P2  | Onboarding and in-app "git explained" tooltips for beginners                           | ⬜                                                         |
+| P2  | i18n                                                                                   | ⬜                                                         |
 
 ## 8. Plugin system
 
