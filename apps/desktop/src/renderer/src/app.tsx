@@ -21,6 +21,7 @@ import { HomeScreen } from '@/features/home/home-screen'
 import { RepoView } from '@/features/repo-view/repo-view'
 import { GitMissingScreen } from '@/features/git-check/git-missing-screen'
 import { CloneDialog } from '@/features/create-repo/clone-dialog'
+import { Dialogs } from '@/features/dialogs/dialogs'
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
 
 export function App() {
@@ -70,6 +71,7 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
       </div>
       <StatusBar gitVersion={gitVersion} repoPath={activeRepo?.path ?? null} />
       <CloneDialog />
+      <Dialogs />
     </div>
   )
 }

@@ -127,6 +127,8 @@ export interface IpcContract {
   'repo:resolve': { args: [path: string]; result: OpenRepoResult }
   /** Open the repo folder in the system file manager. */
   'repo:showInFolder': { args: [path: string]; result: void }
+  /** Open a file from the repository in its default app (e.g. to resolve conflicts). */
+  'repo:openFile': { args: [path: string, file: string]; result: void }
   /**
    * Tell main which repositories to watch for changes (the open tabs).
    * Main sends `repo:changed` events for them.
@@ -284,6 +286,7 @@ const channelMap: Record<IpcChannel, true> = {
   'dialog:pickFolder': true,
   'repo:resolve': true,
   'repo:showInFolder': true,
+  'repo:openFile': true,
   'repo:setWatched': true,
   'repo:getStatus': true,
   'repo:getLog': true,

@@ -7,7 +7,7 @@
  *
  * Arguments come from the renderer, so validate them first (see ./validate.ts).
  */
-import { basename, join } from 'node:path'
+import { basename, join, relative, resolve } from 'node:path'
 import { existsSync, readdirSync } from 'node:fs'
 import { app, dialog, ipcMain, shell, BrowserWindow } from 'electron'
 import * as git from '@trellis/git'
@@ -102,6 +102,16 @@ export function createHandlers(
     'repo:showInFolder': async (path) => {
       assertString(path, 'path')
       const error = await shell.openPath(path)
+      if (error) throw new Error(error)
+    },
+
+    'repo:openFile': async (path, file) => {
+      assertString(path, 'path')
+      assertString(file, 'file')
+      // Only open files inside the repository.
+      const full = resolve(path, file)
+      if (relative(path, full).startsWith('..')) throw new Error('File is outside the repository')
+      const error = await shell.openPath(full)
       if (error) throw new Error(error)
     },
 

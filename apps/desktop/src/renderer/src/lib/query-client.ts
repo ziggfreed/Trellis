@@ -30,4 +30,7 @@ export const repoKeys = {
   stashes: (path: string) => ['repo', path, 'stashes'] as const,
   commit: (path: string, sha: string) => ['repo', path, 'commit', sha] as const,
   fileDiff: (path: string, target: unknown) => ['repo', path, 'diff', target] as const,
+  // Under 'diff' so it refreshes whenever working-tree files change.
+  filePatch: (path: string, file: string, area: string) =>
+    ['repo', path, 'diff', 'patch', area, file] as const,
 }
