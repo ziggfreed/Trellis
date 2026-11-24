@@ -79,3 +79,11 @@ export function useCommitSearch(path: string, query: string, scope: LogScope) {
     placeholderData: keepPreviousData,
   })
 }
+
+/** What can be undone or redone right now (labels shown on the Undo/Redo buttons). */
+export function useUndoState(path: string) {
+  return useQuery({
+    queryKey: [...repoKeys.all(path), 'undo'],
+    queryFn: () => api.invoke('repo:getUndoState', path),
+  })
+}

@@ -3,7 +3,10 @@
  * branches, stashes, tags, fetch/pull/push...).
  *
  * Every write runs through `runExclusive`, so two writes to the same
- * repository never overlap (see services/repo-queue.ts). Long remote
+ * repository never overlap (see services/repo-queue.ts). Most are also
+ * recorded in the operation log so they can be undone (`recorded`, see
+ * packages/git/src/oplog.ts). Not recorded: stashes (they keep their own
+ * history), and fetch/push (they change remotes, which undo can't reach). Long remote
  * operations report progress as 'operation:progress' events and can be
  * cancelled with 'operation:cancel'.
  *
@@ -29,6 +32,21 @@ import {
 type Handlers = {
   [C in IpcChannel]?: (...args: IpcArgs<C>) => Promise<IpcResult<C>> | IpcResult<C>
 }
+
+/**
+ * Run a write operation through the queue AND record it for undo.
+ * `worktree`: whether the operation can change files (then they are snapshotted too).
+ */
+function recorded<T>(
+  path: string,
+  label: string,
+  worktree: boolean,
+  task: () => Promise<T>,
+): Promise<T> {
+  return runExclusive(path, () => git.recordOperation(path, label, { worktree }, task))
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 /** Send progress for a long operation to the UI. */
 type ProgressSender = (operationId: string, phase: string, percent: number) => void
@@ -58,20 +76,24 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
     'repo:stage': (path, files) => {
       assertString(path, 'path')
       assertStringArray(files, 'files')
-      return runExclusive(path, () => git.stageFiles(path, files))
+      return recorded(path, `Stage ${plural(files.length, 'file')}`, false, () =>
+        git.stageFiles(path, files),
+      )
     },
 
     'repo:unstage': (path, files) => {
       assertString(path, 'path')
       assertStringArray(files, 'files')
-      return runExclusive(path, () => git.unstageFiles(path, files))
+      return recorded(path, `Unstage ${plural(files.length, 'file')}`, false, () =>
+        git.unstageFiles(path, files),
+      )
     },
 
     'repo:discard': (path, files) => {
       assertString(path, 'path')
       if (!Array.isArray(files)) throw new TypeError('files must be an array')
       for (const file of files) assertString(file?.path, 'file.path')
-      return runExclusive(path, () =>
+      return recorded(path, `Discard changes to ${plural(files.length, 'file')}`, true, () =>
         git.discardFiles(
           path,
           files.map((f) => ({ path: f.path, untracked: f.untracked === true })),
@@ -90,13 +112,20 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       assertString(path, 'path')
       assertString(patch, 'patch')
       assertOneOf(action, ['stage', 'unstage', 'discard'] as const, 'action')
-      return runExclusive(path, () => git.applyPatch(path, patch, action))
+      const labels = { stage: 'Stage lines', unstage: 'Unstage lines', discard: 'Discard lines' }
+      return recorded(path, labels[action], action === 'discard', () =>
+        git.applyPatch(path, patch, action),
+      )
     },
 
     'repo:commit': (path, message, options) => {
       assertString(path, 'path')
       if (typeof message !== 'string') throw new TypeError('message must be a string')
-      return runExclusive(path, () => git.commit(path, message, { amend: options?.amend === true }))
+      const amend = options?.amend === true
+      const summary = message.trim().split('\n')[0] ?? ''
+      return recorded(path, `${amend ? 'Amend' : 'Commit'} “${summary}”`, false, () =>
+        git.commit(path, message, { amend }),
+      )
     },
 
     'repo:getHeadMessage': (path) => {
@@ -109,7 +138,7 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       assertString(path, 'path')
       assertRefArg(name, 'name')
       if (options?.startPoint !== undefined) assertRefArg(options.startPoint, 'startPoint')
-      return runExclusive(path, () =>
+      return recorded(path, `Create branch ${name}`, options?.checkout === true, () =>
         git.createBranch(path, name, {
           checkout: options?.checkout === true,
           ...(options?.startPoint ? { startPoint: options.startPoint } : {}),
@@ -120,7 +149,11 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
     'repo:checkout': (path, target) => {
       assertString(path, 'path')
       assertCheckoutTarget(target)
-      return runExclusive(path, () => {
+      const label =
+        target.kind === 'commit'
+          ? `Check out ${target.sha.slice(0, 7)}`
+          : `Check out ${target.kind === 'branch' ? target.name : target.localName}`
+      return recorded(path, label, true, () => {
         if (target.kind === 'branch') return git.checkoutBranch(path, target.name)
         if (target.kind === 'remote-branch')
           return git.checkoutRemoteBranch(path, target.name, target.localName)
@@ -132,19 +165,23 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       assertString(path, 'path')
       assertRefArg(from, 'from')
       assertRefArg(to, 'to')
-      return runExclusive(path, () => git.renameBranch(path, from, to))
+      return recorded(path, `Rename ${from} to ${to}`, false, () =>
+        git.renameBranch(path, from, to),
+      )
     },
 
     'repo:deleteBranch': (path, name, force) => {
       assertString(path, 'path')
       assertRefArg(name, 'name')
-      return runExclusive(path, () => git.deleteBranch(path, name, force === true))
+      return recorded(path, `Delete branch ${name}`, false, () =>
+        git.deleteBranch(path, name, force === true),
+      )
     },
 
     'repo:merge': (path, ref, options) => {
       assertString(path, 'path')
       assertRefArg(ref, 'ref')
-      return runExclusive(path, () =>
+      return recorded(path, `Merge ${ref}`, true, () =>
         git.merge(path, ref, { noFastForward: options?.noFastForward === true }),
       )
     },
@@ -152,26 +189,28 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
     'repo:rebase': (path, onto) => {
       assertString(path, 'path')
       assertRefArg(onto, 'onto')
-      return runExclusive(path, () => git.rebase(path, onto))
+      return recorded(path, `Rebase onto ${onto}`, true, () => git.rebase(path, onto))
     },
 
     'repo:cherryPick': (path, sha) => {
       assertString(path, 'path')
       assertSha(sha, 'sha')
-      return runExclusive(path, () => git.cherryPick(path, sha))
+      return recorded(path, `Cherry-pick ${sha.slice(0, 7)}`, true, () => git.cherryPick(path, sha))
     },
 
     'repo:revert': (path, sha) => {
       assertString(path, 'path')
       assertSha(sha, 'sha')
-      return runExclusive(path, () => git.revert(path, sha))
+      return recorded(path, `Revert ${sha.slice(0, 7)}`, true, () => git.revert(path, sha))
     },
 
     'repo:reset': (path, sha, mode) => {
       assertString(path, 'path')
       assertSha(sha, 'sha')
       assertOneOf(mode, ['soft', 'mixed', 'hard'] as const, 'mode')
-      return runExclusive(path, () => git.reset(path, sha, mode))
+      return recorded(path, `Reset (${mode}) to ${sha.slice(0, 7)}`, mode === 'hard', () =>
+        git.reset(path, sha, mode),
+      )
     },
 
     'repo:operation': (path, action) => {
@@ -221,13 +260,13 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       assertRefArg(name, 'name')
       assertSha(sha, 'sha')
       const text = typeof message === 'string' && message.trim() ? message : undefined
-      return runExclusive(path, () => git.createTag(path, name, sha, text))
+      return recorded(path, `Create tag ${name}`, false, () => git.createTag(path, name, sha, text))
     },
 
     'repo:deleteTag': (path, name) => {
       assertString(path, 'path')
       assertRefArg(name, 'name')
-      return runExclusive(path, () => git.deleteTag(path, name))
+      return recorded(path, `Delete tag ${name}`, false, () => git.deleteTag(path, name))
     },
 
     // --- Remotes --------------------------------------------------------------
@@ -238,7 +277,10 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
 
     'repo:pull': (operationId, path, options) =>
       remoteOperation(operationId, path, sendProgress, (o) =>
-        git.pull(path, { ...o, rebase: options?.rebase === true }),
+        // Recorded so a pull can be undone (the queue lock is already held here).
+        git.recordOperation(path, 'Pull', { worktree: true }, () =>
+          git.pull(path, { ...o, rebase: options?.rebase === true }),
+        ),
       ),
 
     'repo:push': (operationId, path, request) => {
@@ -269,6 +311,22 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       return remoteOperation(operationId, path, sendProgress, (o) =>
         git.pushTag(path, remote, tag, o),
       )
+    },
+
+    // --- Undo / redo ------------------------------------------------------------
+    'repo:getUndoState': (path) => {
+      assertString(path, 'path')
+      return git.getUndoState(path)
+    },
+
+    'repo:undo': (path) => {
+      assertString(path, 'path')
+      return runExclusive(path, () => git.undo(path))
+    },
+
+    'repo:redo': (path) => {
+      assertString(path, 'path')
+      return runExclusive(path, () => git.redo(path))
     },
 
     // --- Command log and credentials -------------------------------------------

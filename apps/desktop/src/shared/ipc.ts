@@ -26,6 +26,7 @@ import type {
   Ref,
   Remote,
   MergeResult,
+  UndoState,
   RepoStatus,
   Stash,
 } from '@trellis/git/types'
@@ -236,6 +237,12 @@ export interface IpcContract {
     result: void
   }
 
+  // --- Undo / redo ------------------------------------------------------------
+  'repo:getUndoState': { args: [path: string]; result: UndoState }
+  /** Undo the last operation made in Trellis. Returns its label, or null if none. */
+  'repo:undo': { args: [path: string]; result: string | null }
+  'repo:redo': { args: [path: string]; result: string | null }
+
   // --- Git command log and credentials --------------------------------------
   'git:getCommandLog': { args: []; result: GitCommandEntry[] }
   /** Answer an `auth:prompt` event; null means the user cancelled. */
@@ -326,6 +333,9 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:push': true,
   'repo:deleteRemoteBranch': true,
   'repo:pushTag': true,
+  'repo:getUndoState': true,
+  'repo:undo': true,
+  'repo:redo': true,
   'git:getCommandLog': true,
   'auth:respond': true,
 }

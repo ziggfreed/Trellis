@@ -411,6 +411,24 @@ export async function pushTag(repo: string, name: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Undo / redo
+// ---------------------------------------------------------------------------
+
+/** Undo the last operation made in Trellis, offering Redo in the toast. */
+export async function undo(repo: string) {
+  const label = await runAction(repo, () => api.invoke('repo:undo', repo))
+  if (label === null) toast.info('Nothing to undo.')
+  else if (label)
+    toast.success(`Undone: ${label}`, { action: { label: 'Redo', onClick: () => void redo(repo) } })
+}
+
+export async function redo(repo: string) {
+  const label = await runAction(repo, () => api.invoke('repo:redo', repo))
+  if (label === null) toast.info('Nothing to redo.')
+  else if (label) toast.success(`Redone: ${label}`)
+}
+
+// ---------------------------------------------------------------------------
 // Navigation helpers
 // ---------------------------------------------------------------------------
 

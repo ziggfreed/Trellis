@@ -10,7 +10,9 @@ import {
   ChevronDown,
   GitBranchPlus,
   Loader2,
+  Redo2,
   RefreshCw,
+  Undo2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,16 +22,39 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useStatus } from '@/features/repos/use-repo-data'
+import { useStatus, useUndoState } from '@/features/repos/use-repo-data'
+import { modKey } from '@/hooks/use-keyboard-shortcuts'
 import { useOperationsStore } from '@/features/repo-actions/operations-store'
 import * as actions from '@/features/repo-actions/actions'
 
 export function RepoToolbar({ repoPath }: { repoPath: string }) {
   const branch = useStatus(repoPath).data?.branch
   const busy = useOperationsStore((s) => s.running.some((op) => op.repoPath === repoPath))
+  const undoState = useUndoState(repoPath).data
 
   return (
     <div className="flex items-center gap-0.5" role="toolbar" aria-label="Repository actions">
+      <IconButton
+        label="Undo"
+        tooltip={
+          undoState?.undo ? `Undo: ${undoState.undo.label} (${modKey}+Z)` : 'Nothing to undo'
+        }
+        disabled={!undoState?.undo || busy}
+        onClick={() => void actions.undo(repoPath)}
+      >
+        <Undo2 />
+      </IconButton>
+      <IconButton
+        label="Redo"
+        tooltip={
+          undoState?.redo ? `Redo: ${undoState.redo.label} (${modKey}+Shift+Z)` : 'Nothing to redo'
+        }
+        disabled={!undoState?.redo || busy}
+        onClick={() => void actions.redo(repoPath)}
+      >
+        <Redo2 />
+      </IconButton>
+      <div className="mx-1 h-5 w-px bg-border" />
       <ToolbarButton
         label="Fetch"
         tooltip="Download new commits from all remotes"
@@ -106,6 +131,34 @@ function ToolbarButton(props: {
           {props.children}
           {props.label}
         </Button>
+      </TooltipTrigger>
+      <TooltipContent>{props.tooltip}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+function IconButton(props: {
+  label: string
+  tooltip: string
+  disabled?: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {/* A span keeps the tooltip working while the button is disabled. */}
+        <span tabIndex={props.disabled ? 0 : -1}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={props.label}
+            disabled={props.disabled}
+            onClick={props.onClick}
+          >
+            {props.children}
+          </Button>
+        </span>
       </TooltipTrigger>
       <TooltipContent>{props.tooltip}</TooltipContent>
     </Tooltip>

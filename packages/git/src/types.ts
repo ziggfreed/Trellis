@@ -206,3 +206,29 @@ export interface FileDiffContents {
 
 /** Result of an operation that can stop because of merge conflicts. */
 export type MergeResult = { status: 'done' } | { status: 'conflicts' }
+
+// ---------------------------------------------------------------------------
+// Undo / redo
+// ---------------------------------------------------------------------------
+
+/** What HEAD pointed at in a snapshot. `ref` is a full name like "refs/heads/main". */
+export type SnapshotHead =
+  { kind: 'branch'; ref: string; unborn: boolean } | { kind: 'detached'; sha: string }
+
+/** Repository state saved for undo/redo. See snapshot.ts. */
+export interface Snapshot {
+  time: number
+  head: SnapshotHead
+  /** Local branches and tags: full ref name -> commit hash. */
+  refs: Record<string, string>
+  /** The index saved as a tree, or null if it couldn't be (unresolved conflicts). */
+  indexTree: string | null
+  /** The working tree saved as a tree, or null if not recorded. */
+  worktreeTree: string | null
+}
+
+/** The undo/redo actions currently available. */
+export interface UndoState {
+  undo: { label: string; time: number } | null
+  redo: { label: string; time: number } | null
+}
