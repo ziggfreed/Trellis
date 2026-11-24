@@ -4,8 +4,8 @@ Thanks for helping! This guide explains how to set up the project, how the code 
 
 ## Setup
 
-1. Install [Node.js](https://nodejs.org) 22+, [git](https://git-scm.com) 2.34+, and enable pnpm with `corepack enable`.
-2. `pnpm install`
+1. Install [Node.js](https://nodejs.org) 22+, [git](https://git-scm.com) 2.34+, and install pnpm with `npm install -g pnpm` (or `corepack enable`, which needs an administrator terminal on Windows).
+2. `pnpm install` (this also downloads the Electron binary)
 3. `pnpm dev` to run the app.
 
 Recommended editor: VS Code with the extensions suggested in `.vscode/extensions.json` (ESLint, Prettier, Tailwind CSS). Format-on-save is already configured.

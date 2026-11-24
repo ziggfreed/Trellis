@@ -19,7 +19,7 @@ Planned: commit graph, staging and committing, branches, merge, rebase, stash, c
 ## Requirements
 
 - [git](https://git-scm.com/downloads) 2.34 or newer on your `PATH`
-- To build from source: [Node.js](https://nodejs.org) 22+ and [pnpm](https://pnpm.io) 10+ (`corepack enable` installs pnpm)
+- To build from source: [Node.js](https://nodejs.org) 22+ and [pnpm](https://pnpm.io) 10+ (`npm install -g pnpm`, or `corepack enable` from an administrator terminal on Windows)
 
 ## Getting started (development)
 
