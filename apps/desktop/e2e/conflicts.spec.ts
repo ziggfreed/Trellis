@@ -37,7 +37,7 @@ test('resolves conflicts in the editor and finishes the merge', async () => {
   await banner.getByRole('button', { name: 'Show conflicts' }).click()
 
   // Line-by-line conflict in README.md: keep both versions.
-  const conflicts = window.getByRole('region', { name: 'Conflicts' })
+  const conflicts = window.getByRole('region', { name: 'Conflicts', exact: true })
   await conflicts.getByRole('button', { name: /README\.md/ }).click()
   const editor = window.getByTestId('conflict-editor')
   await expect(editor).toContainText('0 of 1 conflict resolved')
