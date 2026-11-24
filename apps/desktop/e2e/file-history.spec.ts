@@ -47,8 +47,9 @@ test('shows blame and file history from a file’s menu', async () => {
 })
 
 test('releasing a right-click over a menu item doesn’t pick it', async () => {
-  // On macOS the menu opens on mouse-down, so it can appear under the
-  // pointer; releasing the button there must not run the item.
+  // On macOS (and Linux) the menu opens on mouse-down, so it can appear
+  // under the pointer; releasing the button there must not run the item.
+  test.skip(process.platform === 'win32', 'Windows opens context menus on mouse-up')
   const repo = repoWithHistory()
   const { app, window } = await launch()
   await openRepo(app, window, repo.path)
