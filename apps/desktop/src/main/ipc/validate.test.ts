@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assertDiffTarget, assertPage, assertSha, assertStringArray } from './validate'
+import { assertDiffTarget, assertPage, assertScope, assertSha, assertStringArray } from './validate'
 
 describe('IPC argument validation', () => {
   it('accepts valid diff targets', () => {
@@ -23,6 +23,8 @@ describe('IPC argument validation', () => {
 
   it('checks pages', () => {
     expect(() => assertPage({ skip: 0, limit: 500 })).not.toThrow()
+    expect(() => assertScope('local')).not.toThrow()
+    expect(() => assertScope('everything')).toThrow()
     expect(() => assertPage({ skip: -1, limit: 500 })).toThrow()
     expect(() => assertPage({ skip: 0, limit: 1e9 })).toThrow()
     expect(() => assertPage({ skip: 0.5, limit: 5 })).toThrow()

@@ -3,7 +3,7 @@
  * them as untrusted input and check their shape before using them.
  * Each function throws a TypeError with a clear message if the check fails.
  */
-import type { DiffTarget } from '@shared/ipc'
+import type { DiffTarget, LogScope } from '@shared/ipc'
 
 export function assertString(value: unknown, name: string): asserts value is string {
   if (typeof value !== 'string' || value.length === 0) {
@@ -41,5 +41,11 @@ export function assertDiffTarget(value: unknown): asserts value is DiffTarget {
   if (target.kind === 'commit') assertSha(target.sha, 'target.sha')
   else if (target.kind !== 'staged' && target.kind !== 'unstaged') {
     throw new TypeError('target.kind must be commit, staged or unstaged')
+  }
+}
+
+export function assertScope(value: unknown): asserts value is LogScope {
+  if (value !== 'all' && value !== 'local' && value !== 'head') {
+    throw new TypeError('scope must be all, local or head')
   }
 }

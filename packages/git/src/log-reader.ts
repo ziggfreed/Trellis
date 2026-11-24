@@ -20,8 +20,8 @@
  */
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
 import { spawnGit } from './run-git'
-import { logArgs, logRevisions, parseCommits, type LogScope } from './log'
-import type { Commit } from './types'
+import { logArgs, logRevisions, parseCommits } from './log'
+import type { Commit, LogScope } from './types'
 
 /** How many commits to read beyond the furthest page requested. */
 const READ_AHEAD = 2000

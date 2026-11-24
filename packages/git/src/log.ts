@@ -7,7 +7,7 @@
  * them is always safe, unlike newlines or spaces.
  */
 import { runGit } from './run-git'
-import type { Commit } from './types'
+import type { Commit, LogScope } from './types'
 
 const FIELD = '\x1f'
 
@@ -52,14 +52,6 @@ export function parseCommits(output: string): Commit[] {
   }
   return commits
 }
-
-/**
- * Which commits to include in the history:
- * - 'all':   every local branch, remote branch and tag, plus HEAD (default)
- * - 'local': local branches and tags plus HEAD, without remote branches
- * - 'head':  only commits reachable from HEAD (the current branch)
- */
-export type LogScope = 'all' | 'local' | 'head'
 
 const SCOPE_REVISIONS: Record<LogScope, string[]> = {
   all: ['--branches', '--remotes', '--tags', 'HEAD'],

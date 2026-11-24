@@ -10,14 +10,15 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "typecheck": "tsc -p tsconfig.node.json && tsc -p tsconfig.web.json",
+    "typecheck": "tsc -p tsconfig.node.json && tsc -p tsconfig.web.json && tsc -p tsconfig.e2e.json",
     "test": "vitest run",
     "test:e2e": "electron-vite build && playwright test",
     "package": "electron-vite build && electron-builder"
   },
   "dependencies": {
     "@parcel/watcher": "^2.6.0",
-    "@trellis/git": "workspace:*"
+    "@trellis/git": "workspace:*",
+    "@trellis/graph-layout": "workspace:*"
   },
   "devDependencies": {
     "@codemirror/language": "^6.13.1",
@@ -56,11 +57,11 @@
   "author": "Trellis contributors",
   "homepage": "https://github.com/ziggfreed/trellis",
   "optionalDependencies": {
-    "@parcel/watcher-win32-x64": "2.6.0",
-    "@parcel/watcher-win32-arm64": "2.6.0",
-    "@parcel/watcher-darwin-x64": "2.6.0",
     "@parcel/watcher-darwin-arm64": "2.6.0",
+    "@parcel/watcher-darwin-x64": "2.6.0",
+    "@parcel/watcher-linux-arm64-glibc": "2.6.0",
     "@parcel/watcher-linux-x64-glibc": "2.6.0",
-    "@parcel/watcher-linux-arm64-glibc": "2.6.0"
+    "@parcel/watcher-win32-arm64": "2.6.0",
+    "@parcel/watcher-win32-x64": "2.6.0"
   }
 }

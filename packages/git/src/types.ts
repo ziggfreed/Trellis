@@ -77,6 +77,14 @@ export interface RepoStatus {
 // History (git log)
 // ---------------------------------------------------------------------------
 
+/**
+ * Which commits to include in the history:
+ * - 'all':   every local branch, remote branch and tag, plus HEAD
+ * - 'local': local branches and tags plus HEAD, without remote branches
+ * - 'head':  only commits reachable from HEAD (the current branch)
+ */
+export type LogScope = 'all' | 'local' | 'head'
+
 export interface Commit {
   /** Full 40-character commit hash. */
   sha: string

@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils'
 import { api } from '@/lib/api'
 import { useStatus } from '@/features/repos/use-repo-data'
 import { RepoSidebar } from '@/features/sidebar/repo-sidebar'
-import { CommitList } from '@/features/history/commit-list'
+import { HistoryPanel } from '@/features/history/history-panel'
 import { CommitDetails } from '@/features/history/commit-details'
 import { ChangesList } from '@/features/changes/changes-list'
 import { DiffPanel } from '@/features/diff/diff-panel'
@@ -75,7 +75,7 @@ export function RepoView({ repo }: { repo: RepoTab }) {
             {view.view === 'history' ? (
               <ResizablePanelGroup orientation="vertical" id="history-layout">
                 <ResizablePanel defaultSize="55%" minSize="20%">
-                  <CommitList repoPath={repo.path} />
+                  <HistoryPanel repoPath={repo.path} />
                 </ResizablePanel>
                 <ResizableHandle />
                 <ResizablePanel minSize="20%">

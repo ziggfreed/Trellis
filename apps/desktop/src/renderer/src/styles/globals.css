@@ -52,6 +52,19 @@
   --diff-delete: oklch(0.7 0.18 25 / 15%);
   --diff-delete-strong: oklch(0.65 0.2 25 / 32%);
 
+  /*
+   * Commit graph lane colours. Lanes cycle through these 8 colours; they are
+   * spaced around the colour wheel so neighbouring lanes are easy to tell apart.
+   */
+  --graph-0: oklch(0.6 0.15 150);
+  --graph-1: oklch(0.58 0.16 250);
+  --graph-2: oklch(0.62 0.17 40);
+  --graph-3: oklch(0.56 0.18 310);
+  --graph-4: oklch(0.65 0.14 195);
+  --graph-5: oklch(0.6 0.2 15);
+  --graph-6: oklch(0.7 0.15 90);
+  --graph-7: oklch(0.55 0.13 280);
+
   /* Syntax highlighting. */
   --syntax-keyword: oklch(0.5 0.2 300);
   --syntax-string: oklch(0.5 0.13 150);
@@ -99,6 +112,15 @@
   --diff-insert-strong: oklch(0.65 0.17 150 / 35%);
   --diff-delete: oklch(0.6 0.18 25 / 16%);
   --diff-delete-strong: oklch(0.62 0.2 25 / 35%);
+
+  --graph-0: oklch(0.72 0.16 150);
+  --graph-1: oklch(0.7 0.14 250);
+  --graph-2: oklch(0.75 0.15 50);
+  --graph-3: oklch(0.7 0.16 310);
+  --graph-4: oklch(0.78 0.12 195);
+  --graph-5: oklch(0.7 0.18 15);
+  --graph-6: oklch(0.82 0.14 95);
+  --graph-7: oklch(0.68 0.12 280);
 
   --syntax-keyword: oklch(0.75 0.15 300);
   --syntax-string: oklch(0.78 0.13 150);

@@ -24,7 +24,13 @@ export function CommitDetails({ repoPath }: { repoPath: string }) {
     )
   }
   if (error) return <p className="p-4 text-sm text-destructive">{error.message}</p>
-  if (!data) return null
+  if (!data) {
+    return (
+      <p className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground">
+        Loading…
+      </p>
+    )
+  }
 
   const { commit, files } = data
   const selectedPath =
@@ -89,7 +95,9 @@ export function CommitDetails({ repoPath }: { repoPath: string }) {
                     key={parent}
                     type="button"
                     className="text-brand hover:underline"
-                    onClick={() => setView({ selectedSha: parent, selectedFile: null })}
+                    onClick={() =>
+                      setView({ selectedSha: parent, seekSelected: true, selectedFile: null })
+                    }
                   >
                     {shortSha(parent)}
                   </button>

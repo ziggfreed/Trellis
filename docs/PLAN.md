@@ -1,6 +1,6 @@
 # Trellis: Project Plan
 
-> Status: **Phase 1 complete** (2026-11-24). Next up: Phase 2 (commit graph).
+> Status: **Phase 2 complete** (2026-11-24). Next up: Phase 3 (everyday write operations, the first usable release).
 
 ## 1. Goals
 
@@ -195,10 +195,29 @@ Each phase ends with something usable.
 - Clone dialog with progress and cancel; New repository; Open/Clone/New menu and shortcuts
 - 9 end-to-end tests, including live refresh, clone and init
 
-## 10. Phase 2 plan (next)
+## 10. Phase 2 delivered
 
-1. `packages/graph-layout`: lane assignment for the commit graph, as a pure, heavily tested package
-2. Run layout incrementally as pages load, in a Web Worker
-3. Draw the graph column (SVG or canvas per visible row), colour per lane, merge curves
-4. Benchmark: smooth scrolling at 100k commits (and replace `--skip` paging, which slows down deep in history)
-5. Filters: current branch only, hide remote branches; search by message, author and hash
+- `packages/graph-layout`: incremental lane layout. Validated by replaying the drawn lines over random histories; 100k commits lay out in ~200 ms
+- **Decision:** layout runs on the UI thread, not in a Web Worker as first planned. Pages of 500 commits take ~1 ms each, so a worker would add complexity for no visible benefit. Revisit if profiling ever shows otherwise
+- `LogReader`: one streaming `git log` per repository instead of `--skip` paging, so deep history stays fast
+- Graph column in the history: coloured lanes, merge curves, hollow dots for merges, a ring on HEAD. The column sizes itself to the rows on screen
+- Branch filter (all / local / current branch) and search over messages, authors and hashes, with next/previous navigation that loads older history when needed
+- `scripts/create-benchmark-repo.mjs` builds large realistic histories; `e2e/performance.spec.ts` measures them
+
+Benchmark (Linux, virtual display, 100,000 commits, 6,228 merges):
+
+| Measure                         | Result                                   |
+| ------------------------------- | ---------------------------------------- |
+| First commits on screen         | ~260 ms                                  |
+| Frame time while scrolling      | 17 ms median and p95 (60 fps)            |
+| Scroll to the very first commit | ~11 s (200 pages, mostly test wait time) |
+
+## 11. Phase 3 plan (next): everyday write operations → v0.1
+
+1. Stage / unstage / discard: whole files, then hunks and lines from the diff
+2. Commit and amend, with a commit message box
+3. Branches: create, checkout, rename, delete; merge
+4. Fetch, pull and push with progress, plus credential prompts (helpers, SSH agent)
+5. Stash save / apply / pop / drop; tags; cherry-pick, revert, reset
+6. Command palette and a git command log panel ("show the command it ran")
+7. Package and publish v0.1 builds

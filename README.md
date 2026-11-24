@@ -2,14 +2,15 @@
 
 A fast, good-looking, open-source git client with **multiple repositories in tabs**, a **visual commit graph** and a **plugin system**. Built with Electron, React, TypeScript, Tailwind CSS and shadcn/ui. Runs on Windows, macOS and Linux.
 
-> **Status: early development.** Phases 0–1 are done: you can browse repositories, but not yet change them (staging, committing and branching arrive in Phase 3). See the [roadmap](docs/PLAN.md#5-phased-roadmap).
+> **Status: early development.** Phases 0–2 are done: you can browse repositories, but not yet change them (staging, committing and branching arrive in Phase 3). See the [roadmap](docs/PLAN.md#5-phased-roadmap).
 
 ## Features
 
 Working now:
 
 - Open, clone (with progress) or create repositories, each in its own tab (drag to reorder, restored on restart)
-- History of all branches with branch and tag badges, loaded as you scroll
+- History with a coloured commit graph, branch and tag badges; smooth with 100,000+ commits
+- Filter history to all, local or current branch; search by message, author or hash (`Ctrl/Cmd+F`)
 - Commit details: message, author, parents and changed files with line counts
 - Diff viewer: unified or side by side, syntax highlighting for ~150 languages
 - Changes view: staged, unstaged, untracked and conflicted files
@@ -18,7 +19,7 @@ Working now:
 - Light, dark and system themes
 - Keyboard shortcuts: `Ctrl/Cmd+O` open, `Ctrl/Cmd+Shift+O` clone, `Ctrl/Cmd+N` new, `Ctrl/Cmd+W` close tab, `Ctrl+Tab` next tab, `Ctrl/Cmd+1-9` jump to tab, `↑/↓` move through commits
 
-Planned: commit graph lanes, staging and committing, branch operations, merge, rebase, stash, conflict resolution, undo, worktrees, plugins, optional AI (bring your own key, or turn it off). See [docs/FEATURES.md](docs/FEATURES.md).
+Planned: staging and committing, branch operations, merge, rebase, stash, conflict resolution, undo, worktrees, plugins, optional AI (bring your own key, or turn it off). See [docs/FEATURES.md](docs/FEATURES.md).
 
 ## Requirements
 

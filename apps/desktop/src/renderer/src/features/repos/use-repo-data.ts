@@ -4,7 +4,7 @@
  * repository and refreshed automatically when files change.
  */
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import type { DiffTarget } from '@shared/ipc'
+import type { DiffTarget, LogScope } from '@shared/ipc'
 import { api } from '@/lib/api'
 import { repoKeys } from '@/lib/query-client'
 
@@ -40,12 +40,12 @@ export function useStashes(path: string) {
 }
 
 /** Commit history, loaded one page at a time as the user scrolls. */
-export function useLog(path: string) {
+export function useLog(path: string, scope: LogScope) {
   return useInfiniteQuery({
-    queryKey: repoKeys.log(path),
+    queryKey: [...repoKeys.log(path), scope],
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
-      api.invoke('repo:getLog', path, { skip: pageParam, limit: LOG_PAGE_SIZE }),
+      api.invoke('repo:getLog', path, { skip: pageParam, limit: LOG_PAGE_SIZE, scope }),
     getNextPageParam: (lastPage, pages) =>
       lastPage.hasMore ? pages.length * LOG_PAGE_SIZE : undefined,
   })
@@ -66,5 +66,16 @@ export function useFileDiff(path: string, target: DiffTarget | null) {
     queryKey: repoKeys.fileDiff(path, target),
     queryFn: () => api.invoke('repo:getFileDiff', path, target!),
     enabled: target !== null,
+  })
+}
+
+/** Hashes of commits matching a search, newest first (empty when `query` is blank). */
+export function useCommitSearch(path: string, query: string, scope: LogScope) {
+  const text = query.trim()
+  return useQuery({
+    queryKey: [...repoKeys.all(path), 'search', scope, text],
+    queryFn: () => api.invoke('repo:searchCommits', path, text, scope),
+    enabled: text !== '',
+    placeholderData: keepPreviousData,
   })
 }
