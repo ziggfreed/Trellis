@@ -16,7 +16,14 @@ interface SettingsState {
   update: (patch: Partial<Settings>) => void
 }
 
-const INITIAL: Settings = { theme: 'system', openTabs: [], activeTab: null, recentRepos: [] }
+const INITIAL: Settings = {
+  theme: 'system',
+  openTabs: [],
+  activeTab: null,
+  recentRepos: [],
+  diffLayout: 'unified',
+  lastCloneFolder: null,
+}
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   settings: INITIAL,

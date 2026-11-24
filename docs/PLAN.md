@@ -1,6 +1,6 @@
 # Trellis: Project Plan
 
-> Status: **Phase 0 complete** (2026-11-24). Next up: Phase 1.
+> Status: **Phase 1 complete** (2026-11-24). Next up: Phase 2 (commit graph).
 
 ## 1. Goals
 
@@ -182,12 +182,23 @@ Each phase ends with something usable.
 - CI on Windows, macOS and Linux, plus installer builds (NSIS, DMG, AppImage, deb)
 - Contributor docs: README, CONTRIBUTING, ARCHITECTURE, PR and issue templates
 
-## 9. Phase 1 plan (next)
+## 9. Phase 1 delivered
 
-1. `packages/git`: parsers for `status` (porcelain v2 `-z`), `log` (custom format, NUL separated), branches/tags/remotes (`for-each-ref`), stashes, and `diff`/`show`
-2. File watcher in main (`@parcel/watcher` on the working tree and `.git`), with a debounced "repo changed" event pushed to the UI
-3. Sidebar: real branches, remotes, tags, stashes
-4. Commit list (virtualised) + commit details panel
-5. Diff viewer (CodeMirror 6, unified and side-by-side)
-6. Clone and init repository dialogs
-7. TanStack Query for caching repo data per tab
+- `packages/git`: status (porcelain v2), paged log, branches/tags/remotes, stashes, commit details with line counts, file contents for diffs (commit, staged, unstaged; binary and size limits), clone with progress, init. 65 tests against real repos
+- Main → UI events (`repo:changed`, `operation:progress`) alongside the request/response IPC
+- File watcher (`@parcel/watcher`) with debouncing and a tested change classifier: edits refresh the Changes view, git operations refresh everything
+- TanStack Query for per-repo caching, invalidated by watcher events
+- Repository view: resizable sidebar / commit list / details / diff layout, History and Changes views, selection kept per tab
+- Sidebar: branches with ahead/behind, remotes grouped by remote, tags (natural version sort), stashes
+- Virtualised, infinitely-scrolling commit list with branch/tag badges and keyboard navigation
+- CodeMirror 6 diff viewer: unified and side-by-side, syntax highlighting for ~150 languages (loaded on demand), collapsed unchanged regions, theme driven by CSS variables
+- Clone dialog with progress and cancel; New repository; Open/Clone/New menu and shortcuts
+- 9 end-to-end tests, including live refresh, clone and init
+
+## 10. Phase 2 plan (next)
+
+1. `packages/graph-layout`: lane assignment for the commit graph, as a pure, heavily tested package
+2. Run layout incrementally as pages load, in a Web Worker
+3. Draw the graph column (SVG or canvas per visible row), colour per lane, merge curves
+4. Benchmark: smooth scrolling at 100k commits (and replace `--skip` paging, which slows down deep in history)
+5. Filters: current branch only, hide remote branches; search by message, author and hash

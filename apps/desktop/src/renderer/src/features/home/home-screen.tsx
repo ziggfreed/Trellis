@@ -1,15 +1,16 @@
 /** Shown when no repository tab is selected: open a repo or pick a recent one. */
-import { FolderGit2, FolderOpen, X } from 'lucide-react'
+import { Download, FolderGit2, FolderOpen, FolderPlus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { TrellisLogo } from '@/components/trellis-logo'
-import { openRepoAtPath, pickAndOpenRepo, useRepos } from '@/features/repos/use-repos'
+import { openRepoAtPath, useRepos } from '@/features/repos/use-repos'
+import { repoActions } from '@/features/repos/repo-actions'
 
 export function HomeScreen() {
   const { recentRepos, removeRecent } = useRepos()
 
-  const handleOpen = async (promise: Promise<Awaited<ReturnType<typeof pickAndOpenRepo>>>) => {
-    const result = await promise
+  const openRecent = async (path: string) => {
+    const result = await openRepoAtPath(path)
     if (result.ok === false) toast.error(result.message)
   }
 
@@ -22,10 +23,20 @@ export function HomeScreen() {
           <p className="text-sm text-muted-foreground">
             Open a git repository to get started. Each repository opens in its own tab.
           </p>
-          <Button onClick={() => void handleOpen(pickAndOpenRepo())} className="mt-2">
-            <FolderOpen />
-            Open repository
-          </Button>
+          <div className="mt-2 flex flex-wrap justify-center gap-2">
+            <Button onClick={repoActions.open}>
+              <FolderOpen />
+              Open repository
+            </Button>
+            <Button variant="outline" onClick={repoActions.clone}>
+              <Download />
+              Clone
+            </Button>
+            <Button variant="outline" onClick={repoActions.create}>
+              <FolderPlus />
+              New
+            </Button>
+          </div>
         </div>
 
         {recentRepos.length > 0 && (
@@ -38,7 +49,7 @@ export function HomeScreen() {
                 <li key={repo.path} className="group flex items-center">
                   <button
                     type="button"
-                    onClick={() => void handleOpen(openRepoAtPath(repo.path))}
+                    onClick={() => void openRecent(repo.path)}
                     className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left hover:bg-accent"
                   >
                     <FolderGit2 className="size-4 shrink-0 text-muted-foreground" />

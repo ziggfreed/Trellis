@@ -5,31 +5,58 @@
  * channel, with the right argument and result types. If you add a channel to
  * the contract, TypeScript will point you here.
  *
- * Arguments come from the renderer, so treat them as untrusted input and
- * validate them (see `assertString`).
+ * Arguments come from the renderer, so validate them first (see ./validate.ts).
  */
-import { basename } from 'node:path'
-import { existsSync } from 'node:fs'
+import { basename, join } from 'node:path'
+import { existsSync, readdirSync } from 'node:fs'
 import { app, dialog, ipcMain, shell, BrowserWindow } from 'electron'
-import { checkGitInstallation, getHead, getRepoRoot } from '@trellis/git'
-import { IPC_CHANNELS, type IpcArgs, type IpcChannel, type IpcResult } from '@shared/ipc'
+import * as git from '@trellis/git'
+import {
+  IPC_CHANNELS,
+  type CreateRepoResult,
+  type IpcArgs,
+  type IpcChannel,
+  type IpcEvent,
+  type IpcEvents,
+  type IpcResult,
+} from '@shared/ipc'
 import type { SettingsStore } from '../services/settings-store'
+import { RepoWatcher } from '../services/repo-watcher'
+import { cancelOperation, endOperation, startOperation } from '../services/operations'
+import {
+  assertDiffTarget,
+  assertPage,
+  assertSha,
+  assertString,
+  assertStringArray,
+} from './validate'
 
 type IpcHandlers = {
   [C in IpcChannel]: (...args: IpcArgs<C>) => Promise<IpcResult<C>> | IpcResult<C>
 }
 
-function assertString(value: unknown, name: string): asserts value is string {
-  if (typeof value !== 'string' || value.length === 0) {
-    throw new TypeError(`${name} must be a non-empty string`)
-  }
+/** Send an event to every open window. */
+export function sendToAllWindows<E extends IpcEvent>(event: E, payload: IpcEvents[E]): void {
+  for (const window of BrowserWindow.getAllWindows()) window.webContents.send(event, payload)
 }
 
-export function createHandlers(settings: SettingsStore): IpcHandlers {
+/** Turn a successfully created repo folder into a tab, or explain what went wrong. */
+async function toCreateResult(dir: string): Promise<CreateRepoResult> {
+  const root = await git.getRepoRoot(dir)
+  return root
+    ? { ok: true, repo: { path: root, name: basename(root) } }
+    : { ok: false, message: `${dir} is not a git repository.` }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+export function createHandlers(settings: SettingsStore, watcher: RepoWatcher): IpcHandlers {
   return {
     'app:getInfo': () => ({ version: app.getVersion(), platform: process.platform }),
 
-    'git:checkInstallation': () => checkGitInstallation(),
+    'git:checkInstallation': () => git.checkGitInstallation(),
 
     'settings:get': () => settings.get(),
     'settings:update': (patch) => {
@@ -38,26 +65,24 @@ export function createHandlers(settings: SettingsStore): IpcHandlers {
       return settings.update(patch)
     },
 
-    'repo:pickFolder': async () => {
+    'dialog:pickFolder': async (options) => {
       const window = BrowserWindow.getFocusedWindow()
-      const options = { title: 'Open repository', properties: ['openDirectory' as const] }
+      const dialogOptions = {
+        title: options?.title ?? 'Choose folder',
+        properties: ['openDirectory' as const, 'createDirectory' as const],
+      }
       const result = window
-        ? await dialog.showOpenDialog(window, options)
-        : await dialog.showOpenDialog(options)
+        ? await dialog.showOpenDialog(window, dialogOptions)
+        : await dialog.showOpenDialog(dialogOptions)
       return result.canceled ? null : (result.filePaths[0] ?? null)
     },
 
     'repo:resolve': async (path) => {
       assertString(path, 'path')
       if (!existsSync(path)) return { ok: false, reason: 'not-found', path }
-      const root = await getRepoRoot(path)
+      const root = await git.getRepoRoot(path)
       if (!root) return { ok: false, reason: 'not-a-repo', path }
       return { ok: true, repo: { path: root, name: basename(root) } }
-    },
-
-    'repo:getSummary': async (path) => {
-      assertString(path, 'path')
-      return { path, head: await getHead(path) }
     },
 
     'repo:showInFolder': async (path) => {
@@ -65,14 +90,107 @@ export function createHandlers(settings: SettingsStore): IpcHandlers {
       const error = await shell.openPath(path)
       if (error) throw new Error(error)
     },
+
+    'repo:setWatched': (paths) => {
+      assertStringArray(paths, 'paths')
+      watcher.setWatched(paths)
+    },
+
+    'repo:getStatus': (path) => {
+      assertString(path, 'path')
+      return git.getStatus(path)
+    },
+
+    'repo:getLog': async (path, page) => {
+      assertString(path, 'path')
+      assertPage(page)
+      // Ask for one extra commit to find out whether there are more pages.
+      const commits = await git.getLog(path, { skip: page.skip, limit: page.limit + 1 })
+      return { commits: commits.slice(0, page.limit), hasMore: commits.length > page.limit }
+    },
+
+    'repo:getRefs': (path) => {
+      assertString(path, 'path')
+      return git.getRefs(path)
+    },
+
+    'repo:getRemotes': (path) => {
+      assertString(path, 'path')
+      return git.getRemotes(path)
+    },
+
+    'repo:getStashes': (path) => {
+      assertString(path, 'path')
+      return git.getStashes(path)
+    },
+
+    'repo:getCommit': (path, sha) => {
+      assertString(path, 'path')
+      assertSha(sha, 'sha')
+      return git.getCommitDetails(path, sha)
+    },
+
+    'repo:getFileDiff': (path, target) => {
+      assertString(path, 'path')
+      assertDiffTarget(target)
+      return git.getFileDiffContents(path, target)
+    },
+
+    'repo:clone': async (operationId, url, targetDir) => {
+      assertString(operationId, 'operationId')
+      assertString(url, 'url')
+      assertString(targetDir, 'targetDir')
+      if (existsSync(targetDir) && readdirSync(targetDir).length > 0) {
+        return { ok: false, message: `${targetDir} already exists and is not empty.` }
+      }
+      const signal = startOperation(operationId)
+      try {
+        await git.cloneRepository(url, targetDir, {
+          signal,
+          onProgress: (progress) =>
+            sendToAllWindows('operation:progress', { operationId, ...progress }),
+        })
+        return await toCreateResult(targetDir)
+      } catch (error) {
+        if (signal.aborted) return { ok: false, message: 'Clone cancelled.' }
+        return { ok: false, message: errorMessage(error) }
+      } finally {
+        endOperation(operationId)
+      }
+    },
+
+    'repo:init': async (dir) => {
+      assertString(dir, 'dir')
+      if (existsSync(join(dir, '.git'))) {
+        return { ok: false, message: `${dir} is already a git repository.` }
+      }
+      try {
+        await git.initRepository(dir)
+        return await toCreateResult(dir)
+      } catch (error) {
+        return { ok: false, message: errorMessage(error) }
+      }
+    },
+
+    'operation:cancel': (operationId) => {
+      assertString(operationId, 'operationId')
+      cancelOperation(operationId)
+    },
   }
 }
 
-/** Connect every handler to Electron's `ipcMain`. Call once at start-up. */
-export function registerIpcHandlers(settings: SettingsStore): void {
-  const handlers = createHandlers(settings)
+/**
+ * Connect every handler to Electron's `ipcMain`. Call once at start-up.
+ * Returns the repo watcher so the caller can stop it when the app quits.
+ */
+export function registerIpcHandlers(settings: SettingsStore): RepoWatcher {
+  const watcher = new RepoWatcher((path, scope) =>
+    sendToAllWindows('repo:changed', { path, scope }),
+  )
+  const handlers = createHandlers(settings, watcher)
   for (const channel of IPC_CHANNELS) {
     const handler = handlers[channel] as (...args: unknown[]) => unknown
     ipcMain.handle(channel, (_event, ...args: unknown[]) => handler(...args))
   }
+  return watcher
 }

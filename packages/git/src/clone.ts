@@ -58,14 +58,3 @@ export async function initRepository(dir: string): Promise<void> {
   await mkdir(dir, { recursive: true })
   await runGit(['init'], { cwd: dir })
 }
-
-/**
- * Suggest a folder name from a clone URL, like git does:
- *   https://github.com/user/my-repo.git -> "my-repo"
- *   git@github.com:user/my-repo         -> "my-repo"
- */
-export function repoNameFromUrl(url: string): string {
-  const trimmed = url.trim().replace(/[\\/]+$/, '')
-  const last = trimmed.split(/[\\/:]/).pop() ?? ''
-  return last.replace(/\.git$/, '')
-}

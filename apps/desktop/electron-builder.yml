@@ -11,7 +11,18 @@ directories:
 files:
   - out/**
   - package.json
-# Everything the app needs is bundled into out/ by electron-vite.
+# JavaScript is bundled into out/ by electron-vite. Native modules (only
+# @parcel/watcher, the file watcher) stay in node_modules and are packaged
+# from the app's `dependencies`.
+#
+# electron-builder skips *transitive* optional dependencies, which is where
+# @parcel/watcher keeps its per-platform binaries. So package.json lists
+# those platform packages in `optionalDependencies` directly; pnpm installs
+# only the one matching the current OS/CPU. Keep their version in sync with
+# @parcel/watcher when upgrading it.
+#
+# The binaries use Node-API, which is stable across Node/Electron versions,
+# so no rebuild for Electron is needed.
 npmRebuild: false
 win:
   target: [nsis]

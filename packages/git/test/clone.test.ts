@@ -2,14 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { rm } from 'node:fs/promises'
-import {
-  cloneRepository,
-  getHead,
-  getLog,
-  initRepository,
-  parseCloneProgress,
-  repoNameFromUrl,
-} from '../src'
+import { cloneRepository, getHead, getLog, initRepository, parseCloneProgress } from '../src'
 import { createRepoWithRemote, createTempDir, type TempRepo } from './helpers'
 
 const cleanups: (TempRepo | string)[] = []
@@ -35,18 +28,6 @@ describe('parseCloneProgress', () => {
 
   it('ignores other output', () => {
     expect(parseCloneProgress("Cloning into 'repo'...\n")).toBeNull()
-  })
-})
-
-describe('repoNameFromUrl', () => {
-  it.each([
-    ['https://github.com/user/my-repo.git', 'my-repo'],
-    ['https://github.com/user/my-repo', 'my-repo'],
-    ['https://github.com/user/my-repo/', 'my-repo'],
-    ['git@github.com:user/my-repo.git', 'my-repo'],
-    ['C:\\code\\local-repo', 'local-repo'],
-  ])('%s -> %s', (url, name) => {
-    expect(repoNameFromUrl(url)).toBe(name)
   })
 })
 

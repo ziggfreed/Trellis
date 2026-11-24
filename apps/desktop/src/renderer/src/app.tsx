@@ -5,19 +5,22 @@
  * then shows either the main window layout or the "git missing" screen.
  */
 import { useCallback, useEffect, useState } from 'react'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import type { GitInstallation } from '@shared/ipc'
 import { api } from '@/lib/api'
+import { queryClient } from '@/lib/query-client'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { TabBar } from '@/components/layout/tab-bar'
 import { StatusBar } from '@/components/layout/status-bar'
 import { ThemeProvider } from '@/features/theme/theme-provider'
 import { useSettingsStore } from '@/features/settings/settings-store'
 import { useRepos } from '@/features/repos/use-repos'
-import { describeHead, useRepoSummary } from '@/features/repos/use-repo-summary'
+import { useRepoSync } from '@/features/repos/use-repo-sync'
 import { HomeScreen } from '@/features/home/home-screen'
 import { RepoView } from '@/features/repo-view/repo-view'
 import { GitMissingScreen } from '@/features/git-check/git-missing-screen'
+import { CloneDialog } from '@/features/create-repo/clone-dialog'
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
 
 export function App() {
@@ -38,23 +41,25 @@ export function App() {
   if (!loaded || !git) return null
 
   return (
-    <ThemeProvider>
-      <TooltipProvider delayDuration={400}>
-        {git.status === 'ok' ? (
-          <MainLayout gitVersion={git.version.raw} />
-        ) : (
-          <GitMissingScreen installation={git} onRetry={checkGit} />
-        )}
-        <Toaster position="bottom-right" richColors />
-      </TooltipProvider>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <TooltipProvider delayDuration={400}>
+          {git.status === 'ok' ? (
+            <MainLayout gitVersion={git.version.raw} />
+          ) : (
+            <GitMissingScreen installation={git} onRetry={checkGit} />
+          )}
+          <Toaster position="bottom-right" richColors />
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   )
 }
 
 function MainLayout({ gitVersion }: { gitVersion: string }) {
   const { activeRepo } = useRepos()
-  const { summary } = useRepoSummary(activeRepo?.path ?? null)
   useKeyboardShortcuts()
+  useRepoSync()
 
   return (
     <div className="flex h-full flex-col">
@@ -63,7 +68,8 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
         {/* `key` gives each repo a fresh view, so state never leaks between tabs. */}
         {activeRepo ? <RepoView key={activeRepo.path} repo={activeRepo} /> : <HomeScreen />}
       </div>
-      <StatusBar gitVersion={gitVersion} branch={activeRepo ? describeHead(summary) : null} />
+      <StatusBar gitVersion={gitVersion} repoPath={activeRepo?.path ?? null} />
+      <CloneDialog />
     </div>
   )
 }

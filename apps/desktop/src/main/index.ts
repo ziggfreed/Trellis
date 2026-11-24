@@ -67,7 +67,8 @@ if (!app.requestSingleInstanceLock()) {
 
   void app.whenReady().then(() => {
     app.setAppUserModelId('dev.trellis.app') // Windows taskbar grouping
-    registerIpcHandlers(new SettingsStore(app.getPath('userData')))
+    const watcher = registerIpcHandlers(new SettingsStore(app.getPath('userData')))
+    app.on('will-quit', () => watcher.dispose())
     createWindow()
 
     // macOS: re-create a window when the dock icon is clicked.

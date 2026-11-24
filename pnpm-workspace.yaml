@@ -11,6 +11,10 @@ packages:
 onlyBuiltDependencies:
   - esbuild
 
-# Not needed for building; listed so pnpm stops warning about it.
+# Install scripts we deliberately skip (listed so pnpm stops warning):
+# - electron-winstaller: not needed for building.
+# - @parcel/watcher: its script only compiles from source when no prebuilt
+#   binary exists; prebuilt binaries for all our platforms ship as packages.
 ignoredBuiltDependencies:
   - electron-winstaller
+  - '@parcel/watcher'

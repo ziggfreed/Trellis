@@ -2,19 +2,23 @@
 
 A fast, good-looking, open-source git client with **multiple repositories in tabs**, a **visual commit graph** and a **plugin system**. Built with Electron, React, TypeScript, Tailwind CSS and shadcn/ui. Runs on Windows, macOS and Linux.
 
-> **Status: early development.** Phase 0 (app shell, repo tabs, build/test pipeline) is done. See the [roadmap](docs/PLAN.md#5-phased-roadmap).
+> **Status: early development.** Phases 0–1 are done: you can browse repositories, but not yet change them (staging, committing and branching arrive in Phase 3). See the [roadmap](docs/PLAN.md#5-phased-roadmap).
 
 ## Features
 
 Working now:
 
-- Open repositories as tabs (drag to reorder, restored on restart)
-- Recent repositories on the home screen
-- Current branch shown for each repo
+- Open, clone (with progress) or create repositories, each in its own tab (drag to reorder, restored on restart)
+- History of all branches with branch and tag badges, loaded as you scroll
+- Commit details: message, author, parents and changed files with line counts
+- Diff viewer: unified or side by side, syntax highlighting for ~150 languages
+- Changes view: staged, unstaged, untracked and conflicted files
+- Sidebar: branches (with ahead/behind counts), remotes, tags and stashes
+- Updates live when files change on disk or you run git in a terminal
 - Light, dark and system themes
-- Keyboard shortcuts: `Ctrl/Cmd+O` open, `Ctrl/Cmd+W` close tab, `Ctrl+Tab` next tab, `Ctrl/Cmd+1-9` jump to tab
+- Keyboard shortcuts: `Ctrl/Cmd+O` open, `Ctrl/Cmd+Shift+O` clone, `Ctrl/Cmd+N` new, `Ctrl/Cmd+W` close tab, `Ctrl+Tab` next tab, `Ctrl/Cmd+1-9` jump to tab, `↑/↓` move through commits
 
-Planned: commit graph, staging and committing, branches, merge, rebase, stash, conflict resolution, undo, worktrees, plugins, optional AI (bring your own key, or turn it off). See [docs/FEATURES.md](docs/FEATURES.md).
+Planned: commit graph lanes, staging and committing, branch operations, merge, rebase, stash, conflict resolution, undo, worktrees, plugins, optional AI (bring your own key, or turn it off). See [docs/FEATURES.md](docs/FEATURES.md).
 
 ## Requirements
 
