@@ -1,6 +1,6 @@
 # Trellis: Project Plan
 
-> Status: **Phase 2 complete** (2026-11-24). Next up: Phase 3 (everyday write operations, the first usable release).
+> Status: **Phase 3 complete: v0.1.0 ready to release** (2026-11-24). Next up: Phase 4 (power features).
 
 ## 1. Goals
 
@@ -212,12 +212,21 @@ Benchmark (Linux, virtual display, 100,000 commits, 6,228 merges):
 | Frame time while scrolling      | 17 ms median and p95 (60 fps)            |
 | Scroll to the very first commit | ~11 s (200 pages, mostly test wait time) |
 
-## 11. Phase 3 plan (next): everyday write operations → v0.1
+## 11. Phase 3 delivered (v0.1.0)
 
-1. Stage / unstage / discard: whole files, then hunks and lines from the diff
-2. Commit and amend, with a commit message box
-3. Branches: create, checkout, rename, delete; merge
-4. Fetch, pull and push with progress, plus credential prompts (helpers, SSH agent)
-5. Stash save / apply / pop / drop; tags; cherry-pick, revert, reset
-6. Command palette and a git command log panel ("show the command it ran")
-7. Package and publish v0.1 builds
+- `packages/git`: staging (files, hunks, lines via partial patches), commit/amend, branches, merge/rebase/cherry-pick/revert with conflict detection, abort/continue/skip, reset, stashes, tags, fetch/pull/push with progress
+- Credentials: an askpass helper forwards git's and ssh's questions (passwords, tokens, passphrases, host keys) to an in-app dialog; saved credential helpers are used first
+- Main process: per-repository write queue, git command log, argument validation (ref names can't start with "-")
+- UI: Changes view with stage/unstage/discard and a hunk/line view; commit box; toolbar (fetch, pull, push, branch, stash); right-click menus on branches, remote branches, tags, stashes and commits; conflict banner; command palette with a registry ready for plugins; git command log panel
+- Release workflow: pushing a `v*` tag builds installers for all three platforms and creates a draft GitHub Release with notes from CHANGELOG.md
+
+## 12. Phase 4 plan (next): power features
+
+1. Undo/redo for git operations (operation log with snapshots)
+2. Interactive rebase editor (reorder, squash, fixup, reword, drop)
+3. Built-in 3-way conflict resolution
+4. Blame and file history; compare branches/commits
+5. Drag and drop in the graph (drag a branch onto another to merge/rebase)
+6. Worktrees; workspaces and a multi-repo dashboard with auto-fetch
+7. Integrated terminal; customisable keyboard shortcuts
+8. Syntax highlighting in the hunk view

@@ -63,11 +63,37 @@ Planned: `packages/graph-layout` (commit graph lane algorithm), `packages/plugin
 - **Repo data** (status, history, branches, diffs) is loaded with TanStack Query hooks in `features/repos/use-repo-data.ts`. Query keys start with `['repo', path]`, so one repository's data can be refreshed at once.
 - **View state per tab** (History/Changes, selected commit and file) lives in `features/repo-view/repo-view-store.ts`, so switching tabs keeps your place.
 
+### Changing a repository
+
+```
+Menu item / toolbar button / palette command
+  └─ features/repo-actions/actions.ts   asks for input (dialogs), confirms destructive actions
+       └─ runAction() (lib/run-action.ts) shows git's error as a toast, warns about conflicts,
+            │                              refreshes the repository's data afterwards
+            └─ api.invoke('repo:…')
+                 └─ main/ipc/write-handlers.ts  validates arguments
+                      └─ runExclusive()          one write at a time per repository
+                           └─ packages/git       runs git
+```
+
+Long remote operations (fetch, pull, push) are wrapped in `trackOperation`, which gives them an id; main sends `operation:progress` events for that id, shown in the status bar.
+
+Every action is also a command in the **command palette**. Commands come from providers registered with `registerCommands()` (`features/command-palette/registry.ts`); the built-in ones are in `built-in-commands.ts`. Plugins will register their own providers the same way.
+
+### Credentials
+
+When git or ssh needs to ask the user something (a password, token, SSH passphrase or host key confirmation), it runs the program in `GIT_ASKPASS` / `SSH_ASKPASS`. Trellis points those at a small script that forwards the question over a local socket to the main process, which shows a dialog (`auth:prompt` → `auth:respond`). Details and a diagram are at the top of `main/services/askpass.ts`. Credentials saved in a git credential helper are used without asking.
+
+### Hunk and line staging
+
+The UI asks for a file's diff (`repo:getFilePatch`), the user selects lines, `buildPartialPatch` (`packages/git/src/patch.ts`) builds a smaller patch with just those lines, and main applies it with `git apply --cached` (stage), `--cached --reverse` (unstage) or `--reverse` (discard). The comments in `patch.ts` explain how unselected lines are handled in each direction.
+
 ## 5. Security
 
 - The renderer runs with `contextIsolation: true`, `sandbox: true` and `nodeIntegration: false`.
 - The preload exposes only `window.trellis.invoke`, restricted to the channels in `IPC_CHANNELS`.
-- IPC handlers validate their arguments, since they come from the UI.
+- IPC handlers validate their arguments, since they come from the UI. Ref names may not start with `-`, so they can never be read as git options.
+- The askpass socket only answers clients that present a random token generated at start-up.
 - A Content Security Policy in `index.html` only allows the app's own scripts.
 - External links open in the system browser, and in-app navigation is blocked.
 

@@ -74,6 +74,16 @@ These matter because Trellis is open source: code is read far more often than it
 2. Add tests in `packages/git/test/` using `createTempRepo()` to build a real throwaway repo.
 3. Expose it to the UI with an IPC call (above).
 
+### Add an action that changes a repository
+
+1. Add the git operation (above) and an IPC channel; implement the handler in `apps/desktop/src/main/ipc/write-handlers.ts`, wrapped in `runExclusive(path, ...)`.
+2. Add a function to `apps/desktop/src/renderer/src/features/repo-actions/actions.ts` that asks for any input with `textDialog`/`confirmDialog` and calls the channel through `runAction`.
+3. Expose it where it makes sense: a right-click menu (`repo-actions/menus.tsx`), the toolbar, and the command palette (`command-palette/built-in-commands.ts`).
+
+### Add a command to the command palette
+
+Add an entry to `builtInCommands` in `apps/desktop/src/renderer/src/features/command-palette/built-in-commands.ts`: an `id`, a `title`, a `group`, and a `run` function. To show a list to choose from first (like "Check out branch…"), return a picker from `run`.
+
 ## Tests
 
 - **Unit tests** (`pnpm test`): next to the code as `*.test.ts`, or in `packages/git/test/`. Every git function and every piece of pure logic should have tests.
@@ -85,6 +95,12 @@ These matter because Trellis is open source: code is read far more often than it
 2. Before pushing, run `pnpm lint && pnpm typecheck && pnpm test`.
 3. Open a PR and fill in the template. CI runs lint, type checks and tests on Windows, macOS and Linux; all must pass.
 4. Keep PRs focused: one feature or fix each. Update `docs/FEATURES.md` status when you finish a feature.
+
+## Releases
+
+1. Update `version` in `apps/desktop/package.json` and add a section to `CHANGELOG.md`.
+2. Merge to `main`, tag the commit (`git tag v0.2.0`) and push the tag.
+3. The Release workflow builds installers and creates a draft GitHub Release; review it and publish.
 
 ## Commit messages
 
