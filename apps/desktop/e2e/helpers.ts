@@ -18,9 +18,19 @@ export function tempDir(): string {
   return dir
 }
 
-/** Delete every temporary folder created by `tempDir`. Call from `test.afterAll`. */
+/**
+ * Delete every temporary folder created by `tempDir`. Call from `test.afterAll`.
+ * On Windows, Electron can keep files in its data folder locked for a moment
+ * after closing, so retry, and leave anything still locked for the OS to clean up.
+ */
 export function cleanupTempDirs(): void {
-  for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true })
+  for (const dir of tempDirs.splice(0)) {
+    try {
+      rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
+    } catch {
+      // Still locked; it's in the temp folder, so it will be cleaned up eventually.
+    }
+  }
 }
 
 export interface TestRepo {
