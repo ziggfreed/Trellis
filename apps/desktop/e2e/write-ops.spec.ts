@@ -176,7 +176,10 @@ test('runs commands from the palette and lists them in the git log', async () =>
   await window.keyboard.press('ControlOrMeta+k')
   // Wait for the palette's search box, so no typed characters are lost on slow machines.
   await window.getByPlaceholder('Type a command…').fill('stage all')
-  await window.keyboard.press('Enter')
+  // Click the filtered option rather than pressing Enter: on slow machines
+  // Enter can arrive before the list has filtered and select nothing.
+  await window.getByRole('option', { name: /Stage all changes/ }).click()
+  await expect(window.getByPlaceholder('Type a command…')).toBeHidden()
   await showChanges(window)
   await expect(fileRow(window, 'Staged', 'new.txt')).toBeVisible()
 
