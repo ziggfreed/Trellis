@@ -25,11 +25,14 @@ import { RepoWatcher } from '../services/repo-watcher'
 import { cancelOperation, endOperation, startOperation } from '../services/operations'
 import { getLogPage, keepLogReaders } from '../services/log-cache'
 import { CommandLog } from '../services/command-log'
+import { AutoFetcher } from '../services/auto-fetch'
+import { openEditor, openTerminal } from '../services/external-apps'
 import { AskpassServer } from '../services/askpass'
 import { askUser, cancelAllPrompts } from '../services/auth-prompts'
 import { createWriteHandlers } from './write-handlers'
 import {
   assertDiffTarget,
+  assertFileInRepo,
   assertPage,
   assertScope,
   assertSha,
@@ -62,6 +65,7 @@ export function createHandlers(
   settings: SettingsStore,
   watcher: RepoWatcher,
   commandLog: CommandLog,
+  autoFetcher: AutoFetcher,
 ): IpcHandlers {
   return {
     ...createWriteHandlers(commandLog, (operationId, phase, percent) =>
@@ -74,9 +78,12 @@ export function createHandlers(
 
     'settings:get': () => settings.get(),
     'settings:update': (patch) => {
-      if (typeof patch !== 'object' || patch === null)
+      if (typeof patch !== 'object' || patch === null) {
         throw new TypeError('patch must be an object')
-      return settings.update(patch)
+      }
+      const updated = settings.update(patch)
+      if ('autoFetchMinutes' in patch) autoFetcher.configure(updated.autoFetchMinutes)
+      return updated
     },
 
     'dialog:pickFolder': async (options) => {
@@ -113,6 +120,17 @@ export function createHandlers(
       if (relative(path, full).startsWith('..')) throw new Error('File is outside the repository')
       const error = await shell.openPath(full)
       if (error) throw new Error(error)
+    },
+
+    'shell:openTerminal': (path) => {
+      assertString(path, 'path')
+      return openTerminal(path)
+    },
+
+    'shell:openEditor': (path, file) => {
+      assertString(path, 'path')
+      if (file !== undefined) assertFileInRepo(path, file)
+      return openEditor(path, file, settings.get().editorCommand)
     },
 
     'repo:setWatched': (paths) => {
@@ -243,7 +261,13 @@ export async function registerIpcHandlers(settings: SettingsStore): Promise<IpcS
     console.warn('Could not start the credential prompt helper:', error)
   }
 
-  const handlers = createHandlers(settings, watcher, commandLog)
+  const autoFetcher = new AutoFetcher(
+    () => watcher.watchedPaths,
+    (path) => sendToAllWindows('repo:changed', { path, scope: 'all' }),
+  )
+  autoFetcher.configure(settings.get().autoFetchMinutes)
+
+  const handlers = createHandlers(settings, watcher, commandLog, autoFetcher)
   for (const channel of IPC_CHANNELS) {
     const handler = handlers[channel] as (...args: unknown[]) => unknown
     ipcMain.handle(channel, (_event, ...args: unknown[]) => handler(...args))
@@ -253,6 +277,7 @@ export async function registerIpcHandlers(settings: SettingsStore): Promise<IpcS
     watcher,
     dispose: () => {
       watcher.dispose()
+      autoFetcher.dispose()
       commandLog.dispose()
       askpass.close()
       cancelAllPrompts()

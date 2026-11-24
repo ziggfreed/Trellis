@@ -3,7 +3,8 @@
  * them as untrusted input and check their shape before using them.
  * Each function throws a TypeError with a clear message if the check fails.
  */
-import type { CheckoutTarget, DiffTarget, LogScope, PushRequest } from '@shared/ipc'
+import { isAbsolute, relative, resolve } from 'node:path'
+import type { CheckoutTarget, DiffTarget, LogScope, PushRequest, RebasePlanItem } from '@shared/ipc'
 
 export function assertString(value: unknown, name: string): asserts value is string {
   if (typeof value !== 'string' || value.length === 0) {
@@ -34,13 +35,22 @@ export function assertPage(value: unknown): asserts value is { skip: number; lim
 }
 
 export function assertDiffTarget(value: unknown): asserts value is DiffTarget {
-  const target = value as Partial<DiffTarget & { sha: string; oldPath: string }> | null
+  const target = value as Partial<{
+    kind: string
+    sha: string
+    path: string
+    oldPath: string
+  }> | null
   if (!target || typeof target !== 'object') throw new TypeError('target must be an object')
   assertString(target.path, 'target.path')
   if (target.oldPath !== undefined) assertString(target.oldPath, 'target.oldPath')
   if (target.kind === 'commit') assertSha(target.sha, 'target.sha')
-  else if (target.kind !== 'staged' && target.kind !== 'unstaged') {
-    throw new TypeError('target.kind must be commit, staged or unstaged')
+  else if (target.kind === 'range') {
+    const range = target as { from?: unknown; to?: unknown }
+    assertRefArg(range.from, 'target.from')
+    assertRefArg(range.to, 'target.to')
+  } else if (target.kind !== 'staged' && target.kind !== 'unstaged') {
+    throw new TypeError('target.kind must be commit, range, staged or unstaged')
   }
 }
 
@@ -97,4 +107,41 @@ export function assertPushRequest(value: unknown): asserts value is PushRequest 
   assertRefArg(request.remote, 'request.remote')
   assertRefArg(request.branch, 'request.branch')
   if (request.remoteBranch !== undefined) assertRefArg(request.remoteBranch, 'request.remoteBranch')
+}
+
+/** A rebase base: a commit hash, or 'root' to start from the very first commit. */
+export function assertRebaseBase(value: unknown): asserts value is string {
+  if (value !== 'root') assertSha(value, 'base')
+}
+
+const REBASE_ACTIONS = ['pick', 'reword', 'squash', 'fixup', 'drop'] as const
+
+export function assertRebasePlan(value: unknown): asserts value is RebasePlanItem[] {
+  if (!Array.isArray(value) || value.length === 0)
+    throw new TypeError('plan must be a non-empty array')
+  for (const item of value as Partial<RebasePlanItem>[]) {
+    assertSha(item?.sha, 'plan item sha')
+    assertOneOf(item.action, REBASE_ACTIONS, 'plan item action')
+    if (item.message !== undefined && typeof item.message !== 'string') {
+      throw new TypeError('plan item message must be a string')
+    }
+  }
+}
+
+/**
+ * A file path relative to the repository that stays inside it, so the UI
+ * can never read or write files elsewhere on disk (e.g. "../../secret").
+ */
+export function assertFileInRepo(repoPath: string, file: unknown): asserts file is string {
+  assertString(file, 'file')
+  const rel = relative(repoPath, resolve(repoPath, file))
+  if (rel === '' || rel.startsWith('..') || isAbsolute(rel)) {
+    throw new TypeError('file must be inside the repository')
+  }
+}
+
+/** An absolute folder path (e.g. where to create a worktree). */
+export function assertAbsolutePath(value: unknown, name: string): asserts value is string {
+  assertString(value, name)
+  if (!isAbsolute(value)) throw new TypeError(`${name} must be an absolute path`)
 }

@@ -49,6 +49,19 @@ describe('runGit', () => {
     expect(seen).toEqual([['status']])
   })
 
+  it('finishes when git exits even if a background process keeps its output open', async () => {
+    repo = await createTempRepo()
+    // A shell alias that leaves `sleep` running in the background, holding
+    // git's stdout open after git itself has exited (like an fsmonitor
+    // daemon or background maintenance can on Windows).
+    const started = Date.now()
+    const { stdout } = await runGit(['-c', 'alias.bg=!sleep 4 & echo done', 'bg'], {
+      cwd: repo.path,
+    })
+    expect(stdout.trim()).toBe('done')
+    expect(Date.now() - started).toBeLessThan(3000)
+  })
+
   it('can be cancelled with an AbortSignal', async () => {
     repo = await createTempRepo()
     const controller = new AbortController()

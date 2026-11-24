@@ -80,6 +80,10 @@ Long remote operations (fetch, pull, push) are wrapped in `trackOperation`, whic
 
 Every action is also a command in the **command palette**. Commands come from providers registered with `registerCommands()` (`features/command-palette/registry.ts`); the built-in ones are in `built-in-commands.ts`. Plugins will register their own providers the same way.
 
+### Running git: when is a command finished?
+
+`runGit` treats git's `exit` as authoritative, then waits at most 250 ms for remaining output. Waiting for Node's `close` event alone can hang forever: if git leaves a helper process running that inherited its output pipes (e.g. an fsmonitor daemon or background maintenance on Windows), the pipes never close. There is a test for this in `packages/git/test/run-git.test.ts`.
+
 ### Credentials
 
 When git or ssh needs to ask the user something (a password, token, SSH passphrase or host key confirmation), it runs the program in `GIT_ASKPASS` / `SSH_ASKPASS`. Trellis points those at a small script that forwards the question over a local socket to the main process, which shows a dialog (`auth:prompt` → `auth:respond`). Details and a diagram are at the top of `main/services/askpass.ts`. Credentials saved in a git credential helper are used without asking.
@@ -87,6 +91,20 @@ When git or ssh needs to ask the user something (a password, token, SSH passphra
 ### Hunk and line staging
 
 The UI asks for a file's diff (`repo:getFilePatch`), the user selects lines, `buildPartialPatch` (`packages/git/src/patch.ts`) builds a smaller patch with just those lines, and main applies it with `git apply --cached` (stage), `--cached --reverse` (unstage) or `--reverse` (discard). The comments in `patch.ts` explain how unselected lines are handled in each direction.
+
+### Undo and redo
+
+Every write handler wraps its git call in `recorded(path, label, worktree, task)` (`main/ipc/write-handlers.ts`), which uses `recordOperation` from `packages/git/src/oplog.ts`:
+
+1. Before the operation, `createSnapshot` saves HEAD, local branches and tags, the index (as a tree) and, if the operation can change files, the working tree (as a tree, via a temporary index). These are ordinary git objects, so unchanged files cost nothing.
+2. After it, the new positions of HEAD and the refs are recorded.
+3. Undo computes which refs the operation changed, checks nobody changed them since (`planRefChanges`), and restores the snapshot. Redo does the reverse.
+
+The log is `.git/trellis/oplog.json`; the file watcher ignores `.git/trellis/` so writing it doesn't trigger refreshes.
+
+### The file watcher process
+
+`@parcel/watcher` runs in an Electron `utilityProcess` (`main/services/watcher-process.ts`), not in the main process: on Windows, starting to watch a folder blocked the calling thread for seconds. The main process (`repo-watcher.ts`) sends it the list of folders, receives changed paths, classifies and debounces them. When a folder becomes watched, the app refreshes that repository once, in case anything changed while watching was starting.
 
 ## 5. Security
 

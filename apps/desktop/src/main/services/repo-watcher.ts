@@ -2,95 +2,116 @@
  * Watches open repositories for file changes and reports them, so the UI
  * refreshes when you edit files or run git in a terminal.
  *
- * Uses @parcel/watcher (the same native watcher VS Code uses), which is fast
- * and handles large folders well on Windows, macOS and Linux.
+ * The watching itself happens in a separate process (watcher-process.ts,
+ * using @parcel/watcher, the same native watcher VS Code uses) so it can
+ * never block or crash the main process. This class starts that process,
+ * tells it which folders to watch, and turns the changed paths it reports
+ * into "refresh" events.
  *
  * Events are debounced: a single `git checkout` can touch thousands of files,
  * so we wait until things are quiet for DEBOUNCE_MS before reporting once.
  */
-import { relative } from 'node:path'
-import watcher, { type AsyncSubscription } from '@parcel/watcher'
+import { utilityProcess, type UtilityProcess } from 'electron'
+import watcherProcessPath from './watcher-process?modulePath'
 import { classifyChange, mergeScopes, type ChangeScope } from './classify-change'
+import type { SetWatchedMessage, WatcherMessage } from './watcher-protocol'
 
 const DEBOUNCE_MS = 300
-
-/**
- * Folders we never watch. Changes inside them are frequent and either don't
- * matter to git (objects are covered by ref changes) or are almost always
- * ignored by .gitignore (dependency folders).
- */
-const IGNORE = ['.git/objects', '.git/logs', 'node_modules']
+/** If the watcher process dies, wait this long before starting a new one. */
+const RESTART_DELAY_MS = 2000
 
 type ChangeListener = (repoPath: string, scope: 'status' | 'all') => void
 
-interface WatchedRepo {
-  subscription: Promise<AsyncSubscription | null>
-  pending: ChangeScope
+interface PendingChanges {
+  scope: ChangeScope
   timer: NodeJS.Timeout | null
 }
 
 export class RepoWatcher {
-  private readonly repos = new Map<string, WatchedRepo>()
+  private child: UtilityProcess | null = null
+  private watched: string[] = []
+  private readonly pending = new Map<string, PendingChanges>()
+  private disposed = false
 
   constructor(private readonly onChange: ChangeListener) {}
 
   /** Watch exactly these repositories: start new ones, stop removed ones. */
   setWatched(paths: string[]): void {
-    const wanted = new Set(paths)
-    for (const path of this.repos.keys()) {
-      if (!wanted.has(path)) this.unwatch(path)
+    this.watched = [...paths]
+    for (const path of this.pending.keys()) {
+      if (!paths.includes(path)) this.clearPending(path)
     }
-    for (const path of wanted) {
-      if (!this.repos.has(path)) this.watch(path)
-    }
+    if (paths.length === 0 && !this.child) return
+    this.send({ type: 'set', paths: this.watched })
+  }
+
+  /** The repositories currently being watched (the open tabs). */
+  get watchedPaths(): string[] {
+    return [...this.watched]
   }
 
   /** Stop watching everything (call before the app quits). */
   dispose(): void {
-    for (const path of [...this.repos.keys()]) this.unwatch(path)
+    this.disposed = true
+    for (const path of [...this.pending.keys()]) this.clearPending(path)
+    this.child?.kill()
+    this.child = null
   }
 
-  private watch(repoPath: string): void {
-    const repo: WatchedRepo = { subscription: Promise.resolve(null), pending: null, timer: null }
-    this.repos.set(repoPath, repo)
-
-    repo.subscription = watcher
-      .subscribe(
-        repoPath,
-        (error, events) => {
-          if (error) return // e.g. the folder was deleted; nothing useful to do
-          for (const event of events) {
-            // Normalise to forward slashes so classification works on Windows too.
-            const rel = relative(repoPath, event.path).replaceAll('\\', '/')
-            repo.pending = mergeScopes(repo.pending, classifyChange(rel))
-          }
-          if (repo.pending) this.schedule(repoPath, repo)
-        },
-        { ignore: IGNORE },
-      )
-      .catch((error: unknown) => {
-        // Watching is a convenience: if it fails (e.g. too many files on
-        // Linux), the app still works and refreshes on window focus.
-        console.warn(`Could not watch ${repoPath}:`, error)
-        return null
-      })
+  private send(message: SetWatchedMessage): void {
+    if (this.disposed) return
+    if (!this.child) this.start()
+    this.child?.postMessage(message)
   }
 
-  private schedule(repoPath: string, repo: WatchedRepo): void {
-    if (repo.timer) clearTimeout(repo.timer)
-    repo.timer = setTimeout(() => {
-      repo.timer = null
-      const scope = repo.pending
-      repo.pending = null
-      if (scope) this.onChange(repoPath, scope)
+  private start(): void {
+    const child = utilityProcess.fork(watcherProcessPath, [], {
+      serviceName: 'Trellis file watcher',
+    })
+    child.on('message', (message: WatcherMessage) => this.handle(message))
+    child.on('exit', () => {
+      if (this.child !== child) return
+      this.child = null
+      // Watching is a convenience: the app still works (and refreshes on
+      // window focus) without it. Try again shortly.
+      if (!this.disposed && this.watched.length) {
+        setTimeout(() => this.send({ type: 'set', paths: this.watched }), RESTART_DELAY_MS)
+      }
+    })
+    this.child = child
+  }
+
+  private handle(message: WatcherMessage): void {
+    if (message.type === 'error') {
+      console.warn(`Could not watch ${message.repoPath}: ${message.message}`)
+      return
+    }
+    if (!this.watched.includes(message.repoPath)) return
+    if (message.type === 'ready') {
+      // Starting to watch can take seconds (notably on Windows); refresh in
+      // case anything changed in the meantime.
+      this.onChange(message.repoPath, 'all')
+      return
+    }
+    let scope: ChangeScope = null
+    for (const path of message.paths) scope = mergeScopes(scope, classifyChange(path))
+    if (scope) this.schedule(message.repoPath, scope)
+  }
+
+  private schedule(repoPath: string, scope: ChangeScope): void {
+    const entry = this.pending.get(repoPath) ?? { scope: null, timer: null }
+    entry.scope = mergeScopes(entry.scope, scope)
+    if (entry.timer) clearTimeout(entry.timer)
+    entry.timer = setTimeout(() => {
+      this.pending.delete(repoPath)
+      if (entry.scope) this.onChange(repoPath, entry.scope)
     }, DEBOUNCE_MS)
+    this.pending.set(repoPath, entry)
   }
 
-  private unwatch(repoPath: string): void {
-    const repo = this.repos.get(repoPath)
-    if (!repo) return
-    this.repos.delete(repoPath)
-    if (repo.timer) clearTimeout(repo.timer)
-    void repo.subscription.then((sub) => sub?.unsubscribe())
+  private clearPending(repoPath: string): void {
+    const entry = this.pending.get(repoPath)
+    if (entry?.timer) clearTimeout(entry.timer)
+    this.pending.delete(repoPath)
   }
 }

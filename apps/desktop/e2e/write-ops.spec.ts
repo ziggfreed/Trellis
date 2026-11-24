@@ -20,8 +20,9 @@ async function showChanges(window: Page) {
 
 /** The changes-list row (li) for a file in a section ("Staged", "Unstaged"...). */
 function fileRow(window: Page, section: string, file: string) {
+  // exact: "Staged" must not also match "Unstaged".
   return window
-    .getByRole('region', { name: section })
+    .getByRole('region', { name: section, exact: true })
     .getByRole('listitem')
     .filter({ hasText: file })
 }
@@ -81,7 +82,7 @@ test('discards changes after confirming', async () => {
   await openRepo(app, window, repo.path)
   await showChanges(window)
 
-  await window.getByRole('region', { name: 'Unstaged' }).hover()
+  await window.getByRole('region', { name: 'Unstaged', exact: true }).hover()
   await window.getByRole('button', { name: 'Discard all' }).click()
   await expect(window.getByRole('dialog')).toContainText('can’t be undone')
   await window.getByRole('button', { name: 'Discard', exact: true }).click()
@@ -172,9 +173,13 @@ test('runs commands from the palette and lists them in the git log', async () =>
   const { app, window } = await launch()
   await openRepo(app, window, repo.path)
 
-  await window.keyboard.press('Control+k')
-  await window.keyboard.type('stage all')
-  await window.keyboard.press('Enter')
+  await window.keyboard.press('ControlOrMeta+k')
+  // Wait for the palette's search box, so no typed characters are lost on slow machines.
+  await window.getByPlaceholder('Type a command…').fill('stage all')
+  // Click the filtered option rather than pressing Enter: on slow machines
+  // Enter can arrive before the list has filtered and select nothing.
+  await window.getByRole('option', { name: /Stage all changes/ }).click()
+  await expect(window.getByPlaceholder('Type a command…')).toBeHidden()
   await showChanges(window)
   await expect(fileRow(window, 'Staged', 'new.txt')).toBeVisible()
 

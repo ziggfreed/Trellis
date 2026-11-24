@@ -46,8 +46,8 @@ async function readBlob(repoPath: string, spec: string): Promise<FileContent> {
   return blob.exitCode === 0 ? toContent(blob.stdout) : { kind: 'missing' }
 }
 
-/** Read a file from the working tree. */
-async function readWorkingFile(repoPath: string, path: string): Promise<FileContent> {
+/** Read a file from the working tree (with the same binary and size checks). */
+export async function readWorkingFile(repoPath: string, path: string): Promise<FileContent> {
   const fullPath = join(repoPath, path)
   try {
     const info = await stat(fullPath)
@@ -72,6 +72,13 @@ export async function getFileDiffContents(
       const [old, current] = await Promise.all([
         readBlob(repoPath, `${target.sha}^:${oldPath}`),
         readBlob(repoPath, `${target.sha}:${target.path}`),
+      ])
+      return { old, new: current }
+    }
+    case 'range': {
+      const [old, current] = await Promise.all([
+        readBlob(repoPath, `${target.from}:${target.oldPath ?? target.path}`),
+        readBlob(repoPath, `${target.to}:${target.path}`),
       ])
       return { old, new: current }
     }

@@ -142,12 +142,18 @@ export function spawnGit(
     env: gitEnv(options.env),
     windowsHide: true,
   })
-  child.on('close', (code) => {
+  child.on('exit', (code) => {
     const event = { args, cwd: options.cwd, exitCode: code, durationMs: Date.now() - started }
     for (const listener of listeners) listener(event)
   })
   return child
 }
+
+/**
+ * How long to keep reading git's output after git has exited, if its pipes
+ * are still open (see the comment in runGitBuffer).
+ */
+const OUTPUT_GRACE_MS = 250
 
 /** Run git and return stdout as raw bytes. */
 export function runGitBuffer(
@@ -181,7 +187,7 @@ export function runGitBuffer(
       for (const listener of listeners) listener(event)
     }
 
-    // 'error' and 'close' can both fire for the same process, so only settle once.
+    // 'error' and 'exit' can both fire for the same process, so only settle once.
     let settled = false
 
     child.on('error', (err: NodeJS.ErrnoException) => {
@@ -200,9 +206,19 @@ export function runGitBuffer(
       reject(new GitError(message, args, undefined, notInstalled))
     })
 
-    child.on('close', (code, signal) => {
-      if (settled) return
+    // When is git "done"? Normally Node's 'close' event (process exited AND
+    // its output pipes closed). But if git starts a long-lived helper that
+    // inherits those pipes (on Windows, e.g. the built-in fsmonitor daemon
+    // or background maintenance), the pipes stay open and 'close' never
+    // fires, so the operation would hang forever even though git finished.
+    // So we treat 'exit' as authoritative: once git has exited, we wait for
+    // its output to finish arriving, but at most OUTPUT_GRACE_MS.
+    let exit: { code: number | null; signal: NodeJS.Signals | null } | null = null
+    let openStreams = 2
+    const finish = () => {
+      if (settled || !exit) return
       settled = true
+      const { code, signal } = exit
       notify(code)
       if (code === null) {
         // Killed by a signal from outside the app.
@@ -220,10 +236,21 @@ export function runGitBuffer(
         const detail = result.stderr.trim() || `exit code ${code}`
         reject(new GitError(`git ${args.join(' ')} failed: ${detail}`, args, result))
       }
+    }
+    const streamEnded = () => {
+      openStreams--
+      if (openStreams === 0) finish()
+    }
+    child.stdout.on('end', streamEnded)
+    child.stderr.on('end', streamEnded)
+    child.on('exit', (code, signal) => {
+      exit = { code, signal }
+      if (openStreams === 0) finish()
+      else setTimeout(finish, OUTPUT_GRACE_MS)
     })
 
     // Writing to stdin can fail with EPIPE if git exits before reading it;
-    // the 'close' handler above reports the real problem, so ignore this.
+    // the 'exit' handling above reports the real problem, so ignore this.
     child.stdin.on('error', () => {})
     if (options.stdin !== undefined) child.stdin.end(options.stdin)
     else child.stdin.end()

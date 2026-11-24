@@ -2,7 +2,7 @@
 
 A fast, good-looking, open-source git client with **multiple repositories in tabs**, a **visual commit graph** and a **plugin system**. Built with Electron, React, TypeScript, Tailwind CSS and shadcn/ui. Runs on Windows, macOS and Linux.
 
-> **Status: v0.1.0.** Trellis covers everyday git work. Undo, interactive rebase, a conflict editor and plugins are next. See the [roadmap](docs/PLAN.md#5-phased-roadmap) and [changelog](CHANGELOG.md). See the [roadmap](docs/PLAN.md#5-phased-roadmap).
+> **Status: early development.** Everyday git work (v0.1) plus power features: undo, interactive rebase, a conflict editor, blame, worktrees and workspaces. Plugins are next. See the [roadmap](docs/PLAN.md#5-phased-roadmap) and [changelog](CHANGELOG.md).
 
 ## Features
 
@@ -18,9 +18,14 @@ Working now:
 - **Cherry-pick, revert, reset, tags and stashes** from right-click menus
 - **Conflicts:** a banner with Continue / Skip / Abort while a merge or rebase is in progress
 - **Command palette** (`Ctrl/Cmd+K`) and a **git command log** (``Ctrl+` ``) showing every command Trellis runs
+- **Undo and redo** for operations made in Trellis
+- **Interactive rebase**, a **conflict editor**, **blame**, **file history** and **compare**
+- **Drag branches** onto branches or commits to merge, rebase or move them
+- **Worktrees**, **workspaces** and a dashboard of all your repositories; background fetch
+- **Custom keyboard shortcuts**; open the repository in your terminal or editor
 - Live refresh when files change; light, dark and system themes
 
-Planned: undo, interactive rebase, a built-in conflict editor, blame, worktrees, workspaces, plugins and optional AI (bring your own key, or turn it off). See [docs/FEATURES.md](docs/FEATURES.md).
+Planned: plugins and optional AI (bring your own key, or turn it off). See [docs/FEATURES.md](docs/FEATURES.md).
 
 ## Requirements
 

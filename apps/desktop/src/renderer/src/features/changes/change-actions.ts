@@ -12,7 +12,11 @@ import type { ChangeEntry } from './group-changes'
 function followSelection(repoPath: string, paths: string[], to: 'staged' | 'unstaged') {
   const view = useRepoViewStore.getState()
   const selected = view.byRepo[repoPath]?.selectedFile
-  if (selected && selected.kind !== 'commit' && paths.includes(selected.path)) {
+  if (
+    selected &&
+    (selected.kind === 'staged' || selected.kind === 'unstaged') &&
+    paths.includes(selected.path)
+  ) {
     view.update(repoPath, { selectedFile: { kind: to, path: selected.path } })
   }
 }

@@ -1,6 +1,6 @@
 # Trellis: Project Plan
 
-> Status: **Phase 3 complete: v0.1.0 ready to release** (2026-11-24). Next up: Phase 4 (power features).
+> Status: **Phase 4 complete** (2026-11-24). Next up: Phase 5 (plugin system).
 
 ## 1. Goals
 
@@ -220,13 +220,25 @@ Benchmark (Linux, virtual display, 100,000 commits, 6,228 merges):
 - UI: Changes view with stage/unstage/discard and a hunk/line view; commit box; toolbar (fetch, pull, push, branch, stash); right-click menus on branches, remote branches, tags, stashes and commits; conflict banner; command palette with a registry ready for plugins; git command log panel
 - Release workflow: pushing a `v*` tag builds installers for all three platforms and creates a draft GitHub Release with notes from CHANGELOG.md
 
-## 12. Phase 4 plan (next): power features
+## 12. Phase 4 delivered
 
-1. Undo/redo for git operations (operation log with snapshots)
-2. Interactive rebase editor (reorder, squash, fixup, reword, drop)
-3. Built-in 3-way conflict resolution
-4. Blame and file history; compare branches/commits
-5. Drag and drop in the graph (drag a branch onto another to merge/rebase)
-6. Worktrees; workspaces and a multi-repo dashboard with auto-fetch
-7. Integrated terminal; customisable keyboard shortcuts
-8. Syntax highlighting in the hunk view
+- **Undo/redo** for every operation made in Trellis (snapshots of refs, HEAD, index and, where needed, the working tree; stored in `.git/trellis/oplog.json`). Undo only moves refs the operation changed and refuses if they changed again since
+- **Interactive rebase editor**: reorder, pick, reword, squash, fixup, drop; runs `git rebase -i` via `GIT_SEQUENCE_EDITOR`
+- **Conflict editor**: per-block current/incoming/both/edit, whole-file choices for modify/delete conflicts
+- **Blame** (with "blame before this change"), **file history** following renames, **compare** two refs from their merge base
+- **Drag and drop** branches onto branches or commits: merge, rebase, move, compare
+- **Worktrees** in the sidebar; **workspaces**; home-screen **dashboard** with live status; **background fetch** that never prompts
+- **Settings dialog**; **custom keyboard shortcuts**; **open in terminal / editor**; syntax highlighting in the hunk view
+
+Fixed along the way (found by CI on Windows): the file watcher blocked the main process for ~5 s when opening a repository (now in a utility process); git commands could hang when a helper process kept their output open (now finished on `exit`).
+
+Deferred: an embedded terminal (needs the native `node-pty` module built per platform). The external terminal covers it for now; revisit with the plugin work.
+
+## 13. Phase 5 plan (next): plugins
+
+1. `packages/plugin-api`: the types plugin authors code against (commands, menus, panels, git, events, storage, settings)
+2. Extension host in an Electron `utilityProcess` that loads plugins and talks to main over a message port
+3. Contribution points: commands (into the existing palette registry), context-menu items, toolbar buttons, status bar items, panels (sandboxed iframes using the theme CSS variables)
+4. Plugin manager UI: install from a folder or npm, enable/disable, uninstall
+5. First-party plugins to prove the API: GitHub (PRs, CI status), conventional commits helper
+6. SDK docs and a `create-trellis-plugin` template

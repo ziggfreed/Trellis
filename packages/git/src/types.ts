@@ -191,11 +191,14 @@ export type FileContent =
 /**
  * Which two versions of a file to compare.
  * - `commit`: the file in a commit vs. the same file in its first parent.
+ * - `range`: the file at one commit vs. another.
  * - `staged`: HEAD vs. the index (what `git diff --cached` shows).
  * - `unstaged`: the index vs. the working tree (what `git diff` shows).
  */
 export type DiffTarget =
   | { kind: 'commit'; sha: string; path: string; oldPath?: string }
+  /** The file at commit `from` vs. at commit `to` (used when comparing branches). */
+  | { kind: 'range'; from: string; to: string; path: string; oldPath?: string }
   | { kind: 'staged'; path: string; oldPath?: string }
   | { kind: 'unstaged'; path: string }
 
@@ -206,3 +209,122 @@ export interface FileDiffContents {
 
 /** Result of an operation that can stop because of merge conflicts. */
 export type MergeResult = { status: 'done' } | { status: 'conflicts' }
+
+// ---------------------------------------------------------------------------
+// Undo / redo
+// ---------------------------------------------------------------------------
+
+/** What HEAD pointed at in a snapshot. `ref` is a full name like "refs/heads/main". */
+export type SnapshotHead =
+  { kind: 'branch'; ref: string; unborn: boolean } | { kind: 'detached'; sha: string }
+
+/** Repository state saved for undo/redo. See snapshot.ts. */
+export interface Snapshot {
+  time: number
+  head: SnapshotHead
+  /** Local branches and tags: full ref name -> commit hash. */
+  refs: Record<string, string>
+  /** The index saved as a tree, or null if it couldn't be (unresolved conflicts). */
+  indexTree: string | null
+  /** The working tree saved as a tree, or null if not recorded. */
+  worktreeTree: string | null
+}
+
+/** The undo/redo actions currently available. */
+export interface UndoState {
+  undo: { label: string; time: number } | null
+  redo: { label: string; time: number } | null
+}
+
+// ---------------------------------------------------------------------------
+// Interactive rebase
+// ---------------------------------------------------------------------------
+
+/**
+ * What to do with a commit during an interactive rebase:
+ * - pick:   keep it as it is
+ * - reword: keep it, with a new message
+ * - squash: combine it into the commit before it, keeping both messages
+ * - fixup:  combine it into the commit before it, keeping only that commit's message
+ * - drop:   remove it
+ */
+export type RebaseAction = 'pick' | 'reword' | 'squash' | 'fixup' | 'drop'
+
+export interface RebasePlanItem {
+  sha: string
+  action: RebaseAction
+  /** New message, for 'reword'. */
+  message?: string
+}
+
+// ---------------------------------------------------------------------------
+// File history, blame and compare
+// ---------------------------------------------------------------------------
+
+/** One commit in a file's history. */
+export interface FileHistoryEntry {
+  commit: Commit
+  /** The file's path in this commit (it can change through renames). */
+  path: string
+  /** For renames: the path before this commit. */
+  oldPath?: string
+  change: ChangeKind
+}
+
+export interface BlameLine {
+  /** Commit that last changed this line (all zeros if not committed yet). */
+  sha: string
+  /** Line number in that commit's version of the file. */
+  origLine: number
+  /** Line number in the version being blamed. */
+  line: number
+  text: string
+}
+
+export interface BlameCommit {
+  sha: string
+  author: string
+  authorEmail: string
+  /** Unix time in milliseconds. */
+  authorTime: number
+  summary: string
+  /** The file's path in this commit. */
+  filename: string
+  /** The commit before this one that touched the file, for "blame previous revision". */
+  previous?: { sha: string; path: string }
+}
+
+export interface BlameResult {
+  lines: BlameLine[]
+  commits: Record<string, BlameCommit>
+}
+
+export interface Comparison {
+  /** Where the two histories split, or null if they share no history. */
+  mergeBase: string | null
+  /** Commits on the compared ref that the base doesn't have, newest first. */
+  commits: Commit[]
+  /** How many commits the base has that the compared ref doesn't. */
+  behind: number
+  /** Files changed since the merge base. */
+  files: ChangedFile[]
+}
+
+// ---------------------------------------------------------------------------
+// Worktrees
+// ---------------------------------------------------------------------------
+
+export interface Worktree {
+  /** Folder of the worktree (as git reports it, with forward slashes on Windows). */
+  path: string
+  /** Commit checked out there, or null for a brand-new repository. */
+  head: string | null
+  /** Branch checked out there, or null if detached. */
+  branch: string | null
+  /** The original working folder of the repository (listed first by git). */
+  isMain: boolean
+  bare: boolean
+  locked: boolean
+  /** The folder no longer exists; `git worktree prune` will forget it. */
+  prunable: boolean
+}

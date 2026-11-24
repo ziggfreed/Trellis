@@ -15,6 +15,7 @@ describe('classifyChange', () => {
     ['.git/refs/heads/main.lock', null],
     ['.git/objects/ab/cdef', null],
     ['.git/logs/HEAD', null],
+    ['.git/trellis/oplog.json', null],
   ] as const)('%s -> %s', (path, scope) => {
     expect(classifyChange(path)).toBe(scope)
   })

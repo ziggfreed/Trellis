@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/command'
 import { useRefs, useStatus } from '@/features/repos/use-repo-data'
 import { useRepos } from '@/features/repos/use-repos'
+import { useSettingsStore } from '@/features/settings/settings-store'
 import { getCommands, registerCommands, type CommandPicker } from './registry'
 import { builtInCommands } from './built-in-commands'
 
@@ -52,6 +53,7 @@ function PaletteContents({ close }: { close: () => void }) {
   const repoPath = activeRepo?.path ?? ''
   const status = useStatus(repoPath).data
   const refs = useRefs(repoPath).data
+  const workspaces = useSettingsStore((s) => s.settings.workspaces)
   const [picker, setPicker] = useState<CommandPicker | null>(null)
   const [search, setSearch] = useState('')
 
@@ -62,8 +64,9 @@ function PaletteContents({ close }: { close: () => void }) {
         status: activeRepo ? (status ?? null) : null,
         refs: activeRepo ? (refs ?? []) : [],
         openTabs,
+        workspaces,
       }),
-    [activeRepo, status, refs, openTabs],
+    [activeRepo, status, refs, openTabs, workspaces],
   )
   const groups = useMemo(() => {
     const map = new Map<string, typeof commands>()

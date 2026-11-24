@@ -28,6 +28,8 @@ export function classifyChange(relativePath: string): ChangeScope {
   // Object storage changes constantly but only matters once a ref points at
   // the new objects, which shows up as a ref change.
   if (inside.startsWith('objects/') || inside.startsWith('logs/')) return null
+  // Trellis's own undo log, written after every operation; refreshing for it would be wasted work.
+  if (inside.startsWith('trellis/')) return null
   // The index tracks what's staged.
   if (inside === 'index') return 'status'
   // HEAD, refs, packed-refs, stash, MERGE_HEAD, FETCH_HEAD... all affect history or branches.

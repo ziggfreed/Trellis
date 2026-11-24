@@ -42,10 +42,3 @@ export const toggleCommandLog = () => {
   const { open, setOpen } = useCommandLogStore.getState()
   setOpen(!open)
 }
-
-/** Format a command for display and copying, quoting arguments with spaces. */
-export function formatCommand(args: readonly string[]): string {
-  const quote = (arg: string) =>
-    /^[\w@%+=:,./-]+$/.test(arg) ? arg : `'${arg.replace(/'/g, `'\\''`)}'`
-  return ['git', ...args.map(quote)].join(' ')
-}

@@ -99,6 +99,15 @@ export async function renameBranch(repoPath: string, from: string, to: string): 
 }
 
 /**
+ * Point a branch at a different commit (`git branch --force`), without
+ * checking anything out. Git refuses this for the checked-out branch; use
+ * reset for that.
+ */
+export async function moveBranch(repoPath: string, name: string, target: string): Promise<void> {
+  await runGit(['branch', '--force', name, target], { cwd: repoPath })
+}
+
+/**
  * Delete a local branch. Without `force`, git refuses if the branch has
  * commits that aren't merged anywhere (so nothing is lost by accident).
  */
@@ -237,12 +246,15 @@ export async function deleteTag(repoPath: string, name: string): Promise<void> {
 export interface RemoteOptions {
   onProgress?: (progress: CloneProgress) => void
   signal?: AbortSignal
+  /** Extra environment variables (e.g. to stop background fetches prompting for passwords). */
+  env?: Record<string, string>
 }
 
 function remoteRunOptions(repoPath: string, options: RemoteOptions): RunGitOptions {
   return {
     cwd: repoPath,
     signal: options.signal,
+    ...(options.env ? { env: options.env } : {}),
     onStderr: (chunk) => {
       const progress = parseCloneProgress(chunk)
       if (progress) options.onProgress?.(progress)

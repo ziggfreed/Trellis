@@ -24,6 +24,9 @@ import { CloneDialog } from '@/features/create-repo/clone-dialog'
 import { Dialogs } from '@/features/dialogs/dialogs'
 import { AuthPrompt } from '@/features/auth/auth-prompt'
 import { CommandPalette } from '@/features/command-palette/command-palette'
+import { RebaseDialog } from '@/features/rebase/rebase-dialog'
+import { DropMenu } from '@/features/drag-drop/drop-menu'
+import { SettingsDialog } from '@/features/settings/settings-dialog'
 import { CommandLogPanel } from '@/features/command-log/command-log-panel'
 import { useCommandLogStore } from '@/features/command-log/command-log-store'
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
@@ -81,6 +84,9 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
       <Dialogs />
       <AuthPrompt />
       <CommandPalette />
+      <RebaseDialog />
+      <DropMenu />
+      <SettingsDialog />
     </div>
   )
 }

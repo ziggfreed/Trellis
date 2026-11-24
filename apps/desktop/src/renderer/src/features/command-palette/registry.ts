@@ -6,7 +6,7 @@
  * The built-in commands are one provider (./built-in-commands.ts). In
  * Phase 5, plugins will register providers too, through this same API.
  */
-import type { RepoTab, Ref, RepoStatus } from '@shared/ipc'
+import type { RepoTab, Ref, RepoStatus, Workspace } from '@shared/ipc'
 
 export interface CommandContext {
   /** The repository in the active tab, or null on the home screen. */
@@ -15,6 +15,7 @@ export interface CommandContext {
   status: RepoStatus | null
   refs: Ref[]
   openTabs: RepoTab[]
+  workspaces: Workspace[]
 }
 
 /** A list the palette shows after a command is chosen, e.g. branches to check out. */
@@ -30,7 +31,7 @@ export interface Command {
   /** Heading the command is listed under, e.g. "Git" or "View". */
   group: string
   /** Shortcut to show next to it (display only; shortcuts are handled elsewhere). */
-  shortcut?: string
+  shortcut?: string | undefined
   /** Extra words that should find this command in a search. */
   keywords?: string[]
   /** Run the command, OR return a picker to choose from first. */

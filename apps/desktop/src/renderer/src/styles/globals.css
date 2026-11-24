@@ -179,6 +179,40 @@
   }
 }
 
+/*
+ * Syntax highlighting classes for code shown outside the CodeMirror editor
+ * (the hunk view). Same colours as the editor; see features/diff/highlight-lines.ts.
+ */
+.tok-keyword,
+.tok-heading {
+  color: var(--syntax-keyword);
+}
+.tok-heading {
+  font-weight: bold;
+}
+.tok-string {
+  color: var(--syntax-string);
+}
+.tok-number {
+  color: var(--syntax-number);
+}
+.tok-comment {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+.tok-function {
+  color: var(--syntax-function);
+}
+.tok-type {
+  color: var(--syntax-type);
+}
+.tok-tag {
+  color: var(--syntax-tag);
+}
+.tok-attribute {
+  color: var(--syntax-attribute);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

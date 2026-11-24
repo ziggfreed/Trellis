@@ -6,8 +6,13 @@
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
-import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test'
+import { basename, dirname, join } from 'node:path'
+import {
+  _electron as electron,
+  expect,
+  type ElectronApplication,
+  type Page,
+} from '@playwright/test'
 
 const appEntry = join(import.meta.dirname, '../out/main/index.js')
 const tempDirs: string[] = []
@@ -18,9 +23,19 @@ export function tempDir(): string {
   return dir
 }
 
-/** Delete every temporary folder created by `tempDir`. Call from `test.afterAll`. */
+/**
+ * Delete every temporary folder created by `tempDir`. Call from `test.afterAll`.
+ * On Windows, Electron can keep files in its data folder locked for a moment
+ * after closing, so retry, and leave anything still locked for the OS to clean up.
+ */
 export function cleanupTempDirs(): void {
-  for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true })
+  for (const dir of tempDirs.splice(0)) {
+    try {
+      rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 })
+    } catch {
+      // Still locked; it's in the temp folder, so it will be cleaned up eventually.
+    }
+  }
 }
 
 export interface TestRepo {
@@ -42,6 +57,7 @@ export function createRepo(): TestRepo {
   git('config', 'user.name', 'Trellis Test')
   git('config', 'user.email', 'test@example.com')
   git('config', 'commit.gpgsign', 'false')
+  git('config', 'core.autocrlf', 'false') // same line endings on every OS
   const commit = (message: string) => {
     git('add', '-A')
     git('commit', '-m', message)
@@ -69,8 +85,16 @@ export async function stubFolderPicker(app: ElectronApplication, folder: string)
   }, folder)
 }
 
-/** Open `repoPath` in a new tab via the home screen's "Open repository" button. */
+/**
+ * Open `repoPath` in a new tab via the home screen's "Open repository"
+ * button, and wait until that tab is the active one (so the next step can't
+ * race the tab opening on slow machines).
+ */
 export async function openRepo(app: ElectronApplication, window: Page, repoPath: string) {
   await stubFolderPicker(app, repoPath)
   await window.getByRole('button', { name: 'Open repository' }).first().click()
+  await expect(window.getByRole('tab', { name: basename(repoPath) })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
 }

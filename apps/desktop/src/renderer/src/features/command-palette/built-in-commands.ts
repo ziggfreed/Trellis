@@ -9,9 +9,12 @@ import { repoActions } from '@/features/repos/repo-actions'
 import { useRepoViewStore } from '@/features/repo-view/repo-view-store'
 import { useSettingsStore } from '@/features/settings/settings-store'
 import { toggleCommandLog } from '@/features/command-log/command-log-store'
+import { openSettings } from '@/features/settings/settings-dialog'
+import { openWorkspace, saveTabsAsWorkspace } from '@/features/workspaces/workspace-actions'
 import { groupChanges } from '@/features/changes/group-changes'
 import { stageEntries, unstageEntries } from '@/features/changes/change-actions'
-import { modKey } from '@/hooks/use-keyboard-shortcuts'
+import { shortcutLabel } from '@/features/shortcuts/shortcut-label'
+import { openInEditor, openInTerminal } from '@/features/repo-actions/open-external'
 import * as actions from '@/features/repo-actions/actions'
 import { openRepoTab } from '@/features/repos/use-repos'
 import { splitCommitMessage } from '@/features/changes/commit-message'
@@ -28,28 +31,48 @@ export function builtInCommands(context: CommandContext): Command[] {
       id: 'repo.open',
       title: 'Open repository…',
       group: 'Repository',
-      shortcut: `${modKey}+O`,
+      shortcut: shortcutLabel('repo.open'),
       run: repoActions.open,
     },
     {
       id: 'repo.clone',
       title: 'Clone repository…',
       group: 'Repository',
-      shortcut: `${modKey}+Shift+O`,
+      shortcut: shortcutLabel('repo.clone'),
       run: repoActions.clone,
     },
     {
       id: 'repo.new',
       title: 'New repository…',
       group: 'Repository',
-      shortcut: `${modKey}+N`,
+      shortcut: shortcutLabel('repo.new'),
       run: repoActions.create,
     },
+    {
+      id: 'app.settings',
+      title: 'Settings…',
+      group: 'View',
+      shortcut: shortcutLabel('settings'),
+      keywords: ['preferences', 'options'],
+      run: openSettings,
+    },
+    {
+      id: 'repo.saveWorkspace',
+      title: 'Save open tabs as workspace…',
+      group: 'Repository',
+      run: () => void saveTabsAsWorkspace(),
+    },
+    ...context.workspaces.map((workspace) => ({
+      id: `repo.openWorkspace.${workspace.id}`,
+      title: `Open workspace: ${workspace.name}`,
+      group: 'Repository',
+      run: () => void openWorkspace(workspace),
+    })),
     {
       id: 'view.commandLog',
       title: 'Toggle git command log',
       group: 'View',
-      shortcut: 'Ctrl+`',
+      shortcut: shortcutLabel('commandLog'),
       keywords: ['terminal', 'output', 'history'],
       run: toggleCommandLog,
     },
@@ -85,7 +108,10 @@ export function builtInCommands(context: CommandContext): Command[] {
   const path = repo.path
   const setView = (patch: Parameters<ReturnType<typeof useRepoViewStore.getState>['update']>[1]) =>
     useRepoViewStore.getState().update(path, patch)
-  const changes = groupChanges(context.status?.files ?? [])
+  // Read status when the command runs rather than using the palette's
+  // snapshot: right after a repo opens that snapshot may not be loaded yet,
+  // and "Stage all" would silently do nothing.
+  const currentChanges = async () => groupChanges((await api.invoke('repo:getStatus', path)).files)
   const operation = context.status?.operation
 
   commands.push(
@@ -105,11 +131,41 @@ export function builtInCommands(context: CommandContext): Command[] {
       id: 'view.search',
       title: 'Search commits',
       group: 'View',
-      shortcut: `${modKey}+F`,
+      shortcut: shortcutLabel('history.search'),
       run: () => {
         setView({ view: 'history' })
         focusLater('[aria-label="Search commits"]')
       },
+    },
+    {
+      id: 'git.undo',
+      title: 'Undo last operation',
+      group: 'Git',
+      shortcut: shortcutLabel('undo'),
+      run: () => void actions.undo(path),
+    },
+    {
+      id: 'git.redo',
+      title: 'Redo',
+      group: 'Git',
+      shortcut: shortcutLabel('redo'),
+      run: () => void actions.redo(path),
+    },
+    {
+      id: 'repo.terminal',
+      title: 'Open in terminal',
+      group: 'Repository',
+      shortcut: shortcutLabel('terminal'),
+      keywords: ['shell', 'console', 'command line'],
+      run: () => void openInTerminal(path),
+    },
+    {
+      id: 'repo.editor',
+      title: 'Open in editor',
+      group: 'Repository',
+      shortcut: shortcutLabel('editor'),
+      keywords: ['vs code', 'code'],
+      run: () => void openInEditor(path),
     },
     {
       id: 'git.fetch',
@@ -167,13 +223,13 @@ export function builtInCommands(context: CommandContext): Command[] {
       id: 'git.stageAll',
       title: 'Stage all changes',
       group: 'Git',
-      run: () => void stageEntries(path, changes.unstaged),
+      run: () => void currentChanges().then((c) => stageEntries(path, c.unstaged)),
     },
     {
       id: 'git.unstageAll',
       title: 'Unstage all changes',
       group: 'Git',
-      run: () => void unstageEntries(path, changes.staged),
+      run: () => void currentChanges().then((c) => unstageEntries(path, c.staged)),
     },
     { id: 'git.stash', title: 'Stash changes…', group: 'Git', run: () => void actions.stash(path) },
     {
@@ -230,6 +286,23 @@ export function builtInCommands(context: CommandContext): Command[] {
       }),
     },
   )
+
+  commands.push({
+    id: 'git.compare',
+    title: 'Compare current branch with…',
+    group: 'Branches',
+    keywords: ['diff', 'pull request'],
+    run: () => ({
+      placeholder: 'Choose a branch to compare with',
+      items: context.refs
+        .filter((r) => r.type !== 'tag' && !r.isHead)
+        .map((r) => ({
+          id: r.fullName,
+          label: r.name,
+          run: () => void actions.openCompare(path, r.name),
+        })),
+    }),
+  })
 
   if (operation) {
     commands.push(

@@ -13,7 +13,15 @@
  * In the Changes view the file list and diff sit side by side.
  * All panels can be resized by dragging the dividers.
  */
-import { FolderOpen, GitCommitHorizontal, FilePen } from 'lucide-react'
+import {
+  Code,
+  FilePen,
+  FileText,
+  FolderOpen,
+  GitCommitHorizontal,
+  GitCompare,
+  SquareTerminal,
+} from 'lucide-react'
 import type { RepoTab } from '@shared/ipc'
 import { Button } from '@/components/ui/button'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
@@ -28,6 +36,17 @@ import { CommitBox } from '@/features/changes/commit-box'
 import { PatchView } from '@/features/changes/patch-view'
 import { DiffPanel } from '@/features/diff/diff-panel'
 import { useRepoView } from './repo-view-store'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { openInEditor, openInTerminal } from '@/features/repo-actions/open-external'
+import { shortcutLabel } from '@/features/shortcuts/shortcut-label'
+import { FileView } from '@/features/file-view/file-view'
+import { CompareView } from '@/features/compare/compare-view'
 import { RepoToolbar } from '@/features/repo-toolbar/repo-toolbar'
 import { OperationBanner } from '@/features/repo-toolbar/operation-banner'
 
@@ -51,6 +70,24 @@ export function RepoView({ repo }: { repo: RepoTab }) {
             >
               History
             </ViewTab>
+            {view.file && (
+              <ViewTab
+                active={view.view === 'file'}
+                onClick={() => setView({ view: 'file', selectedFile: null })}
+                icon={<FileText />}
+              >
+                <span className="max-w-40 truncate">{view.file.path.split('/').pop()}</span>
+              </ViewTab>
+            )}
+            {view.compare && (
+              <ViewTab
+                active={view.view === 'compare'}
+                onClick={() => setView({ view: 'compare', selectedFile: null })}
+                icon={<GitCompare />}
+              >
+                Compare
+              </ViewTab>
+            )}
             <ViewTab
               active={view.view === 'changes'}
               onClick={() => setView({ view: 'changes', selectedFile: null })}
@@ -65,22 +102,47 @@ export function RepoView({ repo }: { repo: RepoTab }) {
             </ViewTab>
             <div className="ml-auto flex items-center gap-1">
               <RepoToolbar repoPath={repo.path} />
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-muted-foreground"
-                title={`Show in folder: ${repo.path}`}
-                aria-label="Show in folder"
-                onClick={() => void api.invoke('repo:showInFolder', repo.path)}
-              >
-                <FolderOpen />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-muted-foreground"
+                    aria-label="Open in…"
+                    title="Open in…"
+                  >
+                    <FolderOpen />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => void openInTerminal(repo.path)}>
+                    <SquareTerminal />
+                    Open in terminal
+                    <DropdownMenuShortcut>{shortcutLabel('terminal')}</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => void openInEditor(repo.path)}>
+                    <Code />
+                    Open in editor
+                    <DropdownMenuShortcut>{shortcutLabel('editor')}</DropdownMenuShortcut>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => void api.invoke('repo:showInFolder', repo.path)}
+                  >
+                    <FolderOpen />
+                    Show in folder
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           <OperationBanner repoPath={repo.path} />
 
           <div className="min-h-0 flex-1">
-            {view.view === 'history' ? (
+            {view.view === 'file' && view.file ? (
+              <FileView repoPath={repo.path} file={view.file} />
+            ) : view.view === 'compare' && view.compare ? (
+              <CompareView repoPath={repo.path} compare={view.compare} />
+            ) : view.view === 'history' ? (
               <ResizablePanelGroup orientation="vertical" id="history-layout">
                 <ResizablePanel defaultSize="55%" minSize="20%">
                   <HistoryPanel repoPath={repo.path} />
@@ -110,7 +172,8 @@ export function RepoView({ repo }: { repo: RepoTab }) {
                 </ResizablePanel>
                 <ResizableHandle />
                 <ResizablePanel minSize="30%">
-                  {view.selectedFile && view.selectedFile.kind !== 'commit' ? (
+                  {view.selectedFile &&
+                  (view.selectedFile.kind === 'staged' || view.selectedFile.kind === 'unstaged') ? (
                     <PatchView
                       key={`${view.selectedFile.kind}:${view.selectedFile.path}`}
                       repoPath={repo.path}

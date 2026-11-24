@@ -10,6 +10,8 @@
  * Paths are passed with GIT_LITERAL_PATHSPECS=1 so names containing
  * characters like * or ? are taken literally, not as patterns.
  */
+import { writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { runGit } from './run-git'
 import { parsePatch, type FilePatch } from './patch'
 
@@ -110,4 +112,45 @@ export async function applyPatch(
   if (action !== 'discard') args.push('--cached')
   if (action !== 'stage') args.push('--reverse')
   await runGit([...args, '-'], { cwd: repoPath, stdin: patch })
+}
+
+/**
+ * Save the resolved contents of a conflicted file and stage it, which tells
+ * git the conflict is resolved.
+ */
+export async function saveResolvedFile(
+  repoPath: string,
+  path: string,
+  content: string,
+): Promise<void> {
+  await writeFile(join(repoPath, path), content)
+  await runGit(['add', '--', path], { cwd: repoPath, env: LITERAL })
+}
+
+/**
+ * Resolve a conflicted file in one go:
+ * - 'current':  keep our version of the whole file
+ * - 'incoming': take their version of the whole file
+ * - 'delete':   delete the file
+ * If the chosen side deleted the file, the file is deleted.
+ */
+export async function resolveFileWith(
+  repoPath: string,
+  path: string,
+  choice: 'current' | 'incoming' | 'delete',
+): Promise<void> {
+  if (choice !== 'delete') {
+    const side = choice === 'current' ? '--ours' : '--theirs'
+    const result = await runGit(['checkout', side, '--', path], {
+      cwd: repoPath,
+      env: LITERAL,
+      okExitCodes: [0, 1],
+    })
+    // Exit 1 means that side has no version of the file (it was deleted there).
+    if (result.exitCode === 0) {
+      await runGit(['add', '--', path], { cwd: repoPath, env: LITERAL })
+      return
+    }
+  }
+  await runGit(['rm', '-q', '--', path], { cwd: repoPath, env: LITERAL })
 }

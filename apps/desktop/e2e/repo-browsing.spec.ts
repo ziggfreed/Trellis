@@ -67,7 +67,8 @@ test('the changes view updates live when files change on disk', async () => {
   repo.write('README.md', '# changed\n')
   repo.write('new-file.txt', 'hello\n')
   const list = window.getByTestId('changes-list')
-  await expect(list).toContainText('README.md')
+  // Starting to watch a folder can take several seconds on Windows.
+  await expect(list).toContainText('README.md', { timeout: 15_000 })
   await expect(list).toContainText('new-file.txt')
   await expect(window.getByTestId('change-count')).toHaveText('2')
 

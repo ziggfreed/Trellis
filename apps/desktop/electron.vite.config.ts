@@ -14,7 +14,7 @@ import tailwindcss from '@tailwindcss/vite'
 // output rather than loaded from node_modules at runtime.
 const bundledWorkspacePackages = ['@trellis/git']
 
-const shared = { '@shared': resolve(__dirname, 'src/shared') }
+const shared = { '@shared': resolve(import.meta.dirname, 'src/shared') }
 
 export default defineConfig({
   main: {
@@ -30,7 +30,7 @@ export default defineConfig({
   },
   renderer: {
     resolve: {
-      alias: { ...shared, '@': resolve(__dirname, 'src/renderer/src') },
+      alias: { ...shared, '@': resolve(import.meta.dirname, 'src/renderer/src') },
     },
     plugins: [react(), tailwindcss()],
   },

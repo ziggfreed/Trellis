@@ -11,7 +11,7 @@
  */
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ExternalLink, Minus, Plus, Undo2 } from 'lucide-react'
+import { Minus, Plus, Undo2 } from 'lucide-react'
 import {
   allLineIds,
   buildPartialPatch,
@@ -29,6 +29,9 @@ import { FilePath } from '@/components/file-path'
 import { confirmDialog } from '@/features/dialogs/dialog-store'
 import { useStatus } from '@/features/repos/use-repo-data'
 import { selectRange, toggleLine } from './line-selection'
+import { ConflictEditor } from '@/features/conflicts/conflict-editor'
+import { highlightLines, type Segment } from '@/features/diff/highlight-lines'
+import { useLanguageParser } from '@/features/diff/load-language'
 
 /** Stop rendering lines after this many, to keep huge diffs responsive. */
 const MAX_LINES = 5000
@@ -68,6 +71,29 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
   const anchor = selection.patch === patch ? selection.anchor : null
   const ordered = useMemo(() => (patch ? allLineIds(patch) : []), [patch])
 
+  // Syntax highlighting: highlight each hunk's old and new side separately
+  // (each is valid-ish code on its own), then look lines up by position.
+  const parser = useLanguageParser(file)
+  const highlighted = useMemo(() => {
+    if (!patch || !parser) return null
+    return patch.hunks.map((hunk) => ({
+      old: highlightLines(
+        hunk.lines
+          .filter((l) => l.kind !== 'add')
+          .map((l) => l.text)
+          .join('\n'),
+        parser,
+      ),
+      new: highlightLines(
+        hunk.lines
+          .filter((l) => l.kind !== 'delete')
+          .map((l) => l.text)
+          .join('\n'),
+        parser,
+      ),
+    }))
+  }, [patch, parser])
+
   const header = (
     <div className="flex h-9 shrink-0 items-center gap-2 border-b px-3 text-sm">
       <FilePath path={file} />
@@ -79,35 +105,10 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
 
   if (conflicted) {
     return (
-      <div className="flex h-full flex-col">
+      <div className="flex h-full min-h-0 flex-col">
         {header}
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center text-sm">
-          <p className="max-w-sm">
-            This file has conflicts. Open it, choose what to keep between the
-            <code className="mx-1 rounded bg-muted px-1">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> and
-            <code className="mx-1 rounded bg-muted px-1">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>{' '}
-            markers, then mark it as resolved.
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                void runAction(repoPath, () => api.invoke('repo:openFile', repoPath, file))
-              }
-            >
-              <ExternalLink />
-              Open file
-            </Button>
-            <Button
-              size="sm"
-              onClick={() =>
-                void runAction(repoPath, () => api.invoke('repo:stage', repoPath, [file]))
-              }
-            >
-              Mark as resolved
-            </Button>
-          </div>
+        <div className="min-h-0 flex-1">
+          <ConflictEditor repoPath={repoPath} file={file} />
         </div>
       </div>
     )
@@ -178,6 +179,9 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
         )}
         {patch.hunks.map((hunk, hunkIndex) => {
           if (rendered >= MAX_LINES) return null
+          // Positions of the next line on each side, for finding its highlighting.
+          let oldIndex = 0
+          let newIndex = 0
           return (
             <div key={hunkIndex} className="border-b">
               <div className="flex items-center gap-2 bg-muted px-3 py-0.5 text-muted-foreground">
@@ -192,12 +196,21 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
               {hunk.lines.map((line, index) => {
                 if (rendered++ >= MAX_LINES) return null
                 const id = lineId(hunkIndex, index)
+                const sides = highlighted?.[hunkIndex]
+                let segments: Segment[] | undefined
+                if (line.kind === 'delete') segments = sides?.old[oldIndex++]
+                else if (line.kind === 'add') segments = sides?.new[newIndex++]
+                else {
+                  oldIndex++ // context lines are on both sides
+                  segments = sides?.new[newIndex++]
+                }
                 const selectable =
                   line.kind !== 'context' && (area !== 'staged' || reversePartialOk)
                 return (
                   <Line
                     key={index}
                     line={line}
+                    segments={segments}
                     selected={selected.has(id)}
                     onClick={
                       selectable
@@ -238,6 +251,8 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
 
 function Line(props: {
   line: PatchLine
+  /** Syntax-highlighted pieces of the line, if its language is known. */
+  segments?: Segment[] | undefined
   selected: boolean
   onClick?: (event: React.MouseEvent) => void
 }) {
@@ -266,7 +281,19 @@ function Line(props: {
         {line.newLine ?? ''}
       </span>
       <span className="w-4 shrink-0 text-center select-none">{sign}</span>
-      <span className="pr-4 whitespace-pre">{line.text || ' '}</span>
+      <span className="pr-4 whitespace-pre">
+        {props.segments?.length
+          ? props.segments.map((segment, i) =>
+              segment.className ? (
+                <span key={i} className={segment.className}>
+                  {segment.text}
+                </span>
+              ) : (
+                segment.text
+              ),
+            )
+          : line.text || ' '}
+      </span>
     </div>
   )
 }

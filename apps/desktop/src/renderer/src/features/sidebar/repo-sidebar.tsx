@@ -7,19 +7,38 @@
  * delete...); double-click a branch to check it out.
  */
 import { useState } from 'react'
-import { Archive, ChevronRight, Cloud, GitBranch, Tag, type LucideIcon } from 'lucide-react'
+import {
+  Archive,
+  ChevronRight,
+  Cloud,
+  FolderTree,
+  GitBranch,
+  Plus,
+  Tag,
+  type LucideIcon,
+} from 'lucide-react'
 import type { Ref } from '@shared/ipc'
 import { cn } from '@/lib/utils'
-import { useRefs, useRemotes, useStashes } from '@/features/repos/use-repo-data'
+import { useRefs, useRemotes, useStashes, useWorktrees } from '@/features/repos/use-repo-data'
+import { openRepoAtPath } from '@/features/repos/use-repos'
+import { toast } from 'sonner'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
-import { BranchMenu, RemoteBranchMenu, StashMenu, TagMenu } from '@/features/repo-actions/menus'
-import { checkoutBranch } from '@/features/repo-actions/actions'
+import {
+  BranchMenu,
+  RemoteBranchMenu,
+  StashMenu,
+  TagMenu,
+  WorktreeMenu,
+} from '@/features/repo-actions/menus'
+import { addWorktree, checkoutBranch } from '@/features/repo-actions/actions'
+import { draggableRef } from '@/features/drag-drop/drop-menu'
 import { groupRemoteBranches, localBranches, remoteBranchShortName, sortedTags } from './group-refs'
 
 export function RepoSidebar({ repoPath }: { repoPath: string }) {
   const refs = useRefs(repoPath).data ?? []
   const remotes = useRemotes(repoPath).data ?? []
   const stashes = useStashes(repoPath).data ?? []
+  const worktrees = useWorktrees(repoPath).data ?? []
   const [view, setView] = useRepoView(repoPath)
 
   /**
@@ -39,6 +58,7 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
         {branches.map((branch) => (
           <BranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
             <Item
+              {...draggableRef(branch)}
               label={branch.name}
               selected={view.selectedSha === branch.sha}
               onClick={() => select(branch.sha)}
@@ -57,6 +77,7 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
             {group.branches.map((branch) => (
               <RemoteBranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
                 <Item
+                  {...draggableRef(branch)}
                   label={remoteBranchShortName(branch)}
                   selected={view.selectedSha === branch.sha}
                   onClick={() => select(branch.sha)}
@@ -66,6 +87,34 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
             ))}
           </Section>
         ))}
+      </Section>
+
+      <Section
+        title="Worktrees"
+        icon={FolderTree}
+        count={worktrees.length}
+        defaultOpen={worktrees.length > 1}
+        action={{ label: 'New worktree', onClick: () => void addWorktree(repoPath) }}
+      >
+        {worktrees.map((worktree) => {
+          const isThis = samePath(worktree.path, repoPath)
+          return (
+            <WorktreeMenu key={worktree.path} repo={repoPath} worktree={worktree}>
+              <Item
+                label={worktree.path.split(/[\\/]/).pop() ?? worktree.path}
+                strong={isThis}
+                selected={false}
+                title={`${worktree.path}\n${worktree.branch ? `Branch ${worktree.branch}` : 'Detached'}${worktree.prunable ? '\nFolder missing' : ''}${isThis ? '\n(this tab)' : '\nClick to open in a tab'}`}
+                onClick={() => !isThis && void openWorktree(worktree.path)}
+                trailing={
+                  <span className="ml-auto truncate text-xs text-muted-foreground">
+                    {worktree.prunable ? 'missing' : (worktree.branch ?? 'detached')}
+                  </span>
+                }
+              />
+            </WorktreeMenu>
+          )
+        })}
       </Section>
 
       <Section title="Tags" icon={Tag} count={tags.length} defaultOpen={false}>
@@ -102,12 +151,14 @@ function Section(props: {
   count: number
   nested?: boolean
   defaultOpen?: boolean
+  /** A small "+" button in the header. */
+  action?: { label: string; onClick: () => void }
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(props.defaultOpen ?? true)
   const Icon = props.icon
   return (
-    <div className={props.nested ? '' : 'mb-2'}>
+    <div className={cn('group/section relative', !props.nested && 'mb-2')}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -126,6 +177,17 @@ function Section(props: {
         <span className="truncate">{props.title}</span>
         <span className="ml-auto text-xs font-normal text-muted-foreground">{props.count}</span>
       </button>
+      {props.action && (
+        <button
+          type="button"
+          aria-label={props.action.label}
+          title={props.action.label}
+          onClick={props.action.onClick}
+          className="absolute top-1 right-8 rounded p-0.5 text-muted-foreground opacity-0 group-hover/section:opacity-100 hover:text-foreground focus:opacity-100"
+        >
+          <Plus className="size-3.5" />
+        </button>
+      )}
       {open && (
         <div>
           {props.count === 0 && !props.nested ? (
@@ -193,4 +255,15 @@ function AheadBehind({ branch }: { branch: Ref }) {
       )}
     </span>
   )
+}
+
+/** Compare two paths, ignoring slash direction and letter case. */
+function samePath(a: string, b: string): boolean {
+  const norm = (p: string) => p.replaceAll('\\', '/').replace(/\/$/, '').toLowerCase()
+  return norm(a) === norm(b)
+}
+
+async function openWorktree(path: string) {
+  const result = await openRepoAtPath(path)
+  if (result.ok === false) toast.error(result.message)
 }

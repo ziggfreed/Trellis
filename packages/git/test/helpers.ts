@@ -28,6 +28,9 @@ export async function createTempRepo(options: { bare?: boolean } = {}): Promise<
   await git('config', 'user.name', 'Trellis Test')
   await git('config', 'user.email', 'test@example.com')
   await git('config', 'commit.gpgsign', 'false')
+  // Keep line endings exactly as written, whatever the machine's global git
+  // config says (Windows installs often set core.autocrlf=true).
+  await git('config', 'core.autocrlf', 'false')
 
   return {
     path,
@@ -41,7 +44,8 @@ export async function createTempRepo(options: { bare?: boolean } = {}): Promise<
       await git('commit', '-m', message)
       return (await git('rev-parse', 'HEAD')).trim()
     },
-    cleanup: () => rm(path, { recursive: true, force: true }),
+    // Windows can keep files locked for a moment after git exits, so retry.
+    cleanup: () => rm(path, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }),
   }
 }
 

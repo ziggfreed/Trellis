@@ -21,11 +21,18 @@ import type {
   LogScope,
   CommitDetails,
   DiffTarget,
+  FileContent,
   FileDiffContents,
   GitInstallation,
   Ref,
   Remote,
   MergeResult,
+  Worktree,
+  BlameResult,
+  Comparison,
+  FileHistoryEntry,
+  RebasePlanItem,
+  UndoState,
   RepoStatus,
   Stash,
 } from '@trellis/git/types'
@@ -59,6 +66,21 @@ export interface Settings {
   diffLayout: 'unified' | 'split'
   /** Folder last used as the destination for cloning. */
   lastCloneFolder: string | null
+  /** Fetch open repositories in the background every N minutes (0 = off). */
+  autoFetchMinutes: number
+  /** Named groups of repositories that can be opened together. */
+  workspaces: Workspace[]
+  /** Keyboard shortcut overrides: action id -> shortcut ("" turns it off). */
+  keybindings: Record<string, string>
+  /** Command that starts the user's code editor, e.g. "code" (empty = VS Code). */
+  editorCommand: string
+}
+
+/** A named group of repositories, e.g. "Work" or "Side projects". */
+export interface Workspace {
+  id: string
+  name: string
+  repos: RepoTab[]
 }
 
 export interface AppInfo {
@@ -127,6 +149,10 @@ export interface IpcContract {
   'repo:resolve': { args: [path: string]; result: OpenRepoResult }
   /** Open the repo folder in the system file manager. */
   'repo:showInFolder': { args: [path: string]; result: void }
+  /** Open the user's terminal program in the repository folder. */
+  'shell:openTerminal': { args: [path: string]; result: void }
+  /** Open the repository (and optionally one file) in the user's code editor. */
+  'shell:openEditor': { args: [path: string, file?: string]; result: void }
   /** Open a file from the repository in its default app (e.g. to resolve conflicts). */
   'repo:openFile': { args: [path: string, file: string]; result: void }
   /**
@@ -192,6 +218,8 @@ export interface IpcContract {
     result: void
   }
   'repo:checkout': { args: [path: string, target: CheckoutTarget]; result: void }
+  /** Point a (not checked out) branch at another commit. */
+  'repo:moveBranch': { args: [path: string, name: string, target: string]; result: void }
   'repo:renameBranch': { args: [path: string, from: string, to: string]; result: void }
   'repo:deleteBranch': { args: [path: string, name: string, force: boolean]; result: void }
   'repo:merge': {
@@ -235,6 +263,52 @@ export interface IpcContract {
     args: [operationId: string, path: string, remote: string, tag: string]
     result: void
   }
+
+  // --- File history, blame and compare -----------------------------------------
+  /** Commits that changed a file, newest first, following renames. */
+  'repo:getFileHistory': { args: [path: string, file: string]; result: FileHistoryEntry[] }
+  /** Who last changed each line. Without `revision`, the working-tree version. */
+  'repo:getBlame': { args: [path: string, file: string, revision?: string]; result: BlameResult }
+  /** What `head` has that `base` doesn't (commits and changed files). */
+  'repo:getComparison': { args: [path: string, base: string, head: string]; result: Comparison }
+
+  // --- Worktrees ----------------------------------------------------------------
+  'repo:getWorktrees': { args: [path: string]; result: Worktree[] }
+  /** Create a worktree at `folder` for an existing branch, or a new branch. */
+  'repo:addWorktree': {
+    args: [path: string, folder: string, options: { branch?: string; newBranch?: string }]
+    result: OpenRepoResult
+  }
+  'repo:removeWorktree': { args: [path: string, folder: string, force: boolean]; result: void }
+  'repo:pruneWorktrees': { args: [path: string]; result: void }
+
+  // --- Conflicts ----------------------------------------------------------------
+  /** Read a working-tree file (e.g. a conflicted one, with its markers). */
+  'repo:readWorkingFile': { args: [path: string, file: string]; result: FileContent }
+  /** Write the resolved contents of a conflicted file and stage it. */
+  'repo:saveResolvedFile': { args: [path: string, file: string, content: string]; result: void }
+  /** Resolve a whole conflicted file by keeping one side, or deleting it. */
+  'repo:resolveFileWith': {
+    args: [path: string, file: string, choice: 'current' | 'incoming' | 'delete']
+    result: void
+  }
+
+  // --- Interactive rebase --------------------------------------------------
+  /** Commits after `base` up to HEAD, oldest first ('root' = from the first commit). */
+  'repo:getRebaseCommits': {
+    args: [path: string, base: string]
+    result: { commits: Commit[]; hasMerges: boolean }
+  }
+  'repo:interactiveRebase': {
+    args: [path: string, base: string, plan: RebasePlanItem[]]
+    result: MergeResult
+  }
+
+  // --- Undo / redo ------------------------------------------------------------
+  'repo:getUndoState': { args: [path: string]; result: UndoState }
+  /** Undo the last operation made in Trellis. Returns its label, or null if none. */
+  'repo:undo': { args: [path: string]; result: string | null }
+  'repo:redo': { args: [path: string]; result: string | null }
 
   // --- Git command log and credentials --------------------------------------
   'git:getCommandLog': { args: []; result: GitCommandEntry[] }
@@ -287,6 +361,8 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:resolve': true,
   'repo:showInFolder': true,
   'repo:openFile': true,
+  'shell:openTerminal': true,
+  'shell:openEditor': true,
   'repo:setWatched': true,
   'repo:getStatus': true,
   'repo:getLog': true,
@@ -308,6 +384,7 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:getHeadMessage': true,
   'repo:createBranch': true,
   'repo:checkout': true,
+  'repo:moveBranch': true,
   'repo:renameBranch': true,
   'repo:deleteBranch': true,
   'repo:merge': true,
@@ -326,6 +403,21 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:push': true,
   'repo:deleteRemoteBranch': true,
   'repo:pushTag': true,
+  'repo:getFileHistory': true,
+  'repo:getBlame': true,
+  'repo:getComparison': true,
+  'repo:getWorktrees': true,
+  'repo:addWorktree': true,
+  'repo:removeWorktree': true,
+  'repo:pruneWorktrees': true,
+  'repo:readWorkingFile': true,
+  'repo:saveResolvedFile': true,
+  'repo:resolveFileWith': true,
+  'repo:getRebaseCommits': true,
+  'repo:interactiveRebase': true,
+  'repo:getUndoState': true,
+  'repo:undo': true,
+  'repo:redo': true,
   'git:getCommandLog': true,
   'auth:respond': true,
 }
