@@ -27,6 +27,9 @@ import type {
   Ref,
   Remote,
   MergeResult,
+  BlameResult,
+  Comparison,
+  FileHistoryEntry,
   RebasePlanItem,
   UndoState,
   RepoStatus,
@@ -239,6 +242,14 @@ export interface IpcContract {
     result: void
   }
 
+  // --- File history, blame and compare -----------------------------------------
+  /** Commits that changed a file, newest first, following renames. */
+  'repo:getFileHistory': { args: [path: string, file: string]; result: FileHistoryEntry[] }
+  /** Who last changed each line. Without `revision`, the working-tree version. */
+  'repo:getBlame': { args: [path: string, file: string, revision?: string]; result: BlameResult }
+  /** What `head` has that `base` doesn't (commits and changed files). */
+  'repo:getComparison': { args: [path: string, base: string, head: string]; result: Comparison }
+
   // --- Conflicts ----------------------------------------------------------------
   /** Read a working-tree file (e.g. a conflicted one, with its markers). */
   'repo:readWorkingFile': { args: [path: string, file: string]; result: FileContent }
@@ -357,6 +368,9 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:push': true,
   'repo:deleteRemoteBranch': true,
   'repo:pushTag': true,
+  'repo:getFileHistory': true,
+  'repo:getBlame': true,
+  'repo:getComparison': true,
   'repo:readWorkingFile': true,
   'repo:saveResolvedFile': true,
   'repo:resolveFileWith': true,

@@ -35,13 +35,22 @@ export function assertPage(value: unknown): asserts value is { skip: number; lim
 }
 
 export function assertDiffTarget(value: unknown): asserts value is DiffTarget {
-  const target = value as Partial<DiffTarget & { sha: string; oldPath: string }> | null
+  const target = value as Partial<{
+    kind: string
+    sha: string
+    path: string
+    oldPath: string
+  }> | null
   if (!target || typeof target !== 'object') throw new TypeError('target must be an object')
   assertString(target.path, 'target.path')
   if (target.oldPath !== undefined) assertString(target.oldPath, 'target.oldPath')
   if (target.kind === 'commit') assertSha(target.sha, 'target.sha')
-  else if (target.kind !== 'staged' && target.kind !== 'unstaged') {
-    throw new TypeError('target.kind must be commit, staged or unstaged')
+  else if (target.kind === 'range') {
+    const range = target as { from?: unknown; to?: unknown }
+    assertRefArg(range.from, 'target.from')
+    assertRefArg(range.to, 'target.to')
+  } else if (target.kind !== 'staged' && target.kind !== 'unstaged') {
+    throw new TypeError('target.kind must be commit, range, staged or unstaged')
   }
 }
 

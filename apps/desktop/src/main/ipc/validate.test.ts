@@ -13,6 +13,12 @@ describe('IPC argument validation', () => {
     expect(() => assertDiffTarget({ kind: 'commit', sha: 'abc1234', path: 'a.ts' })).not.toThrow()
     expect(() => assertDiffTarget({ kind: 'staged', path: 'a.ts', oldPath: 'b.ts' })).not.toThrow()
     expect(() => assertDiffTarget({ kind: 'unstaged', path: 'a.ts' })).not.toThrow()
+    expect(() =>
+      assertDiffTarget({ kind: 'range', from: 'abc123', to: 'feature/x', path: 'a.ts' }),
+    ).not.toThrow()
+    expect(() =>
+      assertDiffTarget({ kind: 'range', from: '--output=x', to: 'main', path: 'a.ts' }),
+    ).toThrow()
   })
 
   it('rejects invalid diff targets', () => {

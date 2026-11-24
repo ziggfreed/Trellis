@@ -87,3 +87,26 @@ export function useUndoState(path: string) {
     queryFn: () => api.invoke('repo:getUndoState', path),
   })
 }
+
+export function useFileHistory(path: string, file: string) {
+  return useQuery({
+    queryKey: [...repoKeys.all(path), 'file-history', file],
+    queryFn: () => api.invoke('repo:getFileHistory', path, file),
+  })
+}
+
+/** Blame for a file; `revision` undefined means the working-tree version. */
+export function useBlame(path: string, file: string, revision?: string) {
+  return useQuery({
+    // Working-tree blame lives under 'diff' so it refreshes when files change.
+    queryKey: [...repoKeys.all(path), revision ? 'blame' : 'diff', 'blame', file, revision ?? null],
+    queryFn: () => api.invoke('repo:getBlame', path, file, revision),
+  })
+}
+
+export function useComparison(path: string, base: string, head: string) {
+  return useQuery({
+    queryKey: [...repoKeys.all(path), 'compare', base, head],
+    queryFn: () => api.invoke('repo:getComparison', path, base, head),
+  })
+}

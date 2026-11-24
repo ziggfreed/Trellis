@@ -20,6 +20,7 @@ import { useStatus } from '@/features/repos/use-repo-data'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { groupChanges, type ChangeEntry } from './group-changes'
 import { discardEntries, stageEntries, unstageEntries } from './change-actions'
+import { FileMenu } from '@/features/repo-actions/menus'
 
 /** The diff to show for a change entry. */
 export function targetFor(entry: ChangeEntry): DiffTarget {
@@ -58,6 +59,7 @@ export function ChangesList({ repoPath }: { repoPath: string }) {
       <Section title="Conflicts" entries={groups.conflicted}>
         {groups.conflicted.map((entry) => (
           <Row
+            repoPath={repoPath}
             key={entry.path}
             entry={entry}
             selected={isSelected(entry)}
@@ -92,6 +94,7 @@ export function ChangesList({ repoPath }: { repoPath: string }) {
       >
         {groups.staged.map((entry) => (
           <Row
+            repoPath={repoPath}
             key={entry.path}
             entry={entry}
             selected={isSelected(entry)}
@@ -127,6 +130,7 @@ export function ChangesList({ repoPath }: { repoPath: string }) {
       >
         {groups.unstaged.map((entry) => (
           <Row
+            repoPath={repoPath}
             key={entry.path}
             entry={entry}
             selected={isSelected(entry)}
@@ -172,6 +176,7 @@ function Section(props: {
 }
 
 function Row(props: {
+  repoPath: string
   entry: ChangeEntry
   selected: boolean
   onSelect: () => void
@@ -185,15 +190,17 @@ function Row(props: {
         props.selected ? 'bg-accent' : 'hover:bg-accent/50',
       )}
     >
-      <button
-        type="button"
-        onClick={props.onSelect}
-        onDoubleClick={props.onDoubleClick}
-        className="flex min-w-0 flex-1 items-center gap-2 py-1 text-left"
-      >
-        <ChangeBadge change={props.entry.change} />
-        <FilePath path={props.entry.path} oldPath={props.entry.origPath} className="flex-1" />
-      </button>
+      <FileMenu repo={props.repoPath} path={props.entry.path}>
+        <button
+          type="button"
+          onClick={props.onSelect}
+          onDoubleClick={props.onDoubleClick}
+          className="flex min-w-0 flex-1 items-center gap-2 py-1 text-left"
+        >
+          <ChangeBadge change={props.entry.change} />
+          <FilePath path={props.entry.path} oldPath={props.entry.origPath} className="flex-1" />
+        </button>
+      </FileMenu>
       <div
         className={cn(
           'flex shrink-0 opacity-0 group-hover/row:opacity-100 focus-within:opacity-100',

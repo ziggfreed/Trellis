@@ -6,8 +6,25 @@
 import { create } from 'zustand'
 import type { DiffTarget, LogScope } from '@shared/ipc'
 
+/** A file opened for blame or history. */
+export interface FileViewState {
+  path: string
+  mode: 'blame' | 'history'
+  /**
+   * For blame: older revisions being looked at ("blame before this change"),
+   * newest last. Empty means the current working-tree file.
+   */
+  revisions: { sha: string; path: string }[]
+}
+
+/** Two refs being compared: what `head` has that `base` doesn't. */
+export interface CompareState {
+  base: string
+  head: string
+}
+
 export interface RepoViewState {
-  view: 'history' | 'changes'
+  view: 'history' | 'changes' | 'file' | 'compare'
   /** Selected commit in the history list. */
   selectedSha: string | null
   /**
@@ -27,6 +44,10 @@ export interface RepoViewState {
   commitDescription: string
   /** Amend the last commit instead of creating a new one. */
   amend: boolean
+  /** The file shown in the File view, if any. */
+  file: FileViewState | null
+  /** The refs shown in the Compare view, if any. */
+  compare: CompareState | null
 }
 
 const DEFAULT_VIEW: RepoViewState = {
@@ -39,6 +60,8 @@ const DEFAULT_VIEW: RepoViewState = {
   commitSummary: '',
   commitDescription: '',
   amend: false,
+  file: null,
+  compare: null,
 }
 
 interface RepoViewStore {

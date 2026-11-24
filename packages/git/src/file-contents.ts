@@ -75,6 +75,13 @@ export async function getFileDiffContents(
       ])
       return { old, new: current }
     }
+    case 'range': {
+      const [old, current] = await Promise.all([
+        readBlob(repoPath, `${target.from}:${target.oldPath ?? target.path}`),
+        readBlob(repoPath, `${target.to}:${target.path}`),
+      ])
+      return { old, new: current }
+    }
     case 'staged': {
       const oldPath = target.oldPath ?? target.path
       const [old, current] = await Promise.all([

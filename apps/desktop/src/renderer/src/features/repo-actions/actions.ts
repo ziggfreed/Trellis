@@ -432,6 +432,24 @@ export async function redo(repo: string) {
 // Navigation helpers
 // ---------------------------------------------------------------------------
 
+/** Open a file's blame or history in the File view. */
+export function openFileView(repo: string, path: string, mode: 'blame' | 'history') {
+  useRepoViewStore
+    .getState()
+    .update(repo, { view: 'file', file: { path, mode, revisions: [] }, selectedFile: null })
+}
+
+/**
+ * Compare `head` with `base` in the Compare view. Without a base, compares
+ * with the current branch.
+ */
+export async function openCompare(repo: string, head: string, base?: string) {
+  const against = base ?? (await getStatus(repo)).branch.head ?? 'HEAD'
+  useRepoViewStore
+    .getState()
+    .update(repo, { view: 'compare', compare: { base: against, head }, selectedFile: null })
+}
+
 /** Switch the repository view to Changes (e.g. after a merge stops with conflicts). */
 export function showChanges(repo: string) {
   useRepoViewStore.getState().update(repo, { view: 'changes', selectedFile: null })

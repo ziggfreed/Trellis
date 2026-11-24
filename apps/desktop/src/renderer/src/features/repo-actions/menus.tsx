@@ -20,6 +20,8 @@ import {
 import { shortSha } from '@/lib/format'
 import { remoteBranchShortName } from '@/features/sidebar/group-refs'
 import * as actions from './actions'
+import { api } from '@/lib/api'
+import { runAction } from '@/lib/run-action'
 import { openInteractiveRebase } from '@/features/rebase/rebase-store'
 
 interface MenuProps {
@@ -68,6 +70,12 @@ export function BranchMenu({ repo, branch, children }: MenuProps & { branch: Ref
           )}
           <ContextMenuSeparator />
           <ContextMenuItem
+            disabled={branch.isHead}
+            onSelect={() => void actions.openCompare(repo, branch.name)}
+          >
+            Compare with current branch
+          </ContextMenuItem>
+          <ContextMenuItem
             onSelect={() =>
               void actions.createBranch(repo, { ref: branch.name, label: branch.name })
             }
@@ -113,6 +121,9 @@ export function RemoteBranchMenu({ repo, branch, children }: MenuProps & { branc
             Rebase current branch onto this…
           </ContextMenuItem>
           <ContextMenuSeparator />
+          <ContextMenuItem onSelect={() => void actions.openCompare(repo, branch.name)}>
+            Compare with current branch
+          </ContextMenuItem>
           <ContextMenuItem
             onSelect={() =>
               void actions.createBranch(repo, { ref: branch.name, label: branch.name })
@@ -218,6 +229,9 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
           <ContextMenuItem onSelect={() => void actions.checkoutCommit(repo, commit.sha)}>
             Check out…
           </ContextMenuItem>
+          <ContextMenuItem onSelect={() => void actions.openCompare(repo, commit.sha)}>
+            Compare with current branch
+          </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem onSelect={() => void openInteractiveRebase(repo, commit)}>
             Interactive rebase from here…
@@ -258,6 +272,35 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
             }
           >
             Copy message
+          </ContextMenuItem>
+        </>
+      }
+    >
+      {children}
+    </Menu>
+  )
+}
+
+/** Menu for a file in a list (commit details, Changes view, file history...). */
+export function FileMenu({ repo, path, children }: MenuProps & { path: string }) {
+  return (
+    <Menu
+      items={
+        <>
+          <ContextMenuItem onSelect={() => actions.openFileView(repo, path, 'blame')}>
+            Blame
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => actions.openFileView(repo, path, 'history')}>
+            File history
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem
+            onSelect={() => void runAction(repo, () => api.invoke('repo:openFile', repo, path))}
+          >
+            Open file
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => void actions.copyToClipboard(path, 'path')}>
+            Copy path
           </ContextMenuItem>
         </>
       }

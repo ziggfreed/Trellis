@@ -11,6 +11,7 @@ import { ChangeBadge } from '@/components/change-badge'
 import { FilePath } from '@/components/file-path'
 import { useCommitDetails } from '@/features/repos/use-repo-data'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
+import { FileMenu } from '@/features/repo-actions/menus'
 
 export function CommitDetails({ repoPath }: { repoPath: string }) {
   const [view, setView] = useRepoView(repoPath)
@@ -115,23 +116,27 @@ export function CommitDetails({ repoPath }: { repoPath: string }) {
       <ul className="min-h-0 flex-1 overflow-y-auto pb-2">
         {files.map((file) => (
           <li key={file.path}>
-            <button
-              type="button"
-              onClick={() => selectFile(file)}
-              className={cn(
-                'flex w-full items-center gap-2 px-3 py-1 text-left text-sm',
-                selectedPath === file.path ? 'bg-accent' : 'hover:bg-accent/50',
-              )}
-            >
-              <ChangeBadge change={file.change} />
-              <FilePath path={file.path} oldPath={file.oldPath} className="flex-1" />
-              {file.additions !== null && (
-                <span className="shrink-0 font-mono text-xs">
-                  <span className="text-change-added">+{file.additions}</span>{' '}
-                  <span className="text-change-deleted">−{file.deletions}</span>
-                </span>
-              )}
-            </button>
+            <FileMenu repo={repoPath} path={file.path}>
+              <button
+                type="button"
+                onClick={() => selectFile(file)}
+                className={cn(
+                  'flex w-full items-center gap-2 px-3 py-1 text-left text-sm',
+                  selectedPath === file.path
+                    ? 'bg-accent'
+                    : 'hover:bg-accent/50 data-[state=open]:bg-accent/50',
+                )}
+              >
+                <ChangeBadge change={file.change} />
+                <FilePath path={file.path} oldPath={file.oldPath} className="flex-1" />
+                {file.additions !== null && (
+                  <span className="shrink-0 font-mono text-xs">
+                    <span className="text-change-added">+{file.additions}</span>{' '}
+                    <span className="text-change-deleted">−{file.deletions}</span>
+                  </span>
+                )}
+              </button>
+            </FileMenu>
           </li>
         ))}
       </ul>

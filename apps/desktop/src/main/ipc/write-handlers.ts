@@ -316,6 +316,28 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       )
     },
 
+    // --- File history, blame and compare (read-only) ---------------------------
+    'repo:getFileHistory': (path, file) => {
+      assertString(path, 'path')
+      assertFileInRepo(path, file)
+      return git.getFileHistory(path, file)
+    },
+
+    'repo:getBlame': (path, file, revision) => {
+      assertString(path, 'path')
+      assertString(file, 'file') // may be an old path from history, so not checked against the disk
+      if (file.startsWith('-')) throw new TypeError('file must not start with "-"')
+      if (revision !== undefined) assertSha(revision, 'revision')
+      return git.getBlame(path, file, revision)
+    },
+
+    'repo:getComparison': (path, base, head) => {
+      assertString(path, 'path')
+      assertRefArg(base, 'base')
+      assertRefArg(head, 'head')
+      return git.getComparison(path, base, head)
+    },
+
     // --- Conflicts --------------------------------------------------------------
     'repo:readWorkingFile': (path, file) => {
       assertString(path, 'path')

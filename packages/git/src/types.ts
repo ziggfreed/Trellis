@@ -191,11 +191,14 @@ export type FileContent =
 /**
  * Which two versions of a file to compare.
  * - `commit`: the file in a commit vs. the same file in its first parent.
+ * - `range`: the file at one commit vs. another.
  * - `staged`: HEAD vs. the index (what `git diff --cached` shows).
  * - `unstaged`: the index vs. the working tree (what `git diff` shows).
  */
 export type DiffTarget =
   | { kind: 'commit'; sha: string; path: string; oldPath?: string }
+  /** The file at commit `from` vs. at commit `to` (used when comparing branches). */
+  | { kind: 'range'; from: string; to: string; path: string; oldPath?: string }
   | { kind: 'staged'; path: string; oldPath?: string }
   | { kind: 'unstaged'; path: string }
 
@@ -252,4 +255,57 @@ export interface RebasePlanItem {
   action: RebaseAction
   /** New message, for 'reword'. */
   message?: string
+}
+
+// ---------------------------------------------------------------------------
+// File history, blame and compare
+// ---------------------------------------------------------------------------
+
+/** One commit in a file's history. */
+export interface FileHistoryEntry {
+  commit: Commit
+  /** The file's path in this commit (it can change through renames). */
+  path: string
+  /** For renames: the path before this commit. */
+  oldPath?: string
+  change: ChangeKind
+}
+
+export interface BlameLine {
+  /** Commit that last changed this line (all zeros if not committed yet). */
+  sha: string
+  /** Line number in that commit's version of the file. */
+  origLine: number
+  /** Line number in the version being blamed. */
+  line: number
+  text: string
+}
+
+export interface BlameCommit {
+  sha: string
+  author: string
+  authorEmail: string
+  /** Unix time in milliseconds. */
+  authorTime: number
+  summary: string
+  /** The file's path in this commit. */
+  filename: string
+  /** The commit before this one that touched the file, for "blame previous revision". */
+  previous?: { sha: string; path: string }
+}
+
+export interface BlameResult {
+  lines: BlameLine[]
+  commits: Record<string, BlameCommit>
+}
+
+export interface Comparison {
+  /** Where the two histories split, or null if they share no history. */
+  mergeBase: string | null
+  /** Commits on the compared ref that the base doesn't have, newest first. */
+  commits: Commit[]
+  /** How many commits the base has that the compared ref doesn't. */
+  behind: number
+  /** Files changed since the merge base. */
+  files: ChangedFile[]
 }

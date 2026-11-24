@@ -231,6 +231,23 @@ export function builtInCommands(context: CommandContext): Command[] {
     },
   )
 
+  commands.push({
+    id: 'git.compare',
+    title: 'Compare current branch with…',
+    group: 'Branches',
+    keywords: ['diff', 'pull request'],
+    run: () => ({
+      placeholder: 'Choose a branch to compare with',
+      items: context.refs
+        .filter((r) => r.type !== 'tag' && !r.isHead)
+        .map((r) => ({
+          id: r.fullName,
+          label: r.name,
+          run: () => void actions.openCompare(path, r.name),
+        })),
+    }),
+  })
+
   if (operation) {
     commands.push(
       {
