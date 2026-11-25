@@ -24,6 +24,17 @@ files:
 # The binaries use Node-API, which is stable across Node/Electron versions,
 # so no rebuild for Electron is needed.
 npmRebuild: false
+# Built-in plugins (the repository's plugins/ folder) go in the resources
+# folder; main/plugins/plugin-ipc.ts loads them from there. Their tests and
+# dev-only files are left out.
+extraResources:
+  - from: ../../plugins
+    to: plugins
+    filter:
+      - '**/*'
+      - '!**/node_modules/**'
+      - '!**/*.test.js'
+      - '!**/tsconfig.json'
 win:
   target: [nsis]
   artifactName: ${productName}-${version}-setup-${arch}.${ext}

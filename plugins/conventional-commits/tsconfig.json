@@ -1,0 +1,11 @@
+{
+  // Built-in plugins are plain JavaScript (no build step), type-checked
+  // against @trellis/plugin-api through JSDoc comments.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "types": []
+  },
+  "include": ["*.js"]
+}

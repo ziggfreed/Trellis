@@ -4,7 +4,8 @@
  *
  *   <BranchMenu repo={path} branch={ref}><button>main</button></BranchMenu>
  *
- * The menu items just call functions in ./actions.ts.
+ * The menu items just call functions in ./actions.ts. Plugins can add
+ * items to the commit, branch and file menus (PluginMenuItems).
  */
 import type { Commit, Ref, Stash, Worktree } from '@shared/ipc'
 import { openRepoAtPath } from '@/features/repos/use-repos'
@@ -25,6 +26,7 @@ import { api } from '@/lib/api'
 import { runAction } from '@/lib/run-action'
 import { openInteractiveRebase } from '@/features/rebase/rebase-store'
 import { openCompareDialog } from '@/features/compare/compare-dialog'
+import { PluginMenuItems } from '@/features/plugins/plugin-menu-items'
 import { useRepoViewStore } from '@/features/repo-view/repo-view-store'
 
 interface MenuProps {
@@ -103,6 +105,7 @@ export function BranchMenu({ repo, branch, children }: MenuProps & { branch: Ref
           >
             Copy name
           </ContextMenuItem>
+          <PluginMenuItems location="branch" args={{ repo, branch: branch.name }} />
         </>
       }
     >
@@ -152,6 +155,7 @@ export function RemoteBranchMenu({ repo, branch, children }: MenuProps & { branc
           >
             Copy name
           </ContextMenuItem>
+          <PluginMenuItems location="branch" args={{ repo, branch: branch.name }} />
         </>
       }
     >
@@ -300,6 +304,7 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
           >
             Copy message
           </ContextMenuItem>
+          <PluginMenuItems location="commit" args={{ repo, sha: commit.sha }} />
         </>
       }
     >
@@ -329,6 +334,7 @@ export function FileMenu({ repo, path, children }: MenuProps & { path: string })
           <ContextMenuItem onSelect={() => void actions.copyToClipboard(path, 'path')}>
             Copy path
           </ContextMenuItem>
+          <PluginMenuItems location="file" args={{ repo, path }} />
         </>
       }
     >
