@@ -77,7 +77,9 @@ describe('submodules', () => {
       delete process.env.GIT_CONFIG_VALUE_0
     }
     expect((await getSubmodules(clone.path))[0]?.state).toBe('ok')
-    expect(await readFile(join(clone.path, 'lib', 'README.md'), 'utf8')).toBe('# test\n')
+    // A fresh submodule checkout follows the machine's line-ending setting (CRLF on Windows).
+    const readme = await readFile(join(clone.path, 'lib', 'README.md'), 'utf8')
+    expect(readme.replace(/\r\n/g, '\n')).toBe('# test\n')
   })
 
   it('is empty without submodules', async () => {

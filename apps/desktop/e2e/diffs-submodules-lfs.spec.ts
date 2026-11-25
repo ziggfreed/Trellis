@@ -143,7 +143,9 @@ test('lists submodules, sets one up, and opens it in a tab', async () => {
   await lib.click({ button: 'right' })
   await window.getByRole('menuitem', { name: 'Set up (update)' }).click()
   await expect(lib).toHaveAttribute('title', /Up to date/)
-  expect(readFileSync(join(project.path, 'lib', 'README.md'), 'utf8')).toBe('# test\n')
+  // The submodule checkout follows the machine's line-ending setting (CRLF on Windows).
+  const readme = readFileSync(join(project.path, 'lib', 'README.md'), 'utf8')
+  expect(readme.replace(/\r\n/g, '\n')).toBe('# test\n')
 
   await lib.click()
   await expect(window.getByRole('tab', { name: 'lib' })).toHaveAttribute('aria-selected', 'true')
