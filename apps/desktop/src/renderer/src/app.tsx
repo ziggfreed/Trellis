@@ -22,6 +22,7 @@ import { RepoView } from '@/features/repo-view/repo-view'
 import { GitMissingScreen } from '@/features/git-check/git-missing-screen'
 import { CloneDialog } from '@/features/create-repo/clone-dialog'
 import { CompareDialog } from '@/features/compare/compare-dialog'
+import { ScanDialog } from '@/features/home/scan-dialog'
 import { Dialogs } from '@/features/dialogs/dialogs'
 import { AuthPrompt } from '@/features/auth/auth-prompt'
 import { CommandPalette } from '@/features/command-palette/command-palette'
@@ -83,6 +84,7 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
       <StatusBar gitVersion={gitVersion} repoPath={activeRepo?.path ?? null} />
       <CloneDialog />
       <CompareDialog />
+      <ScanDialog />
       <Dialogs />
       <AuthPrompt />
       <CommandPalette />

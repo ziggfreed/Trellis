@@ -19,6 +19,7 @@ import * as actions from '@/features/repo-actions/actions'
 import { openRepoTab } from '@/features/repos/use-repos'
 import { splitCommitMessage } from '@/features/changes/commit-message'
 import { openCompareDialog } from '@/features/compare/compare-dialog'
+import { scanFolder } from '@/features/home/scan-dialog'
 import type { Command, CommandContext } from './registry'
 
 /** Focus an element after the palette has closed and the view has updated. */
@@ -48,6 +49,13 @@ export function builtInCommands(context: CommandContext): Command[] {
       group: 'Repository',
       shortcut: shortcutLabel('repo.new'),
       run: repoActions.create,
+    },
+    {
+      id: 'repo.scan',
+      title: 'Scan a folder for repositories…',
+      group: 'Repository',
+      keywords: ['import', 'find', 'workspace'],
+      run: () => void scanFolder(),
     },
     {
       id: 'app.settings',

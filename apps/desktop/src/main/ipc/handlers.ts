@@ -30,10 +30,12 @@ import { openEditor, openTerminal } from '../services/external-apps'
 import { AskpassServer } from '../services/askpass'
 import { askUser, cancelAllPrompts } from '../services/auth-prompts'
 import { createWriteHandlers } from './write-handlers'
+import { scanForRepos } from '../services/scan-repos'
 import {
   assertDiffTarget,
   assertFileInRepo,
   assertPage,
+  assertAbsolutePath,
   assertCommitFilter,
   assertScope,
   assertSha,
@@ -105,6 +107,11 @@ export function createHandlers(
       const root = await git.getRepoRoot(path)
       if (!root) return { ok: false, reason: 'not-a-repo', path }
       return { ok: true, repo: { path: root, name: basename(root) } }
+    },
+
+    'repo:scanFolder': (folder) => {
+      assertAbsolutePath(folder, 'folder')
+      return scanForRepos(folder, git.getRepoRoot)
     },
 
     'repo:showInFolder': async (path) => {

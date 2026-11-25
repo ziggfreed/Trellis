@@ -63,6 +63,8 @@ export interface Settings {
   activeTab: string | null
   /** Recently opened repositories, newest first. */
   recentRepos: RepoTab[]
+  /** Repositories starred on the home screen, in the order they were starred. */
+  favouriteRepos: RepoTab[]
   /** How the diff viewer shows changes. */
   diffLayout: 'unified' | 'split'
   /** Folder last used as the destination for cloning. */
@@ -93,6 +95,14 @@ export interface AppInfo {
 /** Result of asking to open a folder as a repository. */
 export type OpenRepoResult =
   { ok: true; repo: RepoTab } | { ok: false; reason: 'not-a-repo' | 'not-found'; path: string }
+
+/** Repositories found by scanning a folder. */
+export interface ScanResult {
+  /** Found repositories, sorted by path. */
+  repos: RepoTab[]
+  /** True if the scan stopped at a limit, so there may be more. */
+  truncated: boolean
+}
 
 /** Result of a clone or init. */
 export type CreateRepoResult = { ok: true; repo: RepoTab } | { ok: false; message: string }
@@ -148,6 +158,8 @@ export interface IpcContract {
 
   /** Check that `path` is (inside) a git repo and return its root. */
   'repo:resolve': { args: [path: string]; result: OpenRepoResult }
+  /** Find the git repositories inside a folder (a few levels deep). */
+  'repo:scanFolder': { args: [folder: string]; result: ScanResult }
   /** Open the repo folder in the system file manager. */
   'repo:showInFolder': { args: [path: string]; result: void }
   /** Open the user's terminal program in the repository folder. */
@@ -368,6 +380,7 @@ const channelMap: Record<IpcChannel, true> = {
   'settings:update': true,
   'dialog:pickFolder': true,
   'repo:resolve': true,
+  'repo:scanFolder': true,
   'repo:showInFolder': true,
   'repo:openFile': true,
   'shell:openTerminal': true,
