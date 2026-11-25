@@ -8,6 +8,11 @@ All notable changes to Trellis are listed here. The format follows
 
 ### Added
 
+- **Manage remotes**: add, rename, change the URL of, fetch from and remove remotes from the sidebar.
+- **Commit signatures**: commit details show whether a commit is signed (GPG or SSH) and verified; turn on signing for your commits in Settings > General.
+- **Find lost commits**: a reflog browser that marks commits on no branch and rescues them onto a new branch.
+- **Ignore files** from their right-click menu (the file, its extension or its folder), with an offer to stop tracking files already committed.
+- **Delete merged branches** in one go, with one undo to bring them back.
 - **Automatic updates**: Trellis checks GitHub for new versions, downloads them in the background and offers **Restart to update**. Turn it off or check now in **Settings > General > Updates**.
 - **First-run help**: if git doesn't know your name and email yet, the home screen asks for them (commits need them).
 - **Keyboard and screen reader improvements**: repository tabs work with the arrow keys and Delete; better contrast throughout the light theme; the reduce-motion system setting is respected.

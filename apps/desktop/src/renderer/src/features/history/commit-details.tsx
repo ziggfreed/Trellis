@@ -12,6 +12,7 @@ import { FilePath } from '@/components/file-path'
 import { useCommitDetails } from '@/features/repos/use-repo-data'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { FileMenu } from '@/features/repo-actions/menus'
+import { SignatureRow } from '@/features/repo-tools/signature'
 
 export function CommitDetails({ repoPath }: { repoPath: string }) {
   const [view, setView] = useRepoView(repoPath)
@@ -106,6 +107,7 @@ export function CommitDetails({ repoPath }: { repoPath: string }) {
               </dd>
             </>
           )}
+          <SignatureRow repoPath={repoPath} sha={commit.sha} />
         </dl>
       </div>
 

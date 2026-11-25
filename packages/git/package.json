@@ -10,7 +10,8 @@
     "./types": "./src/types.ts",
     "./patch": "./src/patch.ts",
     "./rebase-plan": "./src/rebase-plan.ts",
-    "./conflicts": "./src/conflicts.ts"
+    "./conflicts": "./src/conflicts.ts",
+    "./remote-names": "./src/remote-names.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

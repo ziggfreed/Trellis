@@ -7,7 +7,7 @@
  * The menu items just call functions in ./actions.ts. Plugins can add
  * items to the commit, branch and file menus (PluginMenuItems).
  */
-import type { Commit, Ref, Stash, Worktree } from '@shared/ipc'
+import type { Commit, Ref, Remote, Stash, Worktree } from '@shared/ipc'
 import { openRepoAtPath } from '@/features/repos/use-repos'
 import {
   ContextMenu,
@@ -30,6 +30,9 @@ import { PluginMenuItems } from '@/features/plugins/plugin-menu-items'
 import { useRepoViewStore } from '@/features/repo-view/repo-view-store'
 import { useAiEnabled } from '@/features/ai/ai-client'
 import { explainCommitWithAi } from '@/features/ai/ai-dialog'
+import * as remoteActions from '@/features/repo-tools/remote-actions'
+import { ignore, ignoreChoices } from '@/features/repo-tools/ignore-actions'
+import { openPruneDialog } from '@/features/repo-tools/prune-dialog'
 
 interface MenuProps {
   repo: string
@@ -100,6 +103,9 @@ export function BranchMenu({ repo, branch, children }: MenuProps & { branch: Ref
             onSelect={() => void actions.deleteBranch(repo, branch)}
           >
             Delete…
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => openPruneDialog(repo, branch.name)}>
+            Delete branches merged into {branch.name}…
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem
@@ -342,6 +348,19 @@ export function FileMenu({ repo, path, children }: MenuProps & { path: string })
           <ContextMenuItem onSelect={() => void actions.copyToClipboard(path, 'path')}>
             Copy path
           </ContextMenuItem>
+          <ContextMenuSub>
+            <ContextMenuSubTrigger>Ignore</ContextMenuSubTrigger>
+            <ContextMenuSubContent className="w-64">
+              {ignoreChoices(path).map((choice) => (
+                <ContextMenuItem
+                  key={choice.kind}
+                  onSelect={() => void ignore(repo, path, choice.kind)}
+                >
+                  {choice.label}
+                </ContextMenuItem>
+              ))}
+            </ContextMenuSubContent>
+          </ContextMenuSub>
           <PluginMenuItems location="file" args={{ repo, path }} />
         </>
       }
@@ -385,6 +404,45 @@ export function WorktreeMenu({ repo, worktree, children }: MenuProps & { worktre
               Remove worktree…
             </ContextMenuItem>
           )}
+        </>
+      }
+    >
+      {children}
+    </Menu>
+  )
+}
+
+/** A remote (the group heading in the sidebar's Remotes section). */
+export function RemoteMenu({
+  repo,
+  remote,
+  remotes,
+  children,
+}: MenuProps & { remote: Remote; remotes: Remote[] }) {
+  return (
+    <Menu
+      items={
+        <>
+          <ContextMenuItem onSelect={() => void actions.fetchRemote(repo, remote.name)}>
+            Fetch {remote.name}
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onSelect={() => void remoteActions.editRemoteUrl(repo, remote)}>
+            Change URL…
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => void remoteActions.renameRemote(repo, remote, remotes)}>
+            Rename…
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => void actions.copyToClipboard(remote.fetchUrl, 'URL')}>
+            Copy URL
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem
+            variant="destructive"
+            onSelect={() => void remoteActions.removeRemote(repo, remote)}
+          >
+            Remove…
+          </ContextMenuItem>
         </>
       }
     >

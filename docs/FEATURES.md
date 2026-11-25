@@ -39,18 +39,18 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 3. Working copy, staging & committing
 
-| Pri | Feature                                                                          | Status                                    |
-| --- | -------------------------------------------------------------------------------- | ----------------------------------------- |
-| P0  | File status list (staged / unstaged / untracked / conflicted), tree or flat view | ✅ (flat list)                            |
-| P0  | Stage/unstage/discard file                                                       | ✅                                        |
-| P0  | **Hunk-level and line-level staging** from the diff view                         | ✅                                        |
-| P0  | Commit, amend, commit message editor with subject-length guide                   | ✅                                        |
-| P1  | Live auto-refresh via file watcher                                               | ✅                                        |
-| P1  | Commit templates, co-author picker, Conventional Commits helper                  | ⬜                                        |
-| P1  | GPG/SSH commit signing, with verified badges in the graph                        | ⬜                                        |
-| P1  | Respect and display git hooks output (pre-commit failures shown nicely)          | 🟨 hook failures shown in the error toast |
-| P2  | Partial discard with confirmation and trash/backup                               | ⬜                                        |
-| P2  | `.gitignore` editor ("ignore this file / extension / folder")                    | ⬜                                        |
+| Pri | Feature                                                                          | Status                                                                           |
+| --- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| P0  | File status list (staged / unstaged / untracked / conflicted), tree or flat view | ✅ (flat list)                                                                   |
+| P0  | Stage/unstage/discard file                                                       | ✅                                                                               |
+| P0  | **Hunk-level and line-level staging** from the diff view                         | ✅                                                                               |
+| P0  | Commit, amend, commit message editor with subject-length guide                   | ✅                                                                               |
+| P1  | Live auto-refresh via file watcher                                               | ✅                                                                               |
+| P1  | Commit templates, co-author picker, Conventional Commits helper                  | 🟨 Conventional Commits helper (built-in plugin); templates and co-authors to do |
+| P1  | GPG/SSH commit signing, with verified badges in the graph                        | 🟨 signature shown in commit details; signing setting; graph badges to do        |
+| P1  | Respect and display git hooks output (pre-commit failures shown nicely)          | 🟨 hook failures shown in the error toast                                        |
+| P2  | Partial discard with confirmation and trash/backup                               | ⬜                                                                               |
+| P2  | `.gitignore` editor ("ignore this file / extension / folder")                    | ✅ from a file’s right-click menu                                                |
 
 ## 4. Diff viewer
 
@@ -75,9 +75,9 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | P1  | Cherry-pick, revert, reset (soft/mixed/hard) from context menu                                  | ✅                                        |
 | P1  | Stash: save (with message, include untracked), apply/pop/drop, view diff                        | ✅                                        |
 | P1  | Tags: create (annotated/lightweight), push, delete                                              | ✅                                        |
-| P1  | Manage remotes (add/edit/remove)                                                                | ⬜                                        |
+| P1  | Manage remotes (add/edit/remove)                                                                | ✅                                        |
 | P1  | Force push with `--force-with-lease` safety by default                                          | ✅                                        |
-| P2  | Prune stale branches helper ("delete all branches merged into main")                            | ⬜                                        |
+| P2  | Prune stale branches helper ("delete all branches merged into main")                            | ✅ local branches; one undo               |
 | P2  | Git-flow / trunk-based helpers                                                                  | ⬜                                        |
 
 ## 6. Advanced git
@@ -92,7 +92,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | P2  | Submodules: view status, init/update, open submodule as tab                       | ⬜     |
 | P2  | Git LFS: status, lock/unlock                                                      | ⬜     |
 | P2  | Bisect assistant (mark good/bad visually)                                         | ⬜     |
-| P2  | Reflog browser ("find my lost commit")                                            | ⬜     |
+| P2  | Reflog browser ("find my lost commit")                                            | ✅     |
 | 💡  | Stacked branches (rebase a whole stack at once, `--update-refs`)                  | ⬜     |
 
 ## 7. UX & productivity

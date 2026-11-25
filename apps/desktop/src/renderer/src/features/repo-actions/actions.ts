@@ -51,6 +51,13 @@ export function fetchAll(repo: string) {
   )
 }
 
+/** Fetch from one remote. */
+export function fetchRemote(repo: string, remote: string) {
+  return runAction(repo, () =>
+    trackOperation(repo, `Fetching ${remote}`, (id) => api.invoke('repo:fetch', id, repo, remote)),
+  )
+}
+
 export async function pull(repo: string, rebase = false) {
   const status = await getStatus(repo)
   if (!status.branch.upstream) {
