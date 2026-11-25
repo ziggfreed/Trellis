@@ -72,7 +72,7 @@ export function useKeyboardShortcuts() {
       terminal: () => repo && void openInTerminal(repo),
       editor: () => repo && void openInEditor(repo),
       commandLog: toggleCommandLog,
-      settings: openSettings,
+      settings: () => openSettings(),
     }
 
     function onKeyDown(event: KeyboardEvent) {

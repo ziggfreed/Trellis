@@ -20,6 +20,7 @@ import { openRepoTab } from '@/features/repos/use-repos'
 import { splitCommitMessage } from '@/features/changes/commit-message'
 import { openCompareDialog } from '@/features/compare/compare-dialog'
 import { scanFolder } from '@/features/home/scan-dialog'
+import { reloadPlugins } from '@/features/plugins/plugin-actions'
 import type { Command, CommandContext } from './registry'
 
 /** Focus an element after the palette has closed and the view has updated. */
@@ -63,7 +64,21 @@ export function builtInCommands(context: CommandContext): Command[] {
       group: 'View',
       shortcut: shortcutLabel('settings'),
       keywords: ['preferences', 'options'],
-      run: openSettings,
+      run: () => openSettings(),
+    },
+    {
+      id: 'plugins.manage',
+      title: 'Manage plugins…',
+      group: 'Plugins',
+      keywords: ['extensions', 'install'],
+      run: () => openSettings('plugins'),
+    },
+    {
+      id: 'plugins.reload',
+      title: 'Reload plugins',
+      group: 'Plugins',
+      keywords: ['extensions', 'restart'],
+      run: () => void reloadPlugins(),
     },
     {
       id: 'repo.saveWorkspace',

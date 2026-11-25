@@ -413,8 +413,6 @@ export interface IpcContract {
   /** Load a folder in place, for developing a plugin. */
   'plugins:addDevFolder': { args: [folder: string]; result: void }
   'plugins:removeDevFolder': { args: [folder: string]; result: void }
-  /** Change one of a plugin's own settings. */
-  'plugins:setSetting': { args: [id: string, key: string, value: unknown]; result: void }
 }
 
 /** Events pushed from the main process to the UI. */
@@ -541,7 +539,6 @@ const channelMap: Record<IpcChannel, true> = {
   'plugins:uninstall': true,
   'plugins:addDevFolder': true,
   'plugins:removeDevFolder': true,
-  'plugins:setSetting': true,
 }
 export const IPC_CHANNELS = Object.keys(channelMap) as IpcChannel[]
 

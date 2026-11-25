@@ -92,6 +92,10 @@ export function createHandlers(
       if ('autoFetchMinutes' in patch) autoFetcher.configure(updated.autoFetchMinutes)
       // Plugins can follow which repository is open.
       if (updated.activeTab !== before) plugins.manager.activeRepoChanged(updated.activeTab)
+      // Plugin settings are edited in Settings > Plugins; pass on the new values.
+      if ('pluginSettings' in patch) {
+        for (const id of Object.keys(updated.pluginSettings)) plugins.manager.settingsChanged(id)
+      }
       return updated
     },
 

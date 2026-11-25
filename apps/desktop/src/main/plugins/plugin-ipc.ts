@@ -134,14 +134,6 @@ export function createPluginService(settings: SettingsStore) {
       })
       await manager.reload()
     },
-
-    'plugins:setSetting': (id, key, value) => {
-      assertString(id, 'id')
-      assertString(key, 'key')
-      const all = settings.get().pluginSettings
-      settings.update({ pluginSettings: { ...all, [id]: { ...all[id], [key]: value } } })
-      manager.settingsChanged(id)
-    },
   }
 
   return { manager, handlers }

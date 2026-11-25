@@ -49,7 +49,7 @@ export function StatusBar({ gitVersion, repoPath }: StatusBarProps) {
       <CommandLogToggle />
       <button
         type="button"
-        onClick={openSettings}
+        onClick={() => openSettings()}
         aria-label="Settings"
         title="Settings (Ctrl+,)"
         className="flex items-center hover:text-foreground"

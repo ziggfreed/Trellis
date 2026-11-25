@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseManifest, satisfiesEngine } from '../src'
+import { parseManifest, satisfiesEngine, settingValues, type SettingContribution } from '../src'
 
 const valid = {
   name: 'open-on-remote',
@@ -106,5 +106,27 @@ describe('satisfiesEngine', () => {
     ['0.2.0', 'nonsense', false],
   ])('%s satisfies %s: %s', (version, range, expected) => {
     expect(satisfiesEngine(version, range)).toBe(expected)
+  })
+})
+
+describe('settingValues', () => {
+  it('uses saved values of the right type and defaults for the rest', () => {
+    const declared: SettingContribution[] = [
+      { key: 'remote', type: 'string', default: 'origin', title: 'Remote' },
+      { key: 'on', type: 'boolean', default: true, title: 'On' },
+      { key: 'style', type: 'enum', default: 'a', options: ['a', 'b'], title: 'Style' },
+    ]
+    expect(
+      settingValues(declared, { remote: 'upstream', on: 'yes', style: 'c', extra: 1 }),
+    ).toEqual({
+      remote: 'upstream',
+      on: true,
+      style: 'a',
+    })
+    expect(settingValues(declared, undefined)).toEqual({
+      remote: 'origin',
+      on: true,
+      style: 'a',
+    })
   })
 })

@@ -223,6 +223,26 @@ function parseSetting(value: unknown): SettingContribution | string {
   }
 }
 
+/**
+ * The value each of a plugin's settings has right now: the saved value if
+ * it's valid for the setting's type, otherwise the default.
+ */
+export function settingValues(
+  declared: readonly SettingContribution[],
+  saved: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  const values: Record<string, unknown> = {}
+  for (const setting of declared) {
+    const value = saved?.[setting.key]
+    const valid =
+      setting.type === 'enum'
+        ? typeof value === 'string' && setting.options.includes(value)
+        : typeof value === setting.type
+    values[setting.key] = valid ? value : setting.default
+  }
+  return values
+}
+
 // ---------------------------------------------------------------------------
 // Engine versions
 // ---------------------------------------------------------------------------
