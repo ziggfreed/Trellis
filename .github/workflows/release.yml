@@ -3,10 +3,13 @@
 # draft and clicks "Publish release".
 #
 # To make a release:
-#   1. Set "version" in apps/desktop/package.json and update CHANGELOG.md.
+#   1. Set "version" in apps/desktop/package.json, and in CHANGELOG.md rename
+#      "## [Unreleased]" to "## [x.y.z] - <date>" (add a new empty Unreleased
+#      section above it). The release notes are taken from that section.
 #   2. Merge to main, then tag that commit and push the tag:
 #        git tag v0.1.0
 #        git push origin v0.1.0
+#      The tag must match the version exactly, or the build stops.
 #   3. Wait for this workflow, then review and publish the draft release.
 #
 # The builds are not code-signed yet, so Windows SmartScreen and macOS
@@ -41,7 +44,10 @@ jobs:
         run: |
           version=$(node -p "require('./apps/desktop/package.json').version")
           if [ "v$version" != "${GITHUB_REF_NAME}" ]; then
-            echo "Tag ${GITHUB_REF_NAME} does not match package.json version $version"
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match the app version ($version)."
+            echo "Set \"version\" in apps/desktop/package.json to ${GITHUB_REF_NAME#v}, add a"
+            echo "\"## [${GITHUB_REF_NAME#v}]\" section to CHANGELOG.md, merge that to main, then"
+            echo "delete this tag and tag the new commit (see the steps at the top of this file)."
             exit 1
           fi
       - run: pnpm test
