@@ -42,6 +42,7 @@ All notable changes to Trellis are listed here. The format follows
 
 ### Changed
 
+- Maintainers: a **New release** GitHub workflow bumps the version, updates the changelog, tags and builds a draft release in one click (see docs/RELEASING.md).
 - Scrollbars match the theme (they were white in dark mode).
 - Faster start-up: the diff editor now loads when it's first needed.
 

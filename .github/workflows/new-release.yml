@@ -1,0 +1,99 @@
+# Makes a new release from main in one click: Actions > "New release" >
+# Run workflow, then pick how big the change is.
+#
+#   1. Works out the version: the latest v* tag bumped by patch/minor/major,
+#      or an exact version you type (e.g. 1.0.0-beta.1).
+#   2. Sets it in apps/desktop/package.json and moves CHANGELOG.md's
+#      "Unreleased" notes under it (scripts/release/prepare-release.mjs).
+#      Stops if there are no unreleased notes.
+#   3. Commits that to main as "chore(release): vX.Y.Z", tags the commit,
+#      and pushes both together (if either is refused, neither is pushed).
+#   4. Runs the Release workflow (release.yml) for the tag, which builds the
+#      installers and creates a DRAFT release. Nothing reaches users until you
+#      review the draft and click "Publish release".
+#
+# Tick "Dry run" to see the version and notes it would use, changing nothing.
+# The full guide is docs/RELEASING.md.
+name: New release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'How big a change? patch = fixes, minor = new features, major = breaking changes'
+        type: choice
+        options: [patch, minor, major]
+        default: minor
+      version:
+        description: 'Or an exact version instead (e.g. 1.0.0-beta.1). Leave empty to use the bump above.'
+        type: string
+        required: false
+      dry_run:
+        description: 'Dry run: only show what would be released'
+        type: boolean
+        default: false
+
+# Never prepare two releases at once.
+concurrency:
+  group: new-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write # push the release commit and tag, and create the draft release
+
+jobs:
+  prepare:
+    name: Bump version and tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.prepare.outputs.tag }}
+    steps:
+      - name: Only release from main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Run this workflow on the main branch (it was run on ${GITHUB_REF_NAME})."
+          exit 1
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # all tags, to find the latest release
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Work out the version and update the changelog
+        id: prepare
+        env:
+          REQUEST: ${{ inputs.version || inputs.bump }}
+          DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: node scripts/release/prepare-release.mjs "$REQUEST" $DRY_RUN
+      - name: Summary
+        env:
+          TAG: ${{ steps.prepare.outputs.tag }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          {
+            if [ "$DRY_RUN" = "true" ]; then echo "## Dry run: would release $TAG"; else echo "## Releasing $TAG"; fi
+            echo
+            cat release-notes.md
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit, tag and push
+        if: ${{ !inputs.dry_run }}
+        env:
+          TAG: ${{ steps.prepare.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/desktop/package.json CHANGELOG.md
+          git commit -m "chore(release): $TAG"
+          git tag -a "$TAG" -m "Trellis $TAG"
+          # --atomic: if main moved on since this run started (or the tag
+          # exists), nothing is pushed and the run fails; just run it again.
+          git push --atomic origin HEAD:main "$TAG"
+
+  build:
+    name: Build and draft the release
+    needs: prepare
+    if: ${{ !inputs.dry_run }}
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.prepare.outputs.tag }}
+    secrets: inherit

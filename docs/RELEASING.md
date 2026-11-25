@@ -4,6 +4,23 @@ How to publish a new version, and how code signing and auto-update work. This is
 
 ## Making a release
 
+The easy way is a workflow you run from GitHub:
+
+1. Make sure everything for the release is merged to `main`, and that `CHANGELOG.md`'s `## [Unreleased]` section lists it (that's what becomes the release notes).
+2. On GitHub, open **Actions → New release → Run workflow**, keep the branch on `main`, and choose:
+   - **patch** for fixes only (0.3.0 → 0.3.1), **minor** for new features (0.3.0 → 0.4.0), or **major** for breaking changes (0.3.0 → 1.0.0). The bump is from the latest `v*` tag.
+   - Or type an **exact version** instead, such as `1.0.0-beta.1`.
+   - Tick **Dry run** first if you want to see the version and notes without changing anything (they're shown on the run's summary page).
+3. The workflow (`.github/workflows/new-release.yml`):
+   - sets the version in `apps/desktop/package.json` and moves the Unreleased notes under `## [x.y.z] - <date>`, with a fresh empty Unreleased section above;
+   - commits that to `main` as `chore(release): vx.y.z`, tags it, and pushes both together;
+   - runs the **Release** workflow for the tag, which builds the installers and creates a **draft** GitHub release.
+4. Check the draft, then click **Publish release**.
+
+It refuses to run if the Unreleased section is empty, if the version wouldn't be newer than the latest release (or older than the version already in `package.json`), or if `main` changed while it ran (run it again). The version logic is in `scripts/release/` and tested with `pnpm test:scripts`; you can try it locally without changing git with `node scripts/release/prepare-release.mjs minor --dry-run`.
+
+**By hand** (the old way, still supported):
+
 1. In `apps/desktop/package.json`, set `"version"` to the new version (e.g. `0.4.0`).
 2. In `CHANGELOG.md`, rename `## [Unreleased]` to `## [0.4.0] - <date>` and add a new, empty `## [Unreleased]` section above it.
 3. Merge that to `main`, then tag the merge commit and push the tag:
@@ -19,6 +36,8 @@ How to publish a new version, and how code signing and auto-update work. This is
 5. Check the draft, then click **Publish release**.
 
 Publishing is what rolls the update out: installed copies of Trellis only see published releases.
+
+Each release build runs on Windows, macOS and Linux runners, which use GitHub Actions minutes (macOS minutes count 10×, Windows 2× on private repositories).
 
 ## Auto-update
 

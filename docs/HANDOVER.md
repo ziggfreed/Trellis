@@ -1,6 +1,6 @@
 # Handover: where Trellis is up to
 
-A snapshot for whoever (human or AI assistant) picks up the work next. Last updated 2026-11-25, after PR #13 was merged.
+A snapshot for whoever (human or AI assistant) picks up the work next. Last updated 2026-11-25, after PR #14 was merged.
 
 ## The project
 
@@ -11,11 +11,12 @@ Trellis is an open-source (MIT) desktop git client: Electron + React + TypeScrip
 
 ## State right now
 
-- **All work up to PR #13 is merged into `main`.** `feature/ui-polish` (panel sizes, commit and push, side-by-side hunks, history columns, remote branch clean-up) is open as a PR.
+- **All work up to PR #14 is merged into `main`.**
 - **CI is turned off on purpose**: the "CI" GitHub Actions workflow (`.github/workflows/ci.yml`) was disabled by the owner because the account's Actions minutes are nearly used up (the repo is private, and macOS minutes count 10×, Windows 2×). Don't re-enable it without asking. Verify changes locally instead (commands below). The "Release" workflow is still enabled.
 - **Owner's working preferences**:
   - Open a pull request (via `gh api repos/ziggfreed/trellis/pulls`) as soon as a substantial piece of work is finished, without waiting to be asked. Work on a new branch from the latest `main`.
   - Use Conventional Commit messages.
+  - Releases: Actions → **New release** (bumps the version from the latest tag, cuts the changelog, tags, builds a draft release). See `docs/RELEASING.md`.
   - Don't delete remote branches (the environment blocks it anyway; tell the owner which ones can go).
 
 ## What's been built (by phase)
@@ -34,7 +35,7 @@ The roadmap is `docs/PLAN.md` (sections 8–15 record what each phase delivered)
 | #10        | Submodules, Git LFS, editing in the diff, rendered Markdown and JSON diffs                                                                                                                                                |
 | #11        | Image diffs (side by side / swipe / onion skin), bisect assistant, stacked branches                                                                                                                                       |
 | #13        | Double-click to check out (remote branches, history commits and labels), "local"/"gone" branch markers, clean-up finds squash- and rebase-merged branches                                                                 |
-| next       | Remembered panel sizes and history columns (Changes, Committer, Commit date), commit-and-push, side-by-side hunks in Changes, themed scrollbars, deleting merged remote branches                                          |
+| #14        | Remembered panel sizes and history columns (Changes, Committer, Commit date), commit-and-push, side-by-side hunks in Changes, themed scrollbars, deleting merged remote branches                                          |
 
 ## What's left
 
