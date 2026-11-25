@@ -32,6 +32,7 @@ const INITIAL: Settings = {
   pluginDevFolders: [],
   pluginSettings: {},
   ai: { enabled: false, provider: 'anthropic', model: '', baseUrl: '' },
+  checkForUpdates: true,
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({

@@ -1,0 +1,18 @@
+<!-- Trellis app icon (source for icon.png; see scripts/render-icon.mjs). The
+     logo from src/renderer/src/components/trellis-logo.tsx on a green tile. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f9d5a"/>
+      <stop offset="1" stop-color="#1e7a43"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#tile)"/>
+  <g transform="translate(176 176) scale(28)" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round">
+    <path d="M7 3v18"/>
+    <path d="M7 6c0 3 10 1 10 5v2c0 4-10 2-10 5"/>
+    <circle cx="7" cy="4" r="2" fill="#ffffff" stroke="none"/>
+    <circle cx="17" cy="12" r="2.25" fill="#ffffff" stroke="none"/>
+    <circle cx="7" cy="20" r="2" fill="#ffffff" stroke="none"/>
+  </g>
+</svg>

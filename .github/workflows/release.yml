@@ -2,6 +2,8 @@
 # DRAFT GitHub Release. Nothing is published until a maintainer reviews the
 # draft and clicks "Publish release".
 #
+# The full guide (signing, auto-update) is docs/RELEASING.md.
+#
 # To make a release:
 #   1. Set "version" in apps/desktop/package.json, and in CHANGELOG.md rename
 #      "## [Unreleased]" to "## [x.y.z] - <date>" (add a new empty Unreleased
@@ -12,8 +14,14 @@
 #      The tag must match the version exactly, or the build stops.
 #   3. Wait for this workflow, then review and publish the draft release.
 #
-# The builds are not code-signed yet, so Windows SmartScreen and macOS
-# Gatekeeper will warn users when they open them.
+# Code signing: the builds are signed (and notarised on macOS) when the
+# repository has the secrets listed in docs/RELEASING.md. Without them they
+# are unsigned, so Windows SmartScreen and macOS Gatekeeper warn users, and
+# unsigned macOS builds can't update themselves.
+#
+# Auto-update: installed copies of Trellis check the latest *published*
+# release for the latest*.yml files uploaded here, so publishing the draft is
+# what rolls an update out.
 name: Release
 
 on:
@@ -51,18 +59,33 @@ jobs:
             exit 1
           fi
       - run: pnpm test
-      - name: Build installers (unsigned)
+      - name: Build installers
         run: pnpm package --publish never
         env:
+          # Don't pick up random certificates from the runner's keychain;
+          # only the ones passed in below (if any) are used.
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          # Signing certificate (.p12/.pfx, base64) and its password. Empty
+          # when the secrets aren't set, which means "build unsigned".
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          # macOS notarisation (Apple ID with an app-specific password).
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ runner.os }}
           path: |
             apps/desktop/release/*/*.exe
             apps/desktop/release/*/*.dmg
+            apps/desktop/release/*/*.zip
             apps/desktop/release/*/*.AppImage
             apps/desktop/release/*/*.deb
+            apps/desktop/release/*/*.blockmap
+            apps/desktop/release/*/latest*.yml
 
   release:
     name: Create draft release

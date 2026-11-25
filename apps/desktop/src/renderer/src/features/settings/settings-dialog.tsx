@@ -17,6 +17,7 @@ import { useSettingsStore } from './settings-store'
 import { ShortcutsEditor } from '@/features/shortcuts/shortcuts-editor'
 import { PluginsPanel } from '@/features/plugins/plugins-panel'
 import { AiSettingsPanel } from '@/features/ai/ai-settings-panel'
+import { UpdateSettings } from '@/features/updates/updates'
 import { cn } from '@/lib/utils'
 
 type SettingsSection = 'general' | 'shortcuts' | 'ai' | 'plugins'
@@ -141,6 +142,9 @@ export function SettingsDialog() {
                   label: c.label,
                 }))}
               />
+            </Field>
+            <Field id="setting-updates" label="Updates">
+              <UpdateSettings />
             </Field>
           </div>
         )}

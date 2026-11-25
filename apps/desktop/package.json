@@ -20,7 +20,8 @@
     "@parcel/watcher": "^2.6.0",
     "@trellis/git": "workspace:*",
     "@trellis/graph-layout": "workspace:*",
-    "@trellis/plugin-api": "workspace:*"
+    "@trellis/plugin-api": "workspace:*",
+    "electron-updater": "6.8.12"
   },
   "devDependencies": {
     "@codemirror/lang-javascript": "6.2.5",

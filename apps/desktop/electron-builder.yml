@@ -42,7 +42,8 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
 mac:
-  target: [dmg]
+  # The zip is what auto-update downloads on macOS; the dmg is for people.
+  target: [dmg, zip]
   category: public.app-category.developer-tools
   artifactName: ${productName}-${version}-${arch}.${ext}
 linux:
@@ -52,4 +53,12 @@ linux:
   executableName: trellis
   syncDesktopName: true
   artifactName: ${productName}-${version}-${arch}.${ext}
-publish: null
+# Where auto-update looks for new versions (main/services/updater.ts). The
+# release workflow uploads the latest*.yml files it reads; building with
+# `--publish never` (as CI does) still writes them, it just doesn't upload.
+publish:
+  provider: github
+  owner: ziggfreed
+  repo: Trellis
+# Code signing and notarisation turn on automatically when the release
+# workflow provides certificates (CSC_LINK etc.); see docs/RELEASING.md.

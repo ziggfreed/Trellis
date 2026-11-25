@@ -99,6 +99,8 @@ export interface Settings {
   pluginSettings: Record<string, Record<string, unknown>>
   /** Built-in AI features (off until the user turns them on). */
   ai: AiSettings
+  /** Look for new versions of Trellis in the background (see main/services/updater.ts). */
+  checkForUpdates: boolean
 }
 
 /** A named group of repositories, e.g. "Work" or "Side projects". */
@@ -216,6 +218,23 @@ export interface AiResult {
   resolved?: string | null
 }
 
+/**
+ * Where an app update is up to:
+ * - available: a newer version exists but can't install itself (unsigned
+ *   macOS build); `url` is where to download it.
+ * - ready: downloaded; restart to install.
+ * - unsupported: this build can't update (e.g. running from source).
+ */
+export type UpdateStatus =
+  | { state: 'idle' }
+  | { state: 'checking' }
+  | { state: 'upToDate' }
+  | { state: 'available'; version: string; url: string }
+  | { state: 'downloading'; version: string; percent: number }
+  | { state: 'ready'; version: string }
+  | { state: 'unsupported'; message: string }
+  | { state: 'error'; message: string }
+
 /** Repositories found by scanning a folder. */
 export interface ScanResult {
   /** Found repositories, sorted by path. */
@@ -275,6 +294,13 @@ export interface IpcContract {
   /** Save the author name/email in the global git config. */
   'git:setIdentity': { args: [name: string, email: string]; result: void }
   'git:checkInstallation': { args: []; result: GitInstallation }
+
+  // --- App updates (see src/main/services/updater.ts) ---------------------------
+  'update:getStatus': { args: []; result: UpdateStatus }
+  /** Look for a new version now. */
+  'update:check': { args: []; result: void }
+  /** Quit and install a downloaded update. */
+  'update:install': { args: []; result: void }
 
   'settings:get': { args: []; result: Settings }
   /** Merge a partial update into the saved settings. Returns the new settings. */
@@ -536,6 +562,8 @@ export interface IpcEvents {
   'plugins:decorationsChanged': { repo: string }
   /** More of an AI answer arrived. */
   'ai:chunk': { requestId: string; text: string }
+  /** The app update status changed. */
+  'update:status': UpdateStatus
 }
 
 export type IpcChannel = keyof IpcContract
@@ -558,6 +586,9 @@ export interface TrellisBridge {
 const channelMap: Record<IpcChannel, true> = {
   'app:getInfo': true,
   'git:checkInstallation': true,
+  'update:getStatus': true,
+  'update:check': true,
+  'update:install': true,
   'git:getIdentity': true,
   'git:setIdentity': true,
   'settings:get': true,
@@ -659,5 +690,6 @@ const eventMap: Record<IpcEvent, true> = {
   'plugins:panelChanged': true,
   'plugins:decorationsChanged': true,
   'ai:chunk': true,
+  'update:status': true,
 }
 export const IPC_EVENTS = Object.keys(eventMap) as IpcEvent[]

@@ -60,7 +60,10 @@ test('saves open tabs as a workspace and shows it on the home screen', async () 
   // Close both tabs, then reopen them all from the workspace.
   const repoTabs = window.getByRole('tab', { name: /trellis-e2e/ })
   while ((await repoTabs.count()) > 0) {
-    await repoTabs.first().getByTitle(/^Close/).click()
+    await repoTabs
+      .first()
+      .getByTitle(/^Close/)
+      .click()
   }
   await workspace.getByRole('button', { name: 'Open all' }).click()
   await expect(window.getByRole('tab', { name: /trellis-e2e/ })).toHaveCount(2)

@@ -33,6 +33,7 @@ import { createWriteHandlers } from './write-handlers'
 import { createPluginService } from '../plugins/plugin-ipc'
 import { createAiService } from '../ai/ai-ipc'
 import { SecretStore, safeStorageEncryptor } from '../services/secret-store'
+import { Updater } from '../services/updater'
 import { scanForRepos } from '../services/scan-repos'
 import {
   assertDiffTarget,
@@ -74,6 +75,7 @@ export function createHandlers(
   autoFetcher: AutoFetcher,
   plugins: ReturnType<typeof createPluginService>,
   ai: ReturnType<typeof createAiService>,
+  updater: Updater,
 ): IpcHandlers {
   return {
     ...plugins.handlers,
@@ -85,6 +87,10 @@ export function createHandlers(
     'app:getInfo': () => ({ version: app.getVersion(), platform: process.platform }),
 
     'git:checkInstallation': () => git.checkGitInstallation(),
+
+    'update:getStatus': () => updater.getStatus(),
+    'update:check': () => updater.check(),
+    'update:install': () => updater.install(),
 
     'git:getIdentity': (repo) => {
       if (repo !== null) assertString(repo, 'repo')
@@ -281,6 +287,10 @@ export async function registerIpcHandlers(settings: SettingsStore): Promise<IpcS
   const secrets = new SecretStore(app.getPath('userData'), safeStorageEncryptor(safeStorage))
   const plugins = createPluginService(settings, secrets)
   const ai = createAiService(settings, secrets)
+  const updater = new Updater(
+    () => settings.get().checkForUpdates,
+    (status) => sendToAllWindows('update:status', status),
+  )
   const watcher = new RepoWatcher((path, scope) => {
     sendToAllWindows('repo:changed', { path, scope })
     plugins.manager.repoChanged(path)
@@ -309,7 +319,7 @@ export async function registerIpcHandlers(settings: SettingsStore): Promise<IpcS
   )
   autoFetcher.configure(settings.get().autoFetchMinutes)
 
-  const handlers = createHandlers(settings, watcher, commandLog, autoFetcher, plugins, ai)
+  const handlers = createHandlers(settings, watcher, commandLog, autoFetcher, plugins, ai, updater)
   for (const channel of IPC_CHANNELS) {
     const handler = handlers[channel] as (...args: unknown[]) => unknown
     ipcMain.handle(channel, (_event, ...args: unknown[]) => handler(...args))
@@ -317,6 +327,7 @@ export async function registerIpcHandlers(settings: SettingsStore): Promise<IpcS
 
   // Load plugins in the background; the UI asks for their state when it's ready.
   void plugins.manager.start().catch((error) => console.error('Could not start plugins:', error))
+  void updater.start().catch((error) => console.error('Could not start the updater:', error))
 
   return {
     watcher,
@@ -324,6 +335,7 @@ export async function registerIpcHandlers(settings: SettingsStore): Promise<IpcS
       void plugins.manager.dispose()
       plugins.dispose()
       ai.dispose()
+      updater.dispose()
       watcher.dispose()
       autoFetcher.dispose()
       commandLog.dispose()
