@@ -10,6 +10,8 @@
  * Right-click a commit for actions (branch, tag, cherry-pick, revert, reset...).
  * Drag a branch label onto another row to merge, rebase or move it.
  * Ctrl/Cmd+click a second commit to compare the two.
+ * Double-click a commit (or one of its branch labels) to check it out: see
+ * checkout-target.ts for which branch is picked.
  * Hover a branch label to highlight that branch's line of commits.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -24,7 +26,8 @@ import { RefBadge } from './ref-badge'
 import { CommitDecorations, useCommitDecorations } from '@/features/plugins/commit-decorations'
 import { BisectBadge, bisectRole, useBisect } from '@/features/bisect/bisect'
 import { CommitMenu } from '@/features/repo-actions/menus'
-import { openCompare } from '@/features/repo-actions/actions'
+import { checkoutChoice, openCompare } from '@/features/repo-actions/actions'
+import { checkoutChoiceForCommit, checkoutChoiceForRef } from './checkout-target'
 import { firstParentLine, firstParentMap } from './branch-highlight'
 import { handleRefDrop, isRefDrag } from '@/features/drag-drop/drop-menu'
 import { GraphCell, LANE_WIDTH } from './graph-cell'
@@ -182,6 +185,13 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
                     select(commit)
                   }
                 }}
+                // Stop a double-click from selecting the row's text.
+                onMouseDown={(event) => event.detail > 1 && event.preventDefault()}
+                onDoubleClick={(event) => {
+                  if (event.ctrlKey || event.metaKey) return
+                  const choice = checkoutChoiceForCommit(commit.sha, refs ?? [], headSha)
+                  void checkoutChoice(repoPath, choice)
+                }}
                 onDragOver={(event) => {
                   if (!isRefDrag(event)) return
                   event.preventDefault()
@@ -226,6 +236,9 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
                       key={ref.fullName}
                       gitRef={ref}
                       onHoverChange={(hovering) => setHoveredTip(hovering ? commit.sha : null)}
+                      onDoubleClick={() =>
+                        void checkoutChoice(repoPath, checkoutChoiceForRef(ref, refs ?? []))
+                      }
                     />
                   ))}
                   {(() => {

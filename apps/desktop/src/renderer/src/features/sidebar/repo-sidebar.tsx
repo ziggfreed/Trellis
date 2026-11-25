@@ -4,9 +4,10 @@
  *
  * Each section can be collapsed; the open/closed state is kept per section
  * name for the session. Right-click any item for actions (check out, merge,
- * delete...); double-click a branch to check it out.
+ * delete...); double-click a branch (local or remote) to check it out.
+ * Local branches that aren't on a remote are marked "local" or "gone".
  */
-import { Archive, Cloud, FolderTree, GitBranch, Tag } from 'lucide-react'
+import { Archive, Broom, Cloud, FolderTree, GitBranch, Tag } from 'lucide-react'
 import type { Ref } from '@shared/ipc'
 import { useRefs, useRemotes, useStashes, useWorktrees } from '@/features/repos/use-repo-data'
 import { openRepoAtPath } from '@/features/repos/use-repos'
@@ -20,13 +21,16 @@ import {
   TagMenu,
   WorktreeMenu,
 } from '@/features/repo-actions/menus'
-import { addWorktree, checkoutBranch } from '@/features/repo-actions/actions'
+import { addWorktree, checkoutBranch, checkoutChoice } from '@/features/repo-actions/actions'
+import { checkoutChoiceForRef } from '@/features/history/checkout-target'
+import { openPruneDialog } from '@/features/repo-tools/prune-dialog'
 import { draggableRef } from '@/features/drag-drop/drop-menu'
 import { PluginPanels } from '@/features/plugins/plugin-panels'
 import { SubmodulesSection } from '@/features/submodules/submodules'
 import { LfsSection } from '@/features/lfs/lfs'
 import { addRemote } from '@/features/repo-tools/remote-actions'
 import { Item, Section } from './sidebar-parts'
+import { REMOTE_STATE_TEXT, branchRemoteState } from './branch-remote-state'
 import { groupRemoteBranches, localBranches, remoteBranchShortName, sortedTags } from './group-refs'
 
 export function RepoSidebar({ repoPath }: { repoPath: string }) {
@@ -49,7 +53,16 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
 
   return (
     <nav className="h-full overflow-y-auto py-2 text-sm" aria-label="Repository">
-      <Section title="Branches" icon={GitBranch} count={branches.length}>
+      <Section
+        title="Branches"
+        icon={GitBranch}
+        count={branches.length}
+        action={{
+          label: 'Clean up branches…',
+          icon: Broom,
+          onClick: () => openPruneDialog(repoPath),
+        }}
+      >
         {branches.map((branch) => (
           <BranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
             <Item
@@ -59,8 +72,8 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
               onClick={() => select(branch.sha)}
               onDoubleClick={() => !branch.isHead && void checkoutBranch(repoPath, branch.name)}
               strong={branch.isHead}
-              title={`${branch.upstream ? `Tracking ${branch.upstream}` : 'No upstream branch'}. Double-click to check out; right-click for more.`}
-              trailing={<AheadBehind branch={branch} />}
+              title={`${branchTooltip(branch, refs)} Double-click to check out; right-click for more.`}
+              trailing={<AheadBehind branch={branch} refs={refs} />}
             />
           </BranchMenu>
         ))}
@@ -102,6 +115,10 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
                     label={remoteBranchShortName(branch)}
                     selected={view.selectedSha === branch.sha}
                     onClick={() => select(branch.sha)}
+                    onDoubleClick={() =>
+                      void checkoutChoice(repoPath, checkoutChoiceForRef(branch, refs))
+                    }
+                    title={`${branch.name}. Double-click to check out as “${remoteBranchShortName(branch)}”; right-click for more.`}
                     indent
                   />
                 </RemoteBranchMenu>
@@ -171,12 +188,28 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
   )
 }
 
-/** "↑2 ↓1" next to a branch that differs from its upstream. */
-function AheadBehind({ branch }: { branch: Ref }) {
-  if (branch.upstreamGone) {
+/** First sentence of a local branch's hover text: where it is on the remote. */
+function branchTooltip(branch: Ref, refs: Ref[]): string {
+  const state = branchRemoteState(branch, refs)
+  if (state === 'tracking') return `Tracking ${branch.upstream}.`
+  return `${REMOTE_STATE_TEXT[state].title}.`
+}
+
+/**
+ * "↑2 ↓1" next to a branch that differs from its upstream, or a marker for
+ * one that isn't on a remote ("local", "gone"...).
+ */
+function AheadBehind({ branch, refs }: { branch: Ref; refs: Ref[] }) {
+  const state = branchRemoteState(branch, refs)
+  if (state !== 'tracking') {
+    const text = REMOTE_STATE_TEXT[state]
     return (
-      <span className="ml-auto text-xs text-muted-foreground" title="Upstream branch was deleted">
-        gone
+      <span
+        className="ml-auto shrink-0 text-xs text-muted-foreground"
+        title={text.title}
+        data-remote-state={state}
+      >
+        {text.label}
       </span>
     )
   }

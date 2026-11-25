@@ -28,6 +28,7 @@ import type {
   Ref,
   Remote,
   MergeResult,
+  CleanupBranch,
   Worktree,
   BlameResult,
   Comparison,
@@ -516,14 +517,20 @@ export interface IpcContract {
   /** Save a working-tree file (editing in the diff view). */
   'repo:writeWorkingFile': { args: [path: string, file: string, content: string]; result: void }
 
-  // --- Cleaning up merged branches ----------------------------------------------
+  // --- Cleaning up branches -----------------------------------------------------
   /** The main branch (origin's default, or main/master), or null. */
   'repo:getDefaultBranch': { args: [path: string]; result: string | null }
-  /** Local branches fully merged into `target` that are safe to delete. */
-  'repo:getMergedBranches': { args: [path: string, target: string]; result: string[] }
-  /** Delete several merged branches as one undoable operation. */
+  /**
+   * Local branches that could be deleted, with whether each is merged into
+   * `target` (normally, or by squash/rebase) and whether its remote branch exists.
+   */
+  'repo:getBranchCleanup': { args: [path: string, target: string]; result: CleanupBranch[] }
+  /**
+   * Delete several branches as one undoable operation. Names listed in
+   * `force` are deleted even if git thinks they're unmerged (squash-merged ones).
+   */
   'repo:deleteBranches': {
-    args: [path: string, names: string[]]
+    args: [path: string, names: string[], options?: { force?: string[] }]
     result: { deleted: string[]; failed: { name: string; error: string }[] }
   }
 
@@ -774,7 +781,7 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:getStack': true,
   'repo:rebaseStack': true,
   'repo:pushStack': true,
-  'repo:getMergedBranches': true,
+  'repo:getBranchCleanup': true,
   'repo:deleteBranches': true,
   'repo:fetch': true,
   'repo:pull': true,

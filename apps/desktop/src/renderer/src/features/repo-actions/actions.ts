@@ -24,6 +24,7 @@ import {
 } from '@/features/dialogs/dialog-store'
 import { useRepoViewStore } from '@/features/repo-view/repo-view-store'
 import { remoteBranchShortName } from '@/features/sidebar/group-refs'
+import type { CheckoutChoice } from '@/features/history/checkout-target'
 import { planPush } from './push-plan'
 import { trackOperation } from './operations-store'
 import { validateRefName } from './ref-names'
@@ -153,6 +154,17 @@ export async function checkoutCommit(repo: string, sha: string) {
     confirmLabel: 'Check out',
   })
   if (ok) await runAction(repo, () => api.invoke('repo:checkout', repo, { kind: 'commit', sha }))
+}
+
+/**
+ * Check out what a double-click chose (see features/history/checkout-target.ts).
+ * A bare commit asks first, since it leaves you on no branch.
+ */
+export async function checkoutChoice(repo: string, choice: CheckoutChoice) {
+  if (choice.kind === 'current') toast.info(`${choice.label} is already checked out`)
+  else if (choice.kind === 'branch') await checkoutBranch(repo, choice.name)
+  else if (choice.kind === 'remote-branch') await checkoutRemoteBranch(repo, choice.ref)
+  else await checkoutCommit(repo, choice.sha)
 }
 
 export async function renameBranch(repo: string, name: string) {
