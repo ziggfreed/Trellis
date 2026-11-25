@@ -2,7 +2,14 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { existsSync } from 'node:fs'
 import { readFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
-import { discardFiles, getStatus, stageFiles, unstageFiles } from '../src'
+import {
+  discardAllChanges,
+  discardFiles,
+  getStatus,
+  stageFiles,
+  stashPush,
+  unstageFiles,
+} from '../src'
 import { createTempRepo, type TempRepo } from './helpers'
 
 let repo: TempRepo | undefined
@@ -81,5 +88,51 @@ describe('discardFiles', () => {
     await repo.write('a.txt', 'v3')
     await discardFiles(repo.path, [{ path: 'a.txt', untracked: false }])
     expect(await readFile(join(repo.path, 'a.txt'), 'utf8')).toBe('v2')
+  })
+})
+
+describe('discardAllChanges', () => {
+  it('puts staged files back to the last commit and deletes new ones', async () => {
+    repo = await createTempRepo()
+    await repo.write('kept.txt', 'original\n')
+    await repo.write('gone.txt', 'gone\n')
+    await repo.commit('initial')
+    await repo.write('kept.txt', 'staged edit\n')
+    await repo.write('new.txt', 'brand new\n')
+    await rm(join(repo.path, 'gone.txt'))
+    await stageFiles(repo.path, ['kept.txt', 'new.txt', 'gone.txt'])
+    await repo.write('kept.txt', 'staged edit, then more\n') // unstaged on top
+
+    await discardAllChanges(repo.path, ['kept.txt', 'new.txt', 'gone.txt'])
+    expect(await readFile(join(repo.path, 'kept.txt'), 'utf8')).toBe('original\n')
+    expect(existsSync(join(repo.path, 'new.txt'))).toBe(false)
+    expect(existsSync(join(repo.path, 'gone.txt'))).toBe(true)
+    expect((await getStatus(repo.path)).files).toEqual([])
+  })
+})
+
+describe('stashPush with paths', () => {
+  it('stashes only the given files, leaving the rest', async () => {
+    repo = await createTempRepo()
+    await repo.write('a.txt', 'a\n')
+    await repo.write('b.txt', 'b\n')
+    await repo.commit('initial')
+    await repo.write('a.txt', 'a changed\n')
+    await repo.write('b.txt', 'b changed\n')
+    await repo.write('new file.txt', 'untracked\n')
+    await stageFiles(repo.path, ['b.txt'])
+
+    const stashed = await stashPush(repo.path, {
+      message: 'later',
+      includeUntracked: true,
+      paths: ['a.txt', 'new file.txt'],
+    })
+    expect(stashed).toBe(true)
+    const files = (await getStatus(repo.path)).files.map((f) => [f.path, f.staged, f.unstaged])
+    expect(files).toEqual([['b.txt', 'modified', null]])
+    expect(await repo.git('stash', 'list')).toContain('later')
+    await repo.git('stash', 'pop')
+    expect(await readFile(join(repo.path, 'a.txt'), 'utf8')).toBe('a changed\n')
+    expect(existsSync(join(repo.path, 'new file.txt'))).toBe(true)
   })
 })

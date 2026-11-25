@@ -393,6 +393,11 @@ export interface IpcContract {
     args: [path: string, files: { path: string; untracked: boolean }[]]
     result: void
   }
+  /**
+   * Throw away staged AND unstaged changes, back to the last commit (files new
+   * since then are deleted). For a rename, pass both paths.
+   */
+  'repo:discardAll': { args: [path: string, files: string[]]; result: void }
   /** The diff of one file as hunks, for hunk and line staging. */
   'repo:getFilePatch': {
     args: [path: string, file: string, area: 'staged' | 'unstaged' | 'untracked']
@@ -433,8 +438,9 @@ export interface IpcContract {
 
   // --- Stashes and tags -----------------------------------------------------
   /** Returns false if there was nothing to stash. */
+  /** Stash changes; with `paths`, only those files (staged and unstaged). */
   'repo:stash': {
-    args: [path: string, options: { message?: string; includeUntracked: boolean }]
+    args: [path: string, options: { message?: string; includeUntracked: boolean; paths?: string[] }]
     result: boolean
   }
   /** Apply a stash; with `pop` it's removed afterwards (unless there were conflicts). */
@@ -761,6 +767,7 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:stage': true,
   'repo:unstage': true,
   'repo:discard': true,
+  'repo:discardAll': true,
   'repo:getFilePatch': true,
   'repo:applyPatch': true,
   'repo:commit': true,

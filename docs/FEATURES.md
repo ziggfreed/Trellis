@@ -40,19 +40,21 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 3. Working copy, staging & committing
 
-| Pri | Feature                                                                          | Status                                                                           |
-| --- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| P0  | File status list (staged / unstaged / untracked / conflicted), tree or flat view | ✅ (flat list)                                                                   |
-| P0  | Stage/unstage/discard file                                                       | ✅                                                                               |
-| P0  | **Hunk-level and line-level staging** from the diff view                         | ✅                                                                               |
-| P0  | Commit, amend, commit message editor with subject-length guide                   | ✅                                                                               |
-| P1  | Commit and push in one go (“Push” option, remembered)                            | ✅                                                                               |
-| P1  | Live auto-refresh via file watcher                                               | ✅                                                                               |
-| P1  | Commit templates, co-author picker, Conventional Commits helper                  | 🟨 Conventional Commits helper (built-in plugin); templates and co-authors to do |
-| P1  | GPG/SSH commit signing, with verified badges in the graph                        | 🟨 signature shown in commit details; signing setting; graph badges to do        |
-| P1  | Respect and display git hooks output (pre-commit failures shown nicely)          | 🟨 hook failures shown in the error toast                                        |
-| P2  | Partial discard with confirmation and trash/backup                               | ⬜                                                                               |
-| P2  | `.gitignore` editor ("ignore this file / extension / folder")                    | ✅ from a file’s right-click menu                                                |
+| Pri | Feature                                                                                  | Status                                                                           |
+| --- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| P0  | File status list (staged / unstaged / untracked / conflicted), tree or flat view         | ✅ (flat list)                                                                   |
+| P1  | Staged and unstaged in separate lists; multi-select, drag between them, per-list actions | ✅                                                                               |
+| P1  | Stash only some files (from the Changes view)                                            | ✅                                                                               |
+| P0  | Stage/unstage/discard file                                                               | ✅                                                                               |
+| P0  | **Hunk-level and line-level staging** from the diff view                                 | ✅                                                                               |
+| P0  | Commit, amend, commit message editor with subject-length guide                           | ✅                                                                               |
+| P1  | Commit and push in one go (“Push” option, remembered)                                    | ✅                                                                               |
+| P1  | Live auto-refresh via file watcher                                                       | ✅                                                                               |
+| P1  | Commit templates, co-author picker, Conventional Commits helper                          | 🟨 Conventional Commits helper (built-in plugin); templates and co-authors to do |
+| P1  | GPG/SSH commit signing, with verified badges in the graph                                | 🟨 signature shown in commit details; signing setting; graph badges to do        |
+| P1  | Respect and display git hooks output (pre-commit failures shown nicely)                  | 🟨 hook failures shown in the error toast                                        |
+| P2  | Partial discard with confirmation and trash/backup                                       | ⬜                                                                               |
+| P2  | `.gitignore` editor ("ignore this file / extension / folder")                            | ✅ from a file’s right-click menu                                                |
 
 ## 4. Diff viewer
 

@@ -1,10 +1,11 @@
 /**
- * Actions on working-tree changes (stage, unstage, discard), shared by the
- * changes list, the hunk view and the command palette.
+ * Actions on working-tree changes (stage, unstage, discard, stash), shared
+ * by the changes list, the hunk view and the command palette.
  */
+import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import { runAction } from '@/lib/run-action'
-import { confirmDialog } from '@/features/dialogs/dialog-store'
+import { confirmDialog, textDialog } from '@/features/dialogs/dialog-store'
 import { useRepoViewStore } from '@/features/repo-view/repo-view-store'
 import type { ChangeEntry } from './group-changes'
 
@@ -59,4 +60,58 @@ export async function discardEntries(repoPath: string, entries: ChangeEntry[]) {
       entries.map((e) => ({ path: e.path, untracked: e.change === 'untracked' })),
     ),
   )
+}
+
+/** Every path git needs for these entries (a rename has an old path too). */
+function allPaths(entries: ChangeEntry[]): string[] {
+  return [...new Set(entries.flatMap((e) => (e.origPath ? [e.path, e.origPath] : [e.path])))]
+}
+
+/**
+ * Throw away everything about staged files (staged and unstaged changes),
+ * after asking. Files added since the last commit are deleted.
+ */
+export async function discardStagedEntries(repoPath: string, entries: ChangeEntry[]) {
+  if (!entries.length) return
+  const added = entries.filter((e) => e.change === 'added').length
+  const what = entries.length === 1 ? entries[0]!.path : `${entries.length} files`
+  const ok = await confirmDialog({
+    title: `Discard all changes to ${what}?`,
+    description:
+      'Their staged and unstaged changes will be lost, putting them back to the last commit.' +
+      (added
+        ? `\n${added === 1 ? 'A file added since then' : `${added} files added since then`} will be deleted.`
+        : ''),
+    confirmLabel: 'Discard',
+    destructive: true,
+  })
+  if (!ok) return
+  await runAction(repoPath, () => api.invoke('repo:discardAll', repoPath, allPaths(entries)))
+}
+
+/**
+ * Put some files aside in a stash (both their staged and unstaged changes),
+ * leaving the other files as they are. Asks for an optional message first.
+ */
+export async function stashEntries(repoPath: string, entries: ChangeEntry[]) {
+  if (!entries.length) return
+  const what = entries.length === 1 ? entries[0]!.path : `${entries.length} files`
+  const message = await textDialog({
+    title: `Stash ${what}`,
+    description:
+      'Put these files’ changes (staged and unstaged) aside for later; the other files stay as they are. Apply the stash again from the sidebar’s Stashes section.',
+    label: 'Message (optional)',
+    optional: true,
+    confirmLabel: 'Stash',
+  })
+  if (message === null) return
+  const created = await runAction(repoPath, () =>
+    api.invoke('repo:stash', repoPath, {
+      message: message.trim(),
+      includeUntracked: entries.some((e) => e.change === 'untracked'),
+      paths: allPaths(entries),
+    }),
+  )
+  if (created === false) toast.info('There were no changes to stash.')
+  else if (created) toast.success(`Stashed ${what}`)
 }

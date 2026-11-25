@@ -208,14 +208,27 @@ export async function reset(
  * Stash the working tree and index. Returns false if there was nothing to
  * stash (git reports success in that case, so we check its message).
  */
+/**
+ * Stash changes. With `paths`, only those files are stashed (both their
+ * staged and unstaged changes); everything else stays as it is, so you can
+ * put some files aside and commit the rest. Returns false if there was
+ * nothing to stash.
+ */
 export async function stashPush(
   repoPath: string,
-  options: { message?: string; includeUntracked?: boolean } = {},
+  options: { message?: string; includeUntracked?: boolean; paths?: string[] } = {},
 ): Promise<boolean> {
   const args = ['stash', 'push']
   if (options.includeUntracked) args.push('--include-untracked')
   if (options.message) args.push('-m', options.message)
-  const { stdout } = await runGit(args, { cwd: repoPath })
+  const paths = options.paths ?? []
+  // Paths go on stdin (NUL-separated) so a long selection can't hit
+  // command-line length limits, and odd file names are taken literally.
+  if (paths.length) args.push('--pathspec-from-file=-', '--pathspec-file-nul')
+  const { stdout } = await runGit(args, {
+    cwd: repoPath,
+    ...(paths.length ? { stdin: paths.join('\0'), env: { GIT_LITERAL_PATHSPECS: '1' } } : {}),
+  })
   return !stdout.includes('No local changes to save')
 }
 
