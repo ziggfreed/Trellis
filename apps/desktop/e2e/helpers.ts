@@ -69,11 +69,12 @@ export function createRepo(): TestRepo {
 
 export async function launch(
   userDataDir = tempDir(),
+  env: Record<string, string> = {},
 ): Promise<{ app: ElectronApplication; window: Page }> {
   const app = await electron.launch({
     // --no-sandbox is needed to run Chromium as root inside CI containers.
     args: [appEntry, ...(process.platform === 'linux' ? ['--no-sandbox'] : [])],
-    env: { ...process.env, TRELLIS_USER_DATA_DIR: userDataDir },
+    env: { ...process.env, TRELLIS_USER_DATA_DIR: userDataDir, ...env },
   })
   return { app, window: await app.firstWindow() }
 }

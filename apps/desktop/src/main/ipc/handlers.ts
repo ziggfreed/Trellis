@@ -86,6 +86,18 @@ export function createHandlers(
 
     'git:checkInstallation': () => git.checkGitInstallation(),
 
+    'git:getIdentity': (repo) => {
+      if (repo !== null) assertString(repo, 'repo')
+      return git.getGitIdentity(repo)
+    },
+
+    'git:setIdentity': async (name, email) => {
+      assertString(name, 'name')
+      assertString(email, 'email')
+      if (!name.trim() || !email.trim()) throw new Error('Enter both a name and an email.')
+      await git.setGlobalGitIdentity(name.trim(), email.trim())
+    },
+
     'settings:get': () => settings.get(),
     'settings:update': (patch) => {
       if (typeof patch !== 'object' || patch === null) {

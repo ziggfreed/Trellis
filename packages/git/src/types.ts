@@ -350,3 +350,9 @@ export interface CommitFilter {
   /** Added or removed this exact text in its changes (git's "pickaxe", `log -S`). */
   content?: string
 }
+
+/** The author name and email git records on commits (null = not set). */
+export interface GitIdentity {
+  name: string | null
+  email: string | null
+}

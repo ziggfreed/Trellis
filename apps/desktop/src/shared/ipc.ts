@@ -34,6 +34,7 @@ import type {
   FileHistoryEntry,
   RebasePlanItem,
   UndoState,
+  GitIdentity,
   RepoStatus,
   Stash,
 } from '@trellis/git/types'
@@ -266,6 +267,13 @@ export interface PushRequest {
 
 export interface IpcContract {
   'app:getInfo': { args: []; result: AppInfo }
+  /**
+   * The author name/email commits will use: in a repository, or the global
+   * git config when `repo` is null.
+   */
+  'git:getIdentity': { args: [repo: string | null]; result: GitIdentity }
+  /** Save the author name/email in the global git config. */
+  'git:setIdentity': { args: [name: string, email: string]; result: void }
   'git:checkInstallation': { args: []; result: GitInstallation }
 
   'settings:get': { args: []; result: Settings }
@@ -550,6 +558,8 @@ export interface TrellisBridge {
 const channelMap: Record<IpcChannel, true> = {
   'app:getInfo': true,
   'git:checkInstallation': true,
+  'git:getIdentity': true,
+  'git:setIdentity': true,
   'settings:get': true,
   'settings:update': true,
   'dialog:pickFolder': true,
