@@ -120,6 +120,7 @@ The log is `.git/trellis/oplog.json`; the file watcher ignores `.git/trellis/` s
 - The askpass socket only answers clients that present a random token generated at start-up.
 - A Content Security Policy in `index.html` only allows the app's own scripts.
 - External links open in the system browser, and in-app navigation is blocked.
+- Markdown from repositories (the rendered diff view) is cleaned with DOMPurify before it's shown, so a document can't run scripts.
 - Secrets (the AI key, plugin tokens) are encrypted with Electron's `safeStorage` (the OS keychain) in `services/secret-store.ts`, and never sent to the UI process.
 
 ## 6. Running git

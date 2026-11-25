@@ -54,13 +54,13 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 4. Diff viewer
 
-| Pri | Feature                                                                        | Status             |
-| --- | ------------------------------------------------------------------------------ | ------------------ |
-| P0  | Unified and side-by-side, syntax highlighting                                  | ✅                 |
-| P1  | Word-level (intra-line) highlighting, whitespace toggle, context-lines control | 🟨 intra-line done |
-| P1  | Image diff (side by side, swipe, onion skin)                                   | ⬜                 |
-| P2  | Rendered Markdown diff, JSON-aware diff                                        | ⬜                 |
-| P2  | Edit the file directly in the diff                                             | ⬜                 |
+| Pri | Feature                                                                        | Status                               |
+| --- | ------------------------------------------------------------------------------ | ------------------------------------ |
+| P0  | Unified and side-by-side, syntax highlighting                                  | ✅                                   |
+| P1  | Word-level (intra-line) highlighting, whitespace toggle, context-lines control | 🟨 intra-line done                   |
+| P1  | Image diff (side by side, swipe, onion skin)                                   | ⬜                                   |
+| P2  | Rendered Markdown diff, JSON-aware diff                                        | ✅                                   |
+| P2  | Edit the file directly in the diff                                             | ✅ working-tree files (Changes view) |
 
 ## 5. Branches, remotes & syncing
 
@@ -82,18 +82,18 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 6. Advanced git
 
-| Pri | Feature                                                                           | Status |
-| --- | --------------------------------------------------------------------------------- | ------ |
-| P1  | **Interactive rebase editor**: drag to reorder, squash, fixup, reword, drop, edit | ✅     |
-| P1  | **Conflict resolution UI**: ours/theirs/both per hunk, 3-way merge editor         | ✅     |
-| P1  | Blame view with "blame prior revision" navigation                                 | ✅     |
-| P1  | File history (follows renames)                                                    | ✅     |
-| P1  | **Worktrees**: list, create, open as tab, remove                                  | ✅     |
-| P2  | Submodules: view status, init/update, open submodule as tab                       | ⬜     |
-| P2  | Git LFS: status, lock/unlock                                                      | ⬜     |
-| P2  | Bisect assistant (mark good/bad visually)                                         | ⬜     |
-| P2  | Reflog browser ("find my lost commit")                                            | ✅     |
-| 💡  | Stacked branches (rebase a whole stack at once, `--update-refs`)                  | ⬜     |
+| Pri | Feature                                                                           | Status                                         |
+| --- | --------------------------------------------------------------------------------- | ---------------------------------------------- |
+| P1  | **Interactive rebase editor**: drag to reorder, squash, fixup, reword, drop, edit | ✅                                             |
+| P1  | **Conflict resolution UI**: ours/theirs/both per hunk, 3-way merge editor         | ✅                                             |
+| P1  | Blame view with "blame prior revision" navigation                                 | ✅                                             |
+| P1  | File history (follows renames)                                                    | ✅                                             |
+| P1  | **Worktrees**: list, create, open as tab, remove                                  | ✅                                             |
+| P2  | Submodules: view status, init/update, open submodule as tab                       | ✅ plus add, update all, sync URLs             |
+| P2  | Git LFS: status, lock/unlock                                                      | ✅ patterns, track, lock/unlock, pointer diffs |
+| P2  | Bisect assistant (mark good/bad visually)                                         | ⬜                                             |
+| P2  | Reflog browser ("find my lost commit")                                            | ✅                                             |
+| 💡  | Stacked branches (rebase a whole stack at once, `--update-refs`)                  | ⬜                                             |
 
 ## 7. UX & productivity
 

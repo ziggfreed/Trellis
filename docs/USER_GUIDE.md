@@ -14,11 +14,12 @@ Shortcuts below use `Ctrl`; on macOS use `Cmd` instead (except where it says `Ct
 6. [Merges, rebases and conflicts](#merges-rebases-and-conflicts)
 7. [Undo](#undo)
 8. [Several repositories](#several-repositories)
-9. [GitHub](#github)
-10. [AI features](#ai-features)
-11. [Plugins](#plugins)
-12. [Settings, shortcuts and updates](#settings-shortcuts-and-updates)
-13. [Troubleshooting](#troubleshooting)
+9. [Submodules and Git LFS](#submodules-and-git-lfs)
+10. [GitHub](#github)
+11. [AI features](#ai-features)
+12. [Plugins](#plugins)
+13. [Settings, shortcuts and updates](#settings-shortcuts-and-updates)
+14. [Troubleshooting](#troubleshooting)
 
 ## Getting started
 
@@ -48,7 +49,7 @@ Trellis watches the repository's files, so changes made in other tools appear st
 
 The history shows every commit as a graph, newest first, with branch and tag labels. It stays fast even with hundreds of thousands of commits.
 
-- **Select** a commit to see its details and changed files. Click a file to see its diff, unified or side by side (switch with the buttons above the diff).
+- **Select** a commit to see its details and changed files. Click a file to see its diff, unified or side by side (switch with the buttons above the diff). For Markdown files, **Rendered** shows the document as it displays, with added blocks in green and removed ones in red. For JSON files, **Data** lists the values that changed, ignoring formatting and key order.
 - **Search** (`Ctrl+F`) by message, author or hash; the arrows jump between matches.
 - **Filter** to one branch, an author, a file or folder, a date range, or commits that added or removed some text.
 - **Compare**: right-click a commit and choose a compare option, or `Ctrl`+click a second commit to compare the two.
@@ -62,6 +63,8 @@ Open **Changes** (`Ctrl+Shift+G`) to see what you've changed.
 1. **Stage** what should go in the commit: a whole file (the + button, or **Stage all**), or select a file and stage single hunks or lines in its diff.
 2. Write a **summary** (the first line, ideally under about 72 characters) and, if useful, a **description**.
 3. Click **Commit** or press `Ctrl+Enter`.
+
+**Editing in the diff.** Select a changed file and choose **Edit** above its diff to change it right there; what git has is shown inline so you can see your changes as you go. Press `Ctrl+S` (or **Save**) to save it to disk. **Rendered** and **Data** are also available here for Markdown and JSON files.
 
 Tick **Amend** to replace the last commit instead, for example to fix its message. To throw away changes, use the discard button on a file (or **Discard all**), or select lines in its diff and discard just those. Right-click a file for its blame and history, or choose **Ignore** to add the file, every file with its extension, or its folder to `.gitignore`. If matching files are already committed, Trellis offers to stop tracking them (they stay on your computer).
 
@@ -104,6 +107,12 @@ When all files are resolved, click **Continue** in the banner.
 - **Favourites**: star a repository on the home screen to keep it at the top.
 - **Workspaces**: save your open tabs as a named workspace (the + menu next to the tabs), then reopen them all at once. The home screen shows each repository's branch and changes, with **Fetch all**.
 - **Worktrees**: check out another branch in a second folder from the sidebar's Worktrees section, so you can work on two branches at once.
+
+## Submodules and Git LFS
+
+**Submodules** are other repositories kept inside this one at a fixed commit. If a repository has any, a **Submodules** section appears in the sidebar showing each one's state. After cloning, submodules show "Not set up yet": click one (or right-click it and choose **Set up**) to download it. Click a set-up submodule to open it in its own tab. Right-click for **Update all submodules** and **Sync URLs**; add a new one with the **+** on the section, or "Add submodule" in the command palette.
+
+**Git LFS** stores large files (images, videos, builds) on a separate server. It needs [git-lfs](https://git-lfs.com) installed; Trellis warns if a repository uses it and it's missing. A **Git LFS** section in the sidebar lists which files use it. Right-click a file and use **Git LFS** to store all files of that type with LFS, or to lock and unlock it (locking stops others pushing changes to a file that can't be merged, like a .psd). "Git LFS: locked files" in the command palette lists every lock. Diffs of LFS files show the old and new sizes instead of pointer text. Fetching, pulling and pushing LFS files needs nothing extra.
 
 ## GitHub
 
