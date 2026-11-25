@@ -507,3 +507,12 @@ export interface RemoteCleanupBranch {
   branch: string
   merged: Exclude<BranchMergeState, 'unmerged'>
 }
+
+/** A commit message used before, offered for reuse in the commit box. */
+export interface RecentMessage {
+  summary: string
+  /** The rest of the message after the summary (may be empty). */
+  description: string
+  /** When it was last used (commit time, ms since 1970). */
+  date: number
+}

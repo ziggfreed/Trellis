@@ -4,6 +4,8 @@
  * - Summary (first line) and an optional description.
  * - "Amend" replaces the last commit; ticking it fills in that commit's message.
  * - "Push" pushes straight after committing. It's remembered between runs.
+ * - The clock button next to the summary reuses a recent commit message
+ *   (recent-messages.tsx).
  * - Ctrl/Cmd+Enter commits.
  * - With AI turned on (Settings > AI), "Suggest" writes a message from the
  *   staged changes, streaming it into the boxes.
@@ -31,6 +33,7 @@ import {
   SUMMARY_HARD_LIMIT,
   summaryLength,
 } from './commit-message'
+import { RecentMessages } from './recent-messages'
 
 export function CommitBox({ repoPath }: { repoPath: string }) {
   const [view, setView] = useRepoView(repoPath)
@@ -127,25 +130,36 @@ export function CommitBox({ repoPath }: { repoPath: string }) {
           </button>
         </p>
       )}
-      <div className="relative">
-        <input
-          aria-label="Commit summary"
-          placeholder="Summary (required)"
-          value={view.commitSummary}
-          onChange={(e) => setView({ commitSummary: e.target.value })}
-          className="h-8 w-full rounded-md border border-input bg-background pr-10 pl-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+      <div className="flex gap-1">
+        <div className="relative flex-1">
+          <input
+            aria-label="Commit summary"
+            placeholder="Summary (required)"
+            value={view.commitSummary}
+            onChange={(e) => setView({ commitSummary: e.target.value })}
+            className="h-8 w-full rounded-md border border-input bg-background pr-10 pl-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          />
+          <span
+            title={`Keep the summary under ${SUMMARY_HARD_LIMIT} characters`}
+            className={cn(
+              'absolute top-1/2 right-2 -translate-y-1/2 text-xs tabular-nums',
+              length === 'ok' && 'text-muted-foreground',
+              length === 'long' && 'text-change-modified',
+              length === 'too-long' && 'text-destructive',
+            )}
+          >
+            {view.commitSummary.trim().length || ''}
+          </span>
+        </div>
+        <RecentMessages
+          repoPath={repoPath}
+          onUse={(parts) =>
+            setView({
+              ...(parts.summary !== undefined ? { commitSummary: parts.summary } : {}),
+              ...(parts.description !== undefined ? { commitDescription: parts.description } : {}),
+            })
+          }
         />
-        <span
-          title={`Keep the summary under ${SUMMARY_HARD_LIMIT} characters`}
-          className={cn(
-            'absolute top-1/2 right-2 -translate-y-1/2 text-xs tabular-nums',
-            length === 'ok' && 'text-muted-foreground',
-            length === 'long' && 'text-change-modified',
-            length === 'too-long' && 'text-destructive',
-          )}
-        >
-          {view.commitSummary.trim().length || ''}
-        </span>
       </div>
       <textarea
         aria-label="Commit description"

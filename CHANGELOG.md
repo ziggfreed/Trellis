@@ -11,6 +11,7 @@ All notable changes to Trellis are listed here. The format follows
 - **Staged and unstaged in separate lists**: the Changes view shows Staged above Unstaged, each with buttons to stage or unstage, stash and discard the whole list.
 - **Select several files** (Ctrl/Cmd+click, Shift+click) to stage, unstage, stash or discard them together, or **drag** them between the two lists.
 - **Stash only some files**, so you can commit the rest now.
+- **Reuse a recent commit message**: the clock button next to the summary lists your recent messages; take the whole message, or just the summary or description.
 - **Discard staged files**: put staged files back to the last commit (undo brings them back).
 
 ## [0.3.0] - 2026-11-25
