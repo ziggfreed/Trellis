@@ -162,8 +162,10 @@ export function previewJson(value: unknown, max = 80): string {
 // ---------------------------------------------------------------------------
 
 /** The extra views a file type offers besides the line diff. */
-export function specialViews(path: string): ('rendered' | 'structure')[] {
+export function specialViews(path: string): ('rendered' | 'structure' | 'image')[] {
   const lower = path.toLowerCase()
+  // SVG is text (so it has a line diff) and an image.
+  if (lower.endsWith('.svg')) return ['image']
   if (/\.(md|markdown|mdx)$/.test(lower)) return ['rendered']
   if (/\.json$/.test(lower) || lower.endsWith('.webmanifest')) return ['structure']
   return []

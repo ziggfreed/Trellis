@@ -35,7 +35,10 @@ import type {
   RebasePlanItem,
   UndoState,
   CommitSignature,
+  BisectState,
   GitIdentity,
+  ImageDiff,
+  StackBranch,
   LfsLock,
   Submodule,
   ReflogEntry,
@@ -481,6 +484,34 @@ export interface IpcContract {
   'repo:lfsLock': { args: [path: string, file: string]; result: void }
   'repo:lfsUnlock': { args: [path: string, file: string, force: boolean]; result: void }
 
+  // --- Image diff ---------------------------------------------------------------
+  /** Both versions of an image, as base64, for the image diff. */
+  'repo:getImageDiff': { args: [path: string, target: DiffTarget]; result: ImageDiff }
+
+  // --- Bisect ---------------------------------------------------------------------
+  /** The bisect in progress, or null. */
+  'repo:getBisect': { args: [path: string]; result: BisectState | null }
+  /** Start bisecting from a bad commit (and a good one, if known). */
+  'repo:bisectStart': { args: [path: string, bad: string, good: string | null]; result: void }
+  /** Mark a commit (null: the checked-out one) good, bad or skipped. */
+  'repo:bisectMark': {
+    args: [path: string, verdict: 'good' | 'bad' | 'skip', sha: string | null]
+    result: void
+  }
+  /** Stop bisecting and return to where it started. */
+  'repo:bisectReset': { args: [path: string]; result: void }
+
+  // --- Stacked branches -----------------------------------------------------------
+  /** Local branches stacked between `base` and `top` (bottom first, `top` last). */
+  'repo:getStack': { args: [path: string, top: string, base: string]; result: StackBranch[] }
+  /** Rebase the current branch onto `onto`, moving the branches stacked below it too. */
+  'repo:rebaseStack': { args: [path: string, onto: string]; result: MergeResult }
+  /** Push several branches with force-with-lease (after a stack rebase), with progress. */
+  'repo:pushStack': {
+    args: [operationId: string, path: string, remote: string, branches: string[]]
+    result: void
+  }
+
   // --- Editing ---------------------------------------------------------------------
   /** Save a working-tree file (editing in the diff view). */
   'repo:writeWorkingFile': { args: [path: string, file: string, content: string]; result: void }
@@ -735,6 +766,14 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:lfsLock': true,
   'repo:lfsUnlock': true,
   'repo:writeWorkingFile': true,
+  'repo:getImageDiff': true,
+  'repo:getBisect': true,
+  'repo:bisectStart': true,
+  'repo:bisectMark': true,
+  'repo:bisectReset': true,
+  'repo:getStack': true,
+  'repo:rebaseStack': true,
+  'repo:pushStack': true,
   'repo:getMergedBranches': true,
   'repo:deleteBranches': true,
   'repo:fetch': true,

@@ -430,3 +430,39 @@ export interface LfsPointer {
   oid: string
   size: number
 }
+
+/** One version of an image for the image diff (see getImageDiff). */
+export type ImageVersion =
+  | { kind: 'image'; base64: string; size: number }
+  | { kind: 'missing' }
+  | { kind: 'too-large'; size: number }
+
+export interface ImageDiff {
+  old: ImageVersion
+  new: ImageVersion
+}
+
+/** A bisect in progress (see bisect.ts). */
+export interface BisectState {
+  /** The commit marked bad (null until one is). */
+  bad: string | null
+  /** Commits marked good. */
+  good: string[]
+  /** Commits marked as impossible to test. */
+  skipped: string[]
+  /** The commit checked out now (the one to test). */
+  current: string | null
+  /** How many commits are still in question (null until there's a good and a bad). */
+  remaining: number | null
+  /** The first bad commit, once found. */
+  culprit: string | null
+}
+
+/** One branch in a stack (see stacks.ts). */
+export interface StackBranch {
+  name: string
+  /** The commit it points to. */
+  sha: string
+  /** Commits on it since the branch below (0 if it shares that branch's commit). */
+  commits: number
+}

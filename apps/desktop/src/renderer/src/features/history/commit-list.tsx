@@ -22,6 +22,7 @@ import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { refsBySha } from '@/features/sidebar/group-refs'
 import { RefBadge } from './ref-badge'
 import { CommitDecorations, useCommitDecorations } from '@/features/plugins/commit-decorations'
+import { BisectBadge, bisectRole, useBisect } from '@/features/bisect/bisect'
 import { CommitMenu } from '@/features/repo-actions/menus'
 import { openCompare } from '@/features/repo-actions/actions'
 import { firstParentLine, firstParentMap } from './branch-highlight'
@@ -73,6 +74,7 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
   )
   const refMap = useMemo(() => refsBySha(refs ?? []), [refs])
   const decorations = useCommitDecorations(repoPath)
+  const bisect = useBisect(repoPath).data
   const firstParents = useMemo(() => firstParentMap(commits), [commits])
   const highlighted = useMemo(
     () => (hoveredTip ? firstParentLine(firstParents, hoveredTip) : null),
@@ -226,6 +228,10 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
                       onHoverChange={(hovering) => setHoveredTip(hovering ? commit.sha : null)}
                     />
                   ))}
+                  {(() => {
+                    const role = bisectRole(bisect, commit.sha)
+                    return role && <BisectBadge role={role} />
+                  })()}
                   <span className="truncate">{commit.subject}</span>
                   {decorations.has(commit.sha) && (
                     <CommitDecorations decorations={decorations.get(commit.sha)!} />

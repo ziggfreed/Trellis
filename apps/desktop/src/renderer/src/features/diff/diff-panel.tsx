@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils'
 import { specialViews } from './structured-diff'
 import { JsonDiffView, LfsPointerView, MarkdownDiffView } from './special-views'
 import { ViewSwitch, type DiffMode } from './view-switch'
+import { ImageDiffView, isImagePath } from './image-diff'
 
 // The diff editor (CodeMirror) is a large chunk of code that isn't needed
 // until a diff is shown, so it loads on first use instead of at start-up.
@@ -43,7 +44,11 @@ export function DiffPanel({ repoPath, target }: { repoPath: string; target: Diff
   }
 
   let body: React.ReactNode
-  if (error) body = <Message className="text-destructive">{error.message}</Message>
+  if (isImagePath(target.path) && mode === 'diff' && !target.path.toLowerCase().endsWith('.svg')) {
+    // Images are compared visually (SVG, being text, keeps the line diff too).
+    body = <ImageDiffView repoPath={repoPath} target={target} />
+  } else if (mode === 'image') body = <ImageDiffView repoPath={repoPath} target={target} />
+  else if (error) body = <Message className="text-destructive">{error.message}</Message>
   else if (isPending) body = null
   else {
     const reason = describeNonText(data.new) ?? describeNonText(data.old)

@@ -24,6 +24,7 @@ import { IdentityDialog } from '@/features/onboarding/git-identity'
 import { ReflogDialog } from '@/features/repo-tools/reflog-dialog'
 import { PruneDialog } from '@/features/repo-tools/prune-dialog'
 import { LfsLocksDialog } from '@/features/lfs/lfs'
+import { StackDialog } from '@/features/stacks/stack-dialog'
 import { useUpdateSync } from '@/features/updates/updates'
 import { HomeScreen } from '@/features/home/home-screen'
 import { RepoView } from '@/features/repo-view/repo-view'
@@ -100,6 +101,7 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
       <ReflogDialog />
       <PruneDialog />
       <LfsLocksDialog />
+      <StackDialog />
       <ScanDialog />
       <Dialogs />
       <AuthPrompt />

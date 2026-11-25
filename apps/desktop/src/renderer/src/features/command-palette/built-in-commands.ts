@@ -26,6 +26,7 @@ import { openIdentityDialog } from '@/features/onboarding/git-identity'
 import { openReflog } from '@/features/repo-tools/reflog-dialog'
 import { addSubmodule, updateSubmodules } from '@/features/submodules/submodules'
 import { openLfsLocks } from '@/features/lfs/lfs'
+import { openStack } from '@/features/stacks/stack-dialog'
 import { openPruneDialog } from '@/features/repo-tools/prune-dialog'
 import * as remoteActions from '@/features/repo-tools/remote-actions'
 
@@ -232,6 +233,13 @@ export function builtInCommands(context: CommandContext): Command[] {
       group: 'Branches',
       keywords: ['prune', 'clean up', 'tidy'],
       run: () => openPruneDialog(path),
+    },
+    {
+      id: 'git.stack',
+      title: 'Branch stack: rebase or push stacked branches…',
+      group: 'Branches',
+      keywords: ['stack', 'stacked', 'update-refs', 'rebase stack'],
+      run: () => openStack(path),
     },
     {
       id: 'git.addSubmodule',

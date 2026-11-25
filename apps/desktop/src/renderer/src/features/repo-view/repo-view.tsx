@@ -49,6 +49,7 @@ import { FileView } from '@/features/file-view/file-view'
 import { CompareView } from '@/features/compare/compare-view'
 import { RepoToolbar } from '@/features/repo-toolbar/repo-toolbar'
 import { OperationBanner } from '@/features/repo-toolbar/operation-banner'
+import { BisectBanner } from '@/features/bisect/bisect'
 
 export function RepoView({ repo }: { repo: RepoTab }) {
   const [view, setView] = useRepoView(repo.path)
@@ -138,6 +139,7 @@ export function RepoView({ repo }: { repo: RepoTab }) {
             </div>
           </div>
           <OperationBanner repoPath={repo.path} />
+          <BisectBanner repoPath={repo.path} />
 
           <div className="min-h-0 flex-1">
             {view.view === 'file' && view.file ? (

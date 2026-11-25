@@ -39,6 +39,7 @@ import { useLanguageParser } from '@/features/diff/load-language'
 import { specialViews } from '@/features/diff/structured-diff'
 import { ViewSwitch, type DiffMode } from '@/features/diff/view-switch'
 import { FileAlternateView } from './file-alternate-view'
+import { ImageDiffView, isImagePath } from '@/features/diff/image-diff'
 
 /** Stop rendering lines after this many, to keep huge diffs responsive. */
 const MAX_LINES = 5000
@@ -169,6 +170,8 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
   if (error) body = <Message className="text-destructive">{error.message}</Message>
   else if (isPending) body = null
   else if (!patch) body = <Message>No changes.</Message>
+  else if (patch.binary && isImagePath(file))
+    body = <ImageDiffView repoPath={repoPath} target={{ kind: area, path: file }} />
   else if (patch.binary) body = <Message>Binary file. Stage or discard it from the list.</Message>
   else {
     // Line-level unstage/discard of a whole new or deleted file can't be
