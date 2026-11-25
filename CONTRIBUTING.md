@@ -25,11 +25,12 @@ apps/desktop/                 The Electron app
     lib/                      Small shared helpers
   e2e/                        End-to-end tests (Playwright)
   src/main/plugins/           The plugin system: plugin host process, manager, installing
+  src/main/ai/                Built-in AI: prompts, providers (Anthropic, OpenAI-compatible)
 packages/git/                 Typed wrapper around the git CLI (no Electron/React)
 packages/graph-layout/        Commit graph lane layout (pure TypeScript)
 packages/plugin-api/          Plugin manifest checks and the API types plugins use
 packages/create-trellis-plugin/  `npm create trellis-plugin` scaffolder
-plugins/                      Built-in plugins, shipped with the app
+plugins/                      Built-in plugins, shipped with the app (GitHub, Open on Remote, Conventional Commits)
 docs/                         Plans, architecture, research
 ```
 

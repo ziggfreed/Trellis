@@ -62,7 +62,7 @@ Entry files can be ES modules (as above, with `"type": "module"`) or CommonJS (`
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
-  "engines": { "trellis": ">=0.2.0" },
+  "engines": { "trellis": ">=0.3.0" },
   "trellis": {
     "displayName": "My Plugin",
     "contributes": {
@@ -84,13 +84,13 @@ Entry files can be ES modules (as above, with `"type": "module"`) or CommonJS (`
 | `name`                | yes      | The plugin's id. A valid npm package name.                                                                                                                                   |
 | `version`             | yes      | Shown in the plugin manager.                                                                                                                                                 |
 | `main`                | yes      | Entry file, inside the plugin folder.                                                                                                                                        |
-| `engines.trellis`     | yes      | Trellis versions the plugin works with, e.g. `>=0.2.0` or `^0.2.0`. Supported forms: `*`, `1.2.3`, `>=`, `>`, `<=`, `<`, `^` and `~`, combined with spaces (all must match). |
+| `engines.trellis`     | yes      | Trellis versions the plugin works with, e.g. `>=0.3.0` or `^0.3.0`. Supported forms: `*`, `1.2.3`, `>=`, `>`, `<=`, `<`, `^` and `~`, combined with spaces (all must match). |
 | `description`         | no       | Shown in the plugin manager.                                                                                                                                                 |
 | `trellis`             | yes      | Marks the package as a Trellis plugin.                                                                                                                                       |
 | `trellis.displayName` | no       | Readable name (defaults to `name`).                                                                                                                                          |
-| `trellis.contributes` | no       | Commands, menus and settings (below).                                                                                                                                        |
+| `trellis.contributes` | no       | Commands, menus, settings and panels (below).                                                                                                                                |
 
-While Trellis is at version 0.x, `^0.2.0` means "0.2.x only" (like npm), because 0.x releases may change the API. Use `>=0.2.0` if you'd rather not update your plugin for every release.
+While Trellis is at version 0.x, `^0.3.0` means "0.3.x only" (like npm), because 0.x releases may change the API. Use `>=0.3.0` if you'd rather not update your plugin for every release.
 
 ### Commands
 
@@ -129,6 +129,14 @@ Adds items to the bottom of the right-click menu of commits (history list), bran
 
 Settings appear under the plugin in **Settings > Plugins**. Read them with `trellis.settings.get(key)`.
 
+### Panels
+
+```json
+"panels": [{ "id": "myPlugin.list", "title": "My list" }]
+```
+
+A list in the repository sidebar. Its items come from your code; see [Panels](#panels-1) in the API section.
+
 ## The API
 
 `activate(trellis, context)` receives:
@@ -152,6 +160,7 @@ Settings appear under the plugin in **Settings > Plugins**. Read them with `trel
 | `sha`    | From a commit menu: the full commit hash.                    |
 | `branch` | From a branch menu: e.g. `main` or `origin/main`.            |
 | `path`   | From a file menu: the file's path inside the repository.     |
+| `item`   | From a panel item: the item's `id`.                          |
 
 If `run` throws or rejects, Trellis shows the error message to the user.
 
@@ -168,23 +177,62 @@ console.log(result.stdout, result.stderr, result.exitCode)
 
 ### `trellis.repos`
 
-| Method                        | What it does                                                           |
-| ----------------------------- | ---------------------------------------------------------------------- |
-| `active()`                    | The repository in the active tab, or `null`.                           |
-| `open()`                      | Every repository open in a tab.                                        |
-| `onDidChangeActive(listener)` | Called with the new repository (or `null`) when the user switches tab. |
-| `onDidChange(listener)`       | Called with a repository's path when its files or refs change.         |
+| Method                        | What it does                                                                                                                                                                                                                                                                                                                                        |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `active()`                    | The repository in the active tab, or `null`.                                                                                                                                                                                                                                                                                                        |
+| `open()`                      | Every repository open in a tab.                                                                                                                                                                                                                                                                                                                     |
+| `onDidChangeActive(listener)` | Called with the new repository (or `null`) when the user switches tab.                                                                                                                                                                                                                                                                              |
+| `onDidChange(listener)`       | Called with a repository's path when its files or refs change.                                                                                                                                                                                                                                                                                      |
+| `onDidRunOperation(listener)` | Called with `{ repo, kind }` after a git command that changes a repository succeeds. `kind` is `commit`, `checkout`, `fetch`, `pull`, `push`, `merge`, `rebase`, `reset`, `cherry-pick`, `revert`, `branch`, `tag` or `stash`. Covers commands run by Trellis and plugins (including your own, so guard against loops), not ones run in a terminal. |
 
 ### `trellis.ui`
 
-| Method                                                | What it does                                                                                    |
-| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `showMessage(text, kind?)`                            | A notification. `kind` is `'info'` (default), `'warning'` or `'error'`.                         |
-| `showInput({ title, prompt?, value?, placeholder? })` | Asks for text. Resolves to the text, or `undefined` if cancelled.                               |
-| `showQuickPick(items, { placeholder? })`              | A searchable list of `{ label, detail? }`. Resolves to the chosen item, or `undefined`.         |
-| `createStatusBarItem()`                               | An item in the status bar. Set `text` (empty hides it), `tooltip` and `command` (run on click). |
-| `setCommitMessage(repo, message)`                     | Puts a message in the repository's commit box and shows the Changes view.                       |
-| `openExternal(url)`                                   | Opens an `http`/`https` link in the browser.                                                    |
+| Method                                                           | What it does                                                                                                                                |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `showMessage(text, kind?)`                                       | A notification. `kind` is `'info'` (default), `'warning'` or `'error'`.                                                                     |
+| `showInput({ title, prompt?, value?, placeholder?, password? })` | Asks for text (`password: true` hides what's typed). Resolves to the text, or `undefined` if cancelled.                                     |
+| `showQuickPick(items, { placeholder? })`                         | A searchable list of `{ label, detail? }`. Resolves to the chosen item, or `undefined`.                                                     |
+| `createStatusBarItem()`                                          | An item in the status bar. Set `text` (empty hides it), `tooltip` and `command` (run on click).                                             |
+| `setCommitMessage(repo, message)`                                | Puts a message in the repository's commit box and shows the Changes view.                                                                   |
+| `openExternal(url)`                                              | Opens an `http`/`https` link in the browser.                                                                                                |
+| `registerPanel(id, provider)`                                    | Supplies the items of a panel declared in `contributes.panels` (see [Panels](#panels-1)). Returns a panel with `refresh()` and `dispose()`. |
+
+#### Panels
+
+A panel is a collapsible list in the repository sidebar, below Stashes. Declare it, then supply its items:
+
+```json
+"contributes": { "panels": [{ "id": "todo.list", "title": "To do" }] }
+```
+
+```js
+const panel = trellis.ui.registerPanel('todo.list', {
+  async getItems(repo) {
+    return [
+      {
+        id: 'fix-1',
+        label: 'Fix the parser',
+        description: 'today',
+        icon: 'warning',
+        command: 'todo.open',
+      },
+    ]
+  },
+})
+context.subscriptions.push(panel)
+// Later, when your data changes:
+panel.refresh()
+```
+
+Each item has a `label` and optionally `description` (muted text), `tooltip`, `icon` (`success`, `failure`, `pending`, `neutral`, `info` or `warning`), and `command`: one of your commands, run with `args.item` set to the item's `id` when it's clicked. `getItems` is called when the panel is first shown for a repository and after `refresh()`, not on every file change, so it's fine to fetch from the network there. Return `[]` to hide the panel (e.g. in repositories your plugin doesn't apply to).
+
+### `trellis.graph`
+
+`setDecorations(repo, decorations)` shows small badges on commits in the history graph, replacing your previous badges for that repository (`[]` clears them). Each decoration is `{ sha, icon, tooltip?, url? }`, with the same icons as panel items; a badge with a `url` (http/https) opens it when clicked. The GitHub plugin uses this for CI results.
+
+### `trellis.secrets`
+
+Encrypted storage for tokens and passwords: `get(key)`, `set(key, value)` and `delete(key)`, all returning promises. Values are encrypted with the operating system's keychain (Keychain on macOS, DPAPI on Windows, the secret service on Linux) and each plugin sees only its own. Use it instead of `context.storage` or settings for anything secret. They're removed when the plugin is uninstalled.
 
 ### `trellis.settings`
 
@@ -192,7 +240,7 @@ console.log(result.stdout, result.stderr, result.exitCode)
 
 ### `trellis.version`
 
-The running Trellis version, e.g. `"0.2.0"`.
+The running Trellis version, e.g. `"0.3.0"`. Panels, graph decorations, secrets, `onDidRunOperation` and `password` input boxes need Trellis 0.3.0 or later, so use `"engines": { "trellis": ">=0.3.0" }` if you rely on them.
 
 ### Types
 
@@ -233,17 +281,19 @@ For contributors working on the plugin system itself:
                                   git.run via repo queue               calls activate()
 ```
 
-| File                                                  | Role                                                                                                   |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `packages/plugin-api`                                 | Manifest parsing/validation, engine version check, and the API types.                                  |
-| `apps/desktop/src/main/plugins/discovery.ts`          | Finds built-in, installed and development plugins and checks them.                                     |
-| `apps/desktop/src/main/plugins/plugin-manager.ts`     | Starts/stops the host, tracks plugin state, serves the host's requests (git, UI).                      |
-| `apps/desktop/src/main/plugins/plugin-host.ts`        | The separate process that loads plugins and implements the `trellis` object.                           |
-| `apps/desktop/src/main/plugins/rpc.ts`, `protocol.ts` | The request/response messages between main and the host.                                               |
-| `apps/desktop/src/main/plugins/install.ts`, `tar.ts`  | Installing from a folder or npm (with a small, path-safe tar reader), uninstalling.                    |
-| `apps/desktop/src/main/plugins/plugin-ipc.ts`         | Folder locations and the `plugins:*` IPC channels.                                                     |
-| `apps/desktop/src/renderer/src/features/plugins/`     | Plugin store, palette commands, menu items, status bar items, prompts, and the Settings > Plugins tab. |
-| `plugins/`                                            | Built-in plugins, shipped in the installer's resources folder.                                         |
-| `packages/create-trellis-plugin`                      | The `npm create trellis-plugin` scaffolder and its template.                                           |
+| File                                                  | Role                                                                                                                          |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `packages/plugin-api`                                 | Manifest parsing/validation, engine version check, and the API types.                                                         |
+| `apps/desktop/src/main/plugins/discovery.ts`          | Finds built-in, installed and development plugins and checks them.                                                            |
+| `apps/desktop/src/main/plugins/plugin-manager.ts`     | Starts/stops the host, tracks plugin state, serves the host's requests (git, UI).                                             |
+| `apps/desktop/src/main/plugins/plugin-host.ts`        | The separate process that loads plugins and implements the `trellis` object.                                                  |
+| `apps/desktop/src/main/plugins/rpc.ts`, `protocol.ts` | The request/response messages between main and the host.                                                                      |
+| `apps/desktop/src/main/plugins/install.ts`, `tar.ts`  | Installing from a folder or npm (with a small, path-safe tar reader), uninstalling.                                           |
+| `apps/desktop/src/main/plugins/plugin-ipc.ts`         | Folder locations and the `plugins:*` IPC channels.                                                                            |
+| `apps/desktop/src/main/plugins/operation-kind.ts`     | Turns finished git commands into `onDidRunOperation` events.                                                                  |
+| `apps/desktop/src/main/services/secret-store.ts`      | Encrypted storage behind `trellis.secrets` (and the AI key).                                                                  |
+| `apps/desktop/src/renderer/src/features/plugins/`     | Plugin store, palette commands, menu items, status bar items, panels, commit badges, prompts, and the Settings > Plugins tab. |
+| `plugins/`                                            | Built-in plugins, shipped in the installer's resources folder.                                                                |
+| `packages/create-trellis-plugin`                      | The `npm create trellis-plugin` scaffolder and its template.                                                                  |
 
 Plugins run in a separate process so a slow or crashing plugin can't freeze or take down the app. Changing which plugins run (install, uninstall, turn on/off, reload) restarts that process, which keeps the lifecycle simple: every plugin always starts from a clean state.

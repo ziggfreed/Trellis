@@ -120,6 +120,7 @@ The log is `.git/trellis/oplog.json`; the file watcher ignores `.git/trellis/` s
 - The askpass socket only answers clients that present a random token generated at start-up.
 - A Content Security Policy in `index.html` only allows the app's own scripts.
 - External links open in the system browser, and in-app navigation is blocked.
+- Secrets (the AI key, plugin tokens) are encrypted with Electron's `safeStorage` (the OS keychain) in `services/secret-store.ts`, and never sent to the UI process.
 
 ## 6. Running git
 
@@ -136,6 +137,21 @@ The log is `.git/trellis/oplog.json`; the file watcher ignores `.git/trellis/` s
 Plugins work like VS Code extensions: trusted code the user chooses to install. A plugin is a package with a manifest (`package.json` with a `trellis` section declaring commands, menu items and settings) and an `activate(trellis, context)` function. Plugins run in a separate **plugin host** process (an Electron `utilityProcess`), so a slow or crashing plugin can't freeze the UI. Main runs their git commands through the same per-repo queue as the app, and relays their prompts to the window.
 
 The authoring guide, API reference and a map of the implementation are in [`docs/PLUGINS.md`](PLUGINS.md).
+
+Built-in plugins live in the root `plugins/` folder: Open on Remote, Conventional Commits and GitHub (pull requests panel, CI badges in the graph).
+
+## 7a. AI
+
+AI features are built in (not a plugin), off by default, and use the user's own key. Everything runs in the main process, in `src/main/ai/`:
+
+| File            | Role                                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------------------- |
+| `ai-ipc.ts`     | The `ai:*` IPC channels: key status, save key, run a task (streamed back as `ai:chunk` events), cancel. |
+| `ai-service.ts` | Checks AI is on, gathers the repository data a task needs (staged diff, `git show`, conflicted file).   |
+| `prompts.ts`    | The instructions for each task (pure, unit-tested), size limits, and parsing the conflict answer.       |
+| `providers.ts`  | Anthropic (official SDK) and OpenAI-compatible services (fetch + `sse.ts`), with plain-word errors.     |
+
+The UI side is `renderer/src/features/ai/`: Settings > AI, the answer dialog, and the Suggest / Explain / Ask AI buttons, which only appear when AI is turned on. Nothing is sent to a service until the user clicks one of them. Inputs over about 200,000 characters are cut down and the user is told; a conflicted file that large is refused rather than resolved from part of it.
 
 ## 8. Build & release
 

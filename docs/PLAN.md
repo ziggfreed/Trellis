@@ -245,8 +245,17 @@ Deferred: an embedded terminal (needs the native `node-pty` module built per pla
 
 Moved to later: toolbar buttons, custom panels (sandboxed iframes), more events (`onCommit`, `onCheckout`...), graph decorations, and a GitHub integration with PRs and CI status (Phase 6, as a plugin). `@trellis/plugin-api` and `create-trellis-plugin` still need publishing to npm (a maintainer step).
 
-## 14. Phase 6 plan (next): integrations and AI
+## 14. Phase 6 delivered: integrations and AI
 
-1. Plugin API additions these need: panels, graph decorations, more events, secrets storage for tokens
-2. GitHub plugin: sign in, pull requests for the current branch, CI status on commits in the graph
-3. AI (built in, bring your own key, can be turned off): commit message suggestions, explain a commit or diff, conflict help
+- **Plugin API 0.3**: sidebar panels (`contributes.panels` + `ui.registerPanel`), commit badges in the graph (`graph.setDecorations`), encrypted per-plugin secrets (`secrets`), operation events (`repos.onDidRunOperation`) and password input boxes
+- **GitHub plugin** (built in): sign in with a personal access token or the GitHub CLI's sign-in; pull requests panel (this branch's PR first, with CI and review state, or a link to create one); CI badges on the branch's latest commits; the branch's PR in the status bar. GitHub Enterprise via an API address setting
+- **AI** (built in, off by default, bring your own key): Anthropic or any OpenAI-compatible service (OpenAI, OpenRouter, Ollama, LM Studio). Suggest a commit message from the staged changes (streamed into the commit box), explain a commit, and explain a merge conflict with a suggested resolution you can apply. Keys are stored with OS encryption and never reach the UI
+- Trellis version bumped to 0.3.0 (the plugin API grew)
+
+Moved to later: GitLab/Bitbucket plugins, checking out PRs and inline review comments, OAuth sign-in (needs a registered OAuth app), explaining an arbitrary diff, PR descriptions, the natural-language command bar, iframe panels and toolbar buttons.
+
+## 15. Phase 7 plan (next): polish and v1.0
+
+1. Performance pass on very large repositories, accessibility review, onboarding
+2. Signing/notarisation and auto-update
+3. Website and user docs
