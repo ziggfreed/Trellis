@@ -101,6 +101,17 @@ export async function push(repo: string, options: { force?: boolean } = {}) {
   )
 }
 
+/**
+ * Push right after a commit (the commit box's "Push" option). After amending
+ * a commit that was already pushed, the branch and its upstream have split,
+ * so a plain push would be rejected: offer a force push (with lease) instead.
+ */
+export async function pushAfterCommit(repo: string, amended: boolean) {
+  await queryClient.invalidateQueries({ queryKey: repoKeys.all(repo) })
+  const status = await getStatus(repo)
+  await push(repo, { force: amended && status.branch.behind > 0 })
+}
+
 // ---------------------------------------------------------------------------
 // Branches
 // ---------------------------------------------------------------------------

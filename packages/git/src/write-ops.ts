@@ -335,8 +335,19 @@ export async function deleteRemoteBranch(
   branch: string,
   options: RemoteOptions = {},
 ): Promise<void> {
+  await deleteRemoteBranches(repoPath, remote, [branch], options)
+}
+
+/** Delete several branches on one remote with a single push. */
+export async function deleteRemoteBranches(
+  repoPath: string,
+  remote: string,
+  branches: string[],
+  options: RemoteOptions = {},
+): Promise<void> {
+  if (branches.length === 0) return
   await runGit(
-    ['push', '--progress', remote, '--delete', `refs/heads/${branch}`],
+    ['push', '--progress', remote, '--delete', ...branches.map((b) => `refs/heads/${b}`)],
     remoteRunOptions(repoPath, options),
   )
 }

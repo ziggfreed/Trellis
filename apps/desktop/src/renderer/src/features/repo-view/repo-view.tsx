@@ -11,7 +11,8 @@
  *   └──────────┴─────────────────┴─────────────────────┘
  *
  * In the Changes view the file list and diff sit side by side.
- * All panels can be resized by dragging the dividers.
+ * All panels can be resized by dragging the dividers; their sizes are kept
+ * between launches (features/layout/panel-layout.ts).
  */
 import {
   Code,
@@ -36,6 +37,7 @@ import { CommitBox } from '@/features/changes/commit-box'
 import { PatchView } from '@/features/changes/patch-view'
 import { DiffPanel } from '@/features/diff/diff-panel'
 import { useRepoView } from './repo-view-store'
+import { usePanelLayout } from '@/features/layout/panel-layout'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,14 +56,21 @@ import { BisectBanner } from '@/features/bisect/bisect'
 export function RepoView({ repo }: { repo: RepoTab }) {
   const [view, setView] = useRepoView(repo.path)
   const changeCount = useStatus(repo.path).data?.files.length ?? 0
+  const outerLayout = usePanelLayout('repo-layout', ['sidebar', 'main'])
 
   return (
-    <ResizablePanelGroup orientation="horizontal" id="repo-layout">
-      <ResizablePanel defaultSize="18%" minSize="10%" maxSize="40%" className="bg-sidebar">
+    <ResizablePanelGroup orientation="horizontal" {...outerLayout}>
+      <ResizablePanel
+        id="sidebar"
+        defaultSize="18%"
+        minSize="10%"
+        maxSize="40%"
+        className="bg-sidebar"
+      >
         <RepoSidebar repoPath={repo.path} />
       </ResizablePanel>
       <ResizableHandle />
-      <ResizablePanel minSize="40%">
+      <ResizablePanel id="main" minSize="40%">
         <div className="flex h-full min-h-0 flex-col">
           <div className="flex h-10 shrink-0 items-center gap-1 border-b px-2">
             <div role="tablist" aria-label="Views" className="flex items-center gap-1">
@@ -147,53 +156,72 @@ export function RepoView({ repo }: { repo: RepoTab }) {
             ) : view.view === 'compare' && view.compare ? (
               <CompareView repoPath={repo.path} compare={view.compare} />
             ) : view.view === 'history' ? (
-              <ResizablePanelGroup orientation="vertical" id="history-layout">
-                <ResizablePanel defaultSize="55%" minSize="20%">
-                  <HistoryPanel repoPath={repo.path} />
-                </ResizablePanel>
-                <ResizableHandle />
-                <ResizablePanel minSize="20%">
-                  <ResizablePanelGroup orientation="horizontal" id="history-bottom-layout">
-                    <ResizablePanel defaultSize="40%" minSize="20%">
-                      <CommitDetails repoPath={repo.path} />
-                    </ResizablePanel>
-                    <ResizableHandle />
-                    <ResizablePanel minSize="30%">
-                      <DiffPanel repoPath={repo.path} target={view.selectedFile} />
-                    </ResizablePanel>
-                  </ResizablePanelGroup>
-                </ResizablePanel>
-              </ResizablePanelGroup>
+              <HistoryLayout repoPath={repo.path} />
             ) : (
-              <ResizablePanelGroup orientation="horizontal" id="changes-layout">
-                <ResizablePanel defaultSize="35%" minSize="20%">
-                  <div className="flex h-full min-h-0 flex-col">
-                    <div className="min-h-0 flex-1">
-                      <ChangesList repoPath={repo.path} />
-                    </div>
-                    <CommitBox repoPath={repo.path} />
-                  </div>
-                </ResizablePanel>
-                <ResizableHandle />
-                <ResizablePanel minSize="30%">
-                  {view.selectedFile &&
-                  (view.selectedFile.kind === 'staged' || view.selectedFile.kind === 'unstaged') ? (
-                    <PatchView
-                      key={`${view.selectedFile.kind}:${view.selectedFile.path}`}
-                      repoPath={repo.path}
-                      file={view.selectedFile.path}
-                      area={view.selectedFile.kind}
-                    />
-                  ) : (
-                    <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                      Select a file to see its changes.
-                    </p>
-                  )}
-                </ResizablePanel>
-              </ResizablePanelGroup>
+              <ChangesLayout repoPath={repo.path} />
             )}
           </div>
         </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
+  )
+}
+
+/** History view: commit list on top; commit details and diff below. */
+function HistoryLayout({ repoPath }: { repoPath: string }) {
+  const [view] = useRepoView(repoPath)
+  const outer = usePanelLayout('history-layout', ['list', 'bottom'])
+  const bottom = usePanelLayout('history-bottom-layout', ['details', 'diff'])
+  return (
+    <ResizablePanelGroup orientation="vertical" {...outer}>
+      <ResizablePanel id="list" defaultSize="55%" minSize="20%">
+        <HistoryPanel repoPath={repoPath} />
+      </ResizablePanel>
+      <ResizableHandle />
+      <ResizablePanel id="bottom" minSize="20%">
+        <ResizablePanelGroup orientation="horizontal" {...bottom}>
+          <ResizablePanel id="details" defaultSize="40%" minSize="20%">
+            <CommitDetails repoPath={repoPath} />
+          </ResizablePanel>
+          <ResizableHandle />
+          <ResizablePanel id="diff" minSize="30%">
+            <DiffPanel repoPath={repoPath} target={view.selectedFile} />
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </ResizablePanel>
+    </ResizablePanelGroup>
+  )
+}
+
+/** Changes view: changed files and the commit box on the left, the diff on the right. */
+function ChangesLayout({ repoPath }: { repoPath: string }) {
+  const [view] = useRepoView(repoPath)
+  const layout = usePanelLayout('changes-layout', ['files', 'diff'])
+  const file = view.selectedFile
+  return (
+    <ResizablePanelGroup orientation="horizontal" {...layout}>
+      <ResizablePanel id="files" defaultSize="35%" minSize="20%">
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="min-h-0 flex-1">
+            <ChangesList repoPath={repoPath} />
+          </div>
+          <CommitBox repoPath={repoPath} />
+        </div>
+      </ResizablePanel>
+      <ResizableHandle />
+      <ResizablePanel id="diff" minSize="30%">
+        {file && (file.kind === 'staged' || file.kind === 'unstaged') ? (
+          <PatchView
+            key={`${file.kind}:${file.path}`}
+            repoPath={repoPath}
+            file={file.path}
+            area={file.kind}
+          />
+        ) : (
+          <p className="flex h-full items-center justify-center text-sm text-muted-foreground">
+            Select a file to see its changes.
+          </p>
+        )}
       </ResizablePanel>
     </ResizablePanelGroup>
   )

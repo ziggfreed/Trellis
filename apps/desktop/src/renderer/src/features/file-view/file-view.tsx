@@ -15,6 +15,7 @@ import type { FileViewState } from '@/features/repo-view/repo-view-store'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { useBlame, useFileHistory } from '@/features/repos/use-repo-data'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
+import { usePanelLayout } from '@/features/layout/panel-layout'
 import { Button } from '@/components/ui/button'
 import { ChangeBadge } from '@/components/change-badge'
 import { FilePath } from '@/components/file-path'
@@ -205,6 +206,7 @@ function FileHistoryView({ repoPath, file }: { repoPath: string; file: string })
   const { data, error } = useFileHistory(repoPath, file)
   const [view, setView] = useRepoView(repoPath)
   const selected = view.selectedFile?.kind === 'commit' ? view.selectedFile : null
+  const layout = usePanelLayout('file-history-layout', ['list', 'diff'])
 
   if (error) return <p className="p-4 text-sm text-destructive">{error.message}</p>
   if (!data) return null
@@ -217,8 +219,8 @@ function FileHistoryView({ repoPath, file }: { repoPath: string; file: string })
   }
 
   return (
-    <ResizablePanelGroup orientation="horizontal" id="file-history-layout">
-      <ResizablePanel defaultSize="35%" minSize="20%">
+    <ResizablePanelGroup orientation="horizontal" {...layout}>
+      <ResizablePanel id="list" defaultSize="35%" minSize="20%">
         <ul className="h-full overflow-y-auto py-1" data-testid="file-history">
           {data.map((entry) => {
             const active = selected?.sha === entry.commit.sha
@@ -257,7 +259,7 @@ function FileHistoryView({ repoPath, file }: { repoPath: string; file: string })
         </ul>
       </ResizablePanel>
       <ResizableHandle />
-      <ResizablePanel minSize="30%">
+      <ResizablePanel id="diff" minSize="30%">
         <DiffPanel repoPath={repoPath} target={selected} />
       </ResizablePanel>
     </ResizablePanelGroup>

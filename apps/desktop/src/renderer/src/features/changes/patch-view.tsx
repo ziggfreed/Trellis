@@ -6,6 +6,10 @@
  * - Click changed lines to select them (Shift+click selects a range), then
  *   use the buttons in the toolbar for just those lines.
  *
+ * - The Unified / Side-by-side buttons (shared with the history's diff) show
+ *   the hunks in one column or two (old left, new right; see split-rows.ts).
+ *   Selecting lines and the hunk buttons work the same in both.
+ *
  * Partial changes are applied by building a smaller patch in the UI
  * (buildPartialPatch from @trellis/git/patch) and applying it with git.
  *
@@ -40,6 +44,9 @@ import { specialViews } from '@/features/diff/structured-diff'
 import { ViewSwitch, type DiffMode } from '@/features/diff/view-switch'
 import { FileAlternateView } from './file-alternate-view'
 import { ImageDiffView, isImagePath } from '@/features/diff/image-diff'
+import { DiffLayoutButtons } from '@/features/diff/layout-buttons'
+import { useSettingsStore } from '@/features/settings/settings-store'
+import { splitRows } from './split-rows'
 
 /** Stop rendering lines after this many, to keep huge diffs responsive. */
 const MAX_LINES = 5000
@@ -63,6 +70,7 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
   const [chosenMode, setChosenMode] = useState<DiffMode>('diff')
   const mode = modes.includes(chosenMode) ? chosenMode : 'diff'
   const [dirty, setDirty] = useState(false)
+  const split = useSettingsStore((s) => s.settings.diffLayout) === 'split'
   const changeMode = async (next: DiffMode) => {
     if (dirty) {
       const ok = await confirmDialog({
@@ -101,24 +109,34 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
   // Syntax highlighting: highlight each hunk's old and new side separately
   // (each is valid-ish code on its own), then look lines up by position.
   const parser = useLanguageParser(file)
+  // The result is looked up as highlighted[hunkIndex][lineIndex].
   const highlighted = useMemo(() => {
     if (!patch || !parser) return null
-    return patch.hunks.map((hunk) => ({
-      old: highlightLines(
+    return patch.hunks.map((hunk) => {
+      const oldSide = highlightLines(
         hunk.lines
           .filter((l) => l.kind !== 'add')
           .map((l) => l.text)
           .join('\n'),
         parser,
-      ),
-      new: highlightLines(
+      )
+      const newSide = highlightLines(
         hunk.lines
           .filter((l) => l.kind !== 'delete')
           .map((l) => l.text)
           .join('\n'),
         parser,
-      ),
-    }))
+      )
+      // Positions of the next line on each side.
+      let oldIndex = 0
+      let newIndex = 0
+      return hunk.lines.map((line): Segment[] | undefined => {
+        if (line.kind === 'delete') return oldSide[oldIndex++]
+        if (line.kind === 'add') return newSide[newIndex++]
+        oldIndex++ // context lines are on both sides
+        return newSide[newIndex++]
+      })
+    })
   }, [patch, parser])
 
   const header = (
@@ -127,7 +145,8 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
       <span className="text-xs text-muted-foreground">
         {area === 'staged' ? 'Staged' : untracked ? 'Untracked' : 'Unstaged'}
       </span>
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-2">
+        {mode === 'diff' && !conflicted && <DiffLayoutButtons />}
         <ViewSwitch
           modes={modes}
           mode={mode}
@@ -233,9 +252,27 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
         )}
         {patch.hunks.map((hunk, hunkIndex) => {
           if (rendered >= MAX_LINES) return null
-          // Positions of the next line on each side, for finding its highlighting.
-          let oldIndex = 0
-          let newIndex = 0
+          const lineProps = (index: number) => {
+            const line = hunk.lines[index]!
+            const id = lineId(hunkIndex, index)
+            const selectable = line.kind !== 'context' && (area !== 'staged' || reversePartialOk)
+            return {
+              line,
+              segments: highlighted?.[hunkIndex]?.[index],
+              selected: selected.has(id),
+              onClick: selectable
+                ? (event: React.MouseEvent) =>
+                    setSelection({
+                      patch,
+                      ids:
+                        event.shiftKey && anchor
+                          ? selectRange(selected, ordered, anchor, id)
+                          : toggleLine(selected, id),
+                      anchor: id,
+                    })
+                : undefined,
+            }
+          }
           return (
             <div key={hunkIndex} className="border-b">
               <div className="flex items-center gap-2 bg-muted px-3 py-0.5 text-muted-foreground">
@@ -247,41 +284,32 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
                   {actionsFor(hunkLineIds(patch, hunkIndex))}
                 </div>
               </div>
-              {hunk.lines.map((line, index) => {
-                if (rendered++ >= MAX_LINES) return null
-                const id = lineId(hunkIndex, index)
-                const sides = highlighted?.[hunkIndex]
-                let segments: Segment[] | undefined
-                if (line.kind === 'delete') segments = sides?.old[oldIndex++]
-                else if (line.kind === 'add') segments = sides?.new[newIndex++]
-                else {
-                  oldIndex++ // context lines are on both sides
-                  segments = sides?.new[newIndex++]
-                }
-                const selectable =
-                  line.kind !== 'context' && (area !== 'staged' || reversePartialOk)
-                return (
-                  <Line
-                    key={index}
-                    line={line}
-                    segments={segments}
-                    selected={selected.has(id)}
-                    onClick={
-                      selectable
-                        ? (event) =>
-                            setSelection({
-                              patch,
-                              ids:
-                                event.shiftKey && anchor
-                                  ? selectRange(selected, ordered, anchor, id)
-                                  : toggleLine(selected, id),
-                              anchor: id,
-                            })
-                        : undefined
-                    }
-                  />
-                )
-              })}
+              {split
+                ? splitRows(hunk.lines).map((row, rowIndex) => {
+                    if (rendered++ >= MAX_LINES) return null
+                    return (
+                      <div key={rowIndex} className="flex" data-testid="split-row">
+                        <div className="flex w-1/2 min-w-0 flex-col border-r">
+                          {row.left !== null ? (
+                            <Line {...lineProps(row.left)} side="old" />
+                          ) : (
+                            <EmptySide />
+                          )}
+                        </div>
+                        <div className="flex w-1/2 min-w-0 flex-col">
+                          {row.right !== null ? (
+                            <Line {...lineProps(row.right)} side="new" />
+                          ) : (
+                            <EmptySide />
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })
+                : hunk.lines.map((_, index) => {
+                    if (rendered++ >= MAX_LINES) return null
+                    return <Line key={index} {...lineProps(index)} />
+                  })}
             </div>
           )
         })}
@@ -308,7 +336,12 @@ function Line(props: {
   /** Syntax-highlighted pieces of the line, if its language is known. */
   segments?: Segment[] | undefined
   selected: boolean
-  onClick?: (event: React.MouseEvent) => void
+  onClick?: ((event: React.MouseEvent) => void) | undefined
+  /**
+   * In the side-by-side view, which column this is: only that side's line
+   * number is shown, and long lines wrap (each column is half the width).
+   */
+  side?: 'old' | 'new'
 }) {
   const { line } = props
   const sign = line.kind === 'add' ? '+' : line.kind === 'delete' ? '-' : ' '
@@ -319,7 +352,8 @@ function Line(props: {
       onClick={props.onClick}
       data-line-kind={line.kind}
       className={cn(
-        'flex min-w-max leading-5',
+        'flex leading-5',
+        props.side ? 'flex-1' : 'min-w-max',
         line.kind === 'add' && 'bg-[var(--diff-insert)]',
         line.kind === 'delete' && 'bg-[var(--diff-delete)]',
         props.selected && line.kind === 'add' && 'bg-[var(--diff-insert-strong)]',
@@ -328,14 +362,23 @@ function Line(props: {
       )}
     >
       <span className={cn('w-1 shrink-0', props.selected && 'bg-ring')} />
-      <span className="w-10 shrink-0 pr-2 text-right text-muted-foreground select-none">
-        {line.oldLine ?? ''}
-      </span>
-      <span className="w-10 shrink-0 pr-2 text-right text-muted-foreground select-none">
-        {line.newLine ?? ''}
-      </span>
+      {props.side !== 'new' && (
+        <span className="w-10 shrink-0 pr-2 text-right text-muted-foreground select-none">
+          {line.oldLine ?? ''}
+        </span>
+      )}
+      {props.side !== 'old' && (
+        <span className="w-10 shrink-0 pr-2 text-right text-muted-foreground select-none">
+          {line.newLine ?? ''}
+        </span>
+      )}
       <span className="w-4 shrink-0 text-center select-none">{sign}</span>
-      <span className="pr-4 whitespace-pre">
+      <span
+        className={cn(
+          'pr-4',
+          props.side ? 'min-w-0 break-all whitespace-pre-wrap' : 'whitespace-pre',
+        )}
+      >
         {props.segments?.length
           ? props.segments.map((segment, i) =>
               segment.className ? (
@@ -350,6 +393,11 @@ function Line(props: {
       </span>
     </div>
   )
+}
+
+/** The blank half of a side-by-side row (a line only on the other side). */
+function EmptySide() {
+  return <div className="min-h-5 flex-1 bg-muted/40" />
 }
 
 function SmallButton(props: { label: string; icon?: React.ReactNode; onClick: () => void }) {

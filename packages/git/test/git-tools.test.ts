@@ -11,6 +11,8 @@ import {
   getCommitSignature,
   getDefaultBranch,
   getBranchCleanup,
+  getRemoteBranchCleanup,
+  deleteRemoteBranches,
   getMergedBranches,
   getReflog,
   getRemotes,
@@ -239,6 +241,39 @@ describe('merged branches', () => {
         upstream: 'origin/pushed-then-deleted',
         upstreamGone: true,
       })
+    } finally {
+      await r.cleanup()
+      await remote.cleanup()
+    }
+  })
+
+  it('finds remote branches merged into the target, and deletes several at once', async () => {
+    const { repo: r, remote } = await createRepoWithRemote()
+    try {
+      const pushBranch = async (name: string, file: string) => {
+        await r.git('switch', '-c', name, 'main')
+        await r.write(file, `${name}\n`)
+        await r.commit(name)
+        await r.git('push', '-u', 'origin', name)
+        await r.git('switch', 'main')
+      }
+      await pushBranch('merged', 'm.txt')
+      await pushBranch('squashed', 's.txt')
+      await pushBranch('open', 'o.txt')
+      await r.git('merge', '--no-ff', '-m', 'merge', 'merged')
+      await r.git('merge', '--squash', 'squashed')
+      await r.commit('squash')
+      await r.git('push', 'origin', 'main')
+      await r.git('remote', 'set-head', 'origin', 'main')
+
+      const found = await getRemoteBranchCleanup(r.path, 'main')
+      expect(found.map((b) => [b.name, b.merged])).toEqual([
+        ['origin/merged', 'merged'],
+        ['origin/squashed', 'squashed'],
+      ])
+      await deleteRemoteBranches(r.path, 'origin', ['merged', 'squashed'])
+      const left = await remote.git('branch', '--format=%(refname:short)')
+      expect(left.trim().split('\n').sort()).toEqual(['main', 'open'])
     } finally {
       await r.cleanup()
       await remote.cleanup()

@@ -4,10 +4,7 @@
  */
 import { lazy, Suspense, useState } from 'react'
 import { parseLfsPointer } from '@trellis/git/lfs-pointer'
-import { Columns2, Rows2 } from 'lucide-react'
 import type { DiffTarget, FileContent } from '@shared/ipc'
-import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { FilePath } from '@/components/file-path'
 import { formatBytes } from '@/lib/format'
 import { useSettingsStore } from '@/features/settings/settings-store'
@@ -17,6 +14,7 @@ import { specialViews } from './structured-diff'
 import { JsonDiffView, LfsPointerView, MarkdownDiffView } from './special-views'
 import { ViewSwitch, type DiffMode } from './view-switch'
 import { ImageDiffView, isImagePath } from './image-diff'
+import { DiffLayoutButtons } from './layout-buttons'
 
 // The diff editor (CodeMirror) is a large chunk of code that isn't needed
 // until a diff is shown, so it loads on first use instead of at start-up.
@@ -33,7 +31,6 @@ const textOf = (content: FileContent) => (content.kind === 'text' ? content.text
 
 export function DiffPanel({ repoPath, target }: { repoPath: string; target: DiffTarget | null }) {
   const layout = useSettingsStore((s) => s.settings.diffLayout)
-  const update = useSettingsStore((s) => s.update)
   const { data, error, isPending } = useFileDiff(repoPath, target)
   const [chosenMode, setMode] = useState<DiffMode>('diff')
   const modes: DiffMode[] = target ? ['diff', ...specialViews(target.path)] : ['diff']
@@ -76,53 +73,11 @@ export function DiffPanel({ repoPath, target }: { repoPath: string; target: Diff
         <FilePath path={target.path} oldPath={'oldPath' in target ? target.oldPath : undefined} />
         <div className="ml-auto flex items-center gap-2">
           <ViewSwitch modes={modes} mode={mode} onChange={setMode} />
-          {mode === 'diff' && (
-            <>
-              <LayoutButton
-                label="Unified view"
-                active={layout === 'unified'}
-                onClick={() => update({ diffLayout: 'unified' })}
-              >
-                <Rows2 />
-              </LayoutButton>
-              <LayoutButton
-                label="Side-by-side view"
-                active={layout === 'split'}
-                onClick={() => update({ diffLayout: 'split' })}
-              >
-                <Columns2 />
-              </LayoutButton>
-            </>
-          )}
+          {mode === 'diff' && <DiffLayoutButtons />}
         </div>
       </div>
       <div className="min-h-0 flex-1">{body}</div>
     </div>
-  )
-}
-
-function LayoutButton(props: {
-  label: string
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={props.label}
-          aria-pressed={props.active}
-          onClick={props.onClick}
-          className={props.active ? 'bg-accent text-foreground' : 'text-muted-foreground'}
-        >
-          {props.children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{props.label}</TooltipContent>
-    </Tooltip>
   )
 }
 

@@ -20,6 +20,11 @@ All notable changes to Trellis are listed here. The format follows
 - **Find lost commits**: a reflog browser that marks commits on no branch and rescues them onto a new branch.
 - **Ignore files** from their right-click menu (the file, its extension or its folder), with an offer to stop tracking files already committed.
 - **Clean up branches** in one go, with one undo to bring them back. Pick a target branch (main by default) and Trellis lists branches merged into it, including ones merged with "Squash and merge" or "Rebase and merge" (which git alone can't detect), plus unmerged branches whose remote branch was deleted or that were never pushed. Open it from the broom button on the sidebar's Branches header.
+- **Delete merged remote branches** from the clean-up dialog (they start unticked, and Trellis asks first).
+- **Panel sizes are remembered** between launches (sidebar, history and changes panels, file history and compare).
+- **Commit and push** in one go: tick **Push** next to **Amend**.
+- **Side-by-side hunks in the Changes view**, with line and hunk staging still available.
+- **History columns**: a new **Changes** column (files and lines changed), plus **Committer** and **Commit date**; choose which columns show from the toolbar or by right-clicking the headers, remembered between launches.
 - **Double-click to check out** a remote branch in the sidebar (as a local branch tracking it), a commit in the history (its branch if it has one), or a branch or tag label in the history.
 - Branches in the sidebar are marked **local** (never pushed), **gone** (remote branch deleted) or **not tracking** (a remote has the name but the branch doesn't track it).
 - **Automatic updates**: Trellis checks GitHub for new versions, downloads them in the background and offers **Restart to update**. Turn it off or check now in **Settings > General > Updates**.
@@ -37,6 +42,7 @@ All notable changes to Trellis are listed here. The format follows
 
 ### Changed
 
+- Scrollbars match the theme (they were white in dark mode).
 - Faster start-up: the diff editor now loads when it's first needed.
 
 ## [0.2.0] - 2026-11-25

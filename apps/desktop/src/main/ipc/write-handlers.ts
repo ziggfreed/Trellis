@@ -317,6 +317,15 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       )
     },
 
+    'repo:deleteRemoteBranches': (operationId, path, remote, branches) => {
+      assertRefArg(remote, 'remote')
+      assertStringArray(branches, 'branches')
+      for (const branch of branches) assertRefArg(branch, 'branch')
+      return remoteOperation(operationId, path, sendProgress, (o) =>
+        git.deleteRemoteBranches(path, remote, branches, o),
+      )
+    },
+
     'repo:pushTag': (operationId, path, remote, tag) => {
       assertRefArg(remote, 'remote')
       assertRefArg(tag, 'tag')

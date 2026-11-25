@@ -8,6 +8,7 @@ import type { CompareState } from '@/features/repo-view/repo-view-store'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { useComparison } from '@/features/repos/use-repo-data'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
+import { usePanelLayout } from '@/features/layout/panel-layout'
 import { Button } from '@/components/ui/button'
 import { ChangeBadge } from '@/components/change-badge'
 import { FilePath } from '@/components/file-path'
@@ -22,6 +23,7 @@ export function CompareView({ repoPath, compare }: { repoPath: string; compare: 
   const [view, setView] = useRepoView(repoPath)
   const { data, error } = useComparison(repoPath, compare.base, compare.head)
   const selected = view.selectedFile?.kind === 'range' ? view.selectedFile : null
+  const layout = usePanelLayout('compare-layout', ['list', 'diff'])
   const swap = () =>
     setView({ compare: { base: compare.head, head: compare.base }, selectedFile: null })
 
@@ -57,12 +59,8 @@ export function CompareView({ repoPath, compare }: { repoPath: string; compare: 
       {error ? (
         <p className="p-4 text-sm text-destructive">{error.message}</p>
       ) : !data ? null : (
-        <ResizablePanelGroup
-          orientation="horizontal"
-          id="compare-layout"
-          className="min-h-0 flex-1"
-        >
-          <ResizablePanel defaultSize="35%" minSize="20%">
+        <ResizablePanelGroup orientation="horizontal" {...layout} className="min-h-0 flex-1">
+          <ResizablePanel id="list" defaultSize="35%" minSize="20%">
             <div className="h-full overflow-y-auto py-1">
               {data.mergeBase === null && (
                 <p className="px-3 py-2 text-sm text-muted-foreground">
@@ -154,7 +152,7 @@ export function CompareView({ repoPath, compare }: { repoPath: string; compare: 
             </div>
           </ResizablePanel>
           <ResizableHandle />
-          <ResizablePanel minSize="30%">
+          <ResizablePanel id="diff" minSize="30%">
             <DiffPanel repoPath={repoPath} target={selected} />
           </ResizablePanel>
         </ResizablePanelGroup>

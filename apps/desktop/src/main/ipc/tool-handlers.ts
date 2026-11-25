@@ -32,6 +32,7 @@ type ToolChannel =
   | 'repo:untrack'
   | 'repo:getDefaultBranch'
   | 'repo:getBranchCleanup'
+  | 'repo:getRemoteBranchCleanup'
   | 'repo:deleteBranches'
 
 type ToolHandlers = {
@@ -134,6 +135,11 @@ export function createToolHandlers(): ToolHandlers {
       assertString(path, 'path')
       assertRefArg(target, 'target')
       return git.getBranchCleanup(path, target)
+    },
+    'repo:getRemoteBranchCleanup': (path, target) => {
+      assertString(path, 'path')
+      assertRefArg(target, 'target')
+      return git.getRemoteBranchCleanup(path, target)
     },
     'repo:deleteBranches': (path, names, options) => {
       assertString(path, 'path')

@@ -73,7 +73,7 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
               onDoubleClick={() => !branch.isHead && void checkoutBranch(repoPath, branch.name)}
               strong={branch.isHead}
               title={`${branchTooltip(branch, refs)} Double-click to check out; right-click for more.`}
-              trailing={<AheadBehind branch={branch} refs={refs} />}
+              trailing={<AheadBehind branch={branch} refs={refs} hasRemotes={remotes.length > 0} />}
             />
           </BranchMenu>
         ))}
@@ -199,8 +199,11 @@ function branchTooltip(branch: Ref, refs: Ref[]): string {
  * "↑2 ↓1" next to a branch that differs from its upstream, or a marker for
  * one that isn't on a remote ("local", "gone"...).
  */
-function AheadBehind({ branch, refs }: { branch: Ref; refs: Ref[] }) {
-  const state = branchRemoteState(branch, refs)
+function AheadBehind(props: { branch: Ref; refs: Ref[]; hasRemotes: boolean }) {
+  const { branch } = props
+  const state = branchRemoteState(branch, props.refs)
+  // With no remotes at all, every branch is local; marking them all is just noise.
+  if (state === 'local-only' && !props.hasRemotes) return null
   if (state !== 'tracking') {
     const text = REMOTE_STATE_TEXT[state]
     return (

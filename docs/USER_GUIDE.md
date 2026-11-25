@@ -43,6 +43,8 @@ Each repository opens in its own tab. Tabs come back when you restart Trellis.
 - **Toolbar** (top right): undo/redo, Fetch, Pull, Push, Branch and Stash.
 - **Status bar** (bottom): the current branch and how many commits it is ahead of or behind its upstream, running operations, the **Git log** (`` Ctrl+` ``, which lists every git command Trellis runs), settings and theme.
 
+Drag the dividers between panels to resize them; Trellis remembers the sizes next time.
+
 Trellis watches the repository's files, so changes made in other tools appear straight away.
 
 ## History
@@ -55,6 +57,7 @@ The history shows every commit as a graph, newest first, with branch and tag lab
 - **Compare**: right-click a commit and choose a compare option, or `Ctrl`+click a second commit to compare the two.
 - **Blame and file history**: right-click a file and choose **Blame** (who last changed each line) or **File history** (every commit that changed it, following renames).
 - **Drag** a branch label onto another branch or a commit to merge, rebase or move it.
+- **Columns**: click the columns button in the history toolbar (or right-click the column headers) to choose what's shown: **Changes** (files and lines changed), **Author**, **Date**, **Committer**, **Commit date** and the **Commit** hash. Your choice is remembered.
 - **Double-click** a commit to check it out. If a branch points at it, you switch to that branch (a remote branch becomes a local one); otherwise Trellis asks before checking out the bare commit. Double-click a branch label to check out that branch.
 
 ## Staging and committing
@@ -67,7 +70,9 @@ Open **Changes** (`Ctrl+Shift+G`) to see what you've changed.
 
 **Editing in the diff.** Select a changed file and choose **Edit** above its diff to change it right there; what git has is shown inline so you can see your changes as you go. Press `Ctrl+S` (or **Save**) to save it to disk. **Rendered** and **Data** are also available here for Markdown and JSON files.
 
-Tick **Amend** to replace the last commit instead, for example to fix its message. To throw away changes, use the discard button on a file (or **Discard all**), or select lines in its diff and discard just those. Right-click a file for its blame and history, or choose **Ignore** to add the file, every file with its extension, or its folder to `.gitignore`. If matching files are already committed, Trellis offers to stop tracking them (they stay on your computer).
+Tick **Amend** to replace the last commit instead, for example to fix its message. Tick **Push** to push straight after committing (it stays ticked until you untick it); after amending a commit you'd already pushed, Trellis offers a safe force push.
+
+The Unified / Side-by-side buttons above a file's diff work here too, and you can still select lines and stage, unstage or discard hunks in the side-by-side view. To throw away changes, use the discard button on a file (or **Discard all**), or select lines in its diff and discard just those. Right-click a file for its blame and history, or choose **Ignore** to add the file, every file with its extension, or its folder to `.gitignore`. If matching files are already committed, Trellis offers to stop tracking them (they stay on your computer).
 
 With AI turned on, **Suggest** writes the message from your staged changes (see [AI features](#ai-features)).
 
@@ -92,7 +97,7 @@ When git needs a password, token or SSH passphrase, Trellis asks for it.
 - **Squash- or rebase-merged into main**: its changes are on main, but as different commits, as with GitHub's "Squash and merge" or "Rebase and merge". Git itself calls these unmerged; Trellis compares the changes instead. Ticked.
 - **Remote branch deleted, not merged** and **Never pushed, not merged**: shown so you can decide, but not ticked, because they have changes that aren't on main.
 
-Branches still in progress (unmerged and on a remote) aren't listed. Untick any you want to keep and click **Delete**. main, master, develop and checked-out branches are never offered, remote branches aren't touched, and one undo brings the deleted ones back. Run **Fetch** first so Trellis knows which remote branches were deleted.
+Branches still in progress (unmerged and on a remote) aren't listed. Below them, **Remote branches merged into main** lists branches on the server whose work is already on main, such as a feature branch you merged; tick them to delete them from the remote too. These start unticked and Trellis asks first, because deleting a remote branch affects everyone and can't be undone. (You can also delete a single remote branch by right-clicking it under **Remotes** and choosing **Delete on remote…**.) Untick any you want to keep and click **Delete**. main, master, develop and checked-out branches are never offered, remote branches aren't touched, and one undo brings the deleted ones back. Run **Fetch** first so Trellis knows which remote branches were deleted.
 
 **Finding the commit that broke something (bisect).** Right-click a commit that has the bug and choose **Bisect › Start: this commit has the bug**. Then right-click an older commit where it worked and choose **Bisect › Mark good**. Trellis checks out a commit halfway between: test it, then click **Good**, **Bad** or **Skip** in the banner. Each answer halves the range (about 10 steps for 1,000 commits) until the banner names the first bad commit, which is marked in the history. Click **Stop bisecting** to go back to where you were.
 
