@@ -33,5 +33,8 @@ export default defineConfig({
       alias: { ...shared, '@': resolve(import.meta.dirname, 'src/renderer/src') },
     },
     plugins: [react(), tailwindcss()],
+    // Minify the UI code: it's the biggest part of the app and is parsed on
+    // every start-up. (Main and preload are small, so they stay readable.)
+    build: { minify: true },
   },
 })
