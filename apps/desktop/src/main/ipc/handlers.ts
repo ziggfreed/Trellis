@@ -30,6 +30,7 @@ import { openEditor, openTerminal } from '../services/external-apps'
 import { AskpassServer } from '../services/askpass'
 import { askUser, cancelAllPrompts } from '../services/auth-prompts'
 import { createWriteHandlers } from './write-handlers'
+import { createToolHandlers } from './tool-handlers'
 import { createPluginService } from '../plugins/plugin-ipc'
 import { createAiService } from '../ai/ai-ipc'
 import { SecretStore, safeStorageEncryptor } from '../services/secret-store'
@@ -81,6 +82,7 @@ export function createHandlers(
   return {
     ...plugins.handlers,
     ...ai.handlers,
+    ...createToolHandlers(),
     ...createWriteHandlers(commandLog, (operationId, phase, percent) =>
       sendToAllWindows('operation:progress', { operationId, phase, percent }),
     ),

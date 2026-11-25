@@ -81,6 +81,21 @@ export function GitSetupCard() {
   )
 }
 
+/** "Ada <ada@example.com>  Change…", for Settings > General. */
+export function IdentitySummary() {
+  const identity = useGitIdentity(null).data
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span id="setting-identity" className="min-w-0 truncate">
+        {isComplete(identity) ? `${identity!.name} <${identity!.email}>` : 'Not set yet'}
+      </span>
+      <Button size="xs" variant="outline" onClick={openIdentityDialog}>
+        Change…
+      </Button>
+    </div>
+  )
+}
+
 export function IdentityDialog() {
   const open = useIdentityDialog((s) => s.open)
   const current = useGitIdentity(null).data

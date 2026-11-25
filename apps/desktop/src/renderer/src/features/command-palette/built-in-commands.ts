@@ -23,6 +23,9 @@ import { scanFolder } from '@/features/home/scan-dialog'
 import { reloadPlugins } from '@/features/plugins/plugin-actions'
 import type { Command, CommandContext } from './registry'
 import { openIdentityDialog } from '@/features/onboarding/git-identity'
+import { openReflog } from '@/features/repo-tools/reflog-dialog'
+import { openPruneDialog } from '@/features/repo-tools/prune-dialog'
+import * as remoteActions from '@/features/repo-tools/remote-actions'
 
 /** Focus an element after the palette has closed and the view has updated. */
 function focusLater(selector: string) {
@@ -214,6 +217,30 @@ export function builtInCommands(context: CommandContext): Command[] {
       run: () => void actions.fetchAll(path),
     },
     { id: 'git.pull', title: 'Pull', group: 'Git', run: () => void actions.pull(path) },
+    {
+      id: 'git.reflog',
+      title: 'Find lost commits (reflog)…',
+      group: 'Git',
+      keywords: ['reflog', 'recover', 'restore', 'deleted', 'undo reset'],
+      run: () => openReflog(path),
+    },
+    {
+      id: 'git.pruneMerged',
+      title: 'Delete merged branches…',
+      group: 'Branches',
+      keywords: ['prune', 'clean up', 'tidy'],
+      run: () => openPruneDialog(path),
+    },
+    {
+      id: 'git.addRemote',
+      title: 'Add remote…',
+      group: 'Git',
+      keywords: ['origin', 'upstream', 'url'],
+      run: () =>
+        void api
+          .invoke('repo:getRemotes', path)
+          .then((remotes) => remoteActions.addRemote(path, remotes)),
+    },
     {
       id: 'git.pullRebase',
       title: 'Pull with rebase',

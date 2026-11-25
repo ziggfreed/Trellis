@@ -15,6 +15,7 @@ import { useRepoView } from '@/features/repo-view/repo-view-store'
 import {
   BranchMenu,
   RemoteBranchMenu,
+  RemoteMenu,
   StashMenu,
   TagMenu,
   WorktreeMenu,
@@ -22,6 +23,7 @@ import {
 import { addWorktree, checkoutBranch } from '@/features/repo-actions/actions'
 import { draggableRef } from '@/features/drag-drop/drop-menu'
 import { PluginPanels } from '@/features/plugins/plugin-panels'
+import { addRemote } from '@/features/repo-tools/remote-actions'
 import { Item, Section } from './sidebar-parts'
 import { groupRemoteBranches, localBranches, remoteBranchShortName, sortedTags } from './group-refs'
 
@@ -62,22 +64,49 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
         ))}
       </Section>
 
-      <Section title="Remotes" icon={Cloud} count={remoteGroups.length}>
-        {remoteGroups.map((group) => (
-          <Section key={group.remote} title={group.remote} nested count={group.branches.length}>
-            {group.branches.map((branch) => (
-              <RemoteBranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
-                <Item
-                  {...draggableRef(branch)}
-                  label={remoteBranchShortName(branch)}
-                  selected={view.selectedSha === branch.sha}
-                  onClick={() => select(branch.sha)}
-                  indent
-                />
-              </RemoteBranchMenu>
-            ))}
-          </Section>
-        ))}
+      <Section
+        title="Remotes"
+        icon={Cloud}
+        count={remoteGroups.length}
+        action={{ label: 'Add remote', onClick: () => void addRemote(repoPath, remotes) }}
+      >
+        {remoteGroups.map((group) => {
+          const remote = remotes.find((r) => r.name === group.remote)
+          return (
+            <Section
+              key={group.remote}
+              title={group.remote}
+              nested
+              count={group.branches.length}
+              tooltip={
+                remote
+                  ? `${remote.fetchUrl}\nRight-click to fetch, change the URL, rename or remove`
+                  : undefined
+              }
+              wrapHeader={(header) =>
+                remote ? (
+                  <RemoteMenu repo={repoPath} remote={remote} remotes={remotes}>
+                    {header}
+                  </RemoteMenu>
+                ) : (
+                  header
+                )
+              }
+            >
+              {group.branches.map((branch) => (
+                <RemoteBranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
+                  <Item
+                    {...draggableRef(branch)}
+                    label={remoteBranchShortName(branch)}
+                    selected={view.selectedSha === branch.sha}
+                    onClick={() => select(branch.sha)}
+                    indent
+                  />
+                </RemoteBranchMenu>
+              ))}
+            </Section>
+          )
+        })}
       </Section>
 
       <Section

@@ -18,6 +18,8 @@ import { ShortcutsEditor } from '@/features/shortcuts/shortcuts-editor'
 import { PluginsPanel } from '@/features/plugins/plugins-panel'
 import { AiSettingsPanel } from '@/features/ai/ai-settings-panel'
 import { UpdateSettings } from '@/features/updates/updates'
+import { SigningSettings } from '@/features/repo-tools/signing-settings'
+import { IdentitySummary } from '@/features/onboarding/git-identity'
 import { cn } from '@/lib/utils'
 
 type SettingsSection = 'general' | 'shortcuts' | 'ai' | 'plugins'
@@ -142,6 +144,12 @@ export function SettingsDialog() {
                   label: c.label,
                 }))}
               />
+            </Field>
+            <Field id="setting-identity" label="Name and email">
+              <IdentitySummary />
+            </Field>
+            <Field id="setting-signing" label="Commit signing">
+              <SigningSettings />
             </Field>
             <Field id="setting-updates" label="Updates">
               <UpdateSettings />

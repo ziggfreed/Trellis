@@ -356,3 +356,44 @@ export interface GitIdentity {
   name: string | null
   email: string | null
 }
+
+/** A commit's signature (see signing.ts). */
+export type CommitSignature =
+  | { status: 'none' }
+  | {
+      /**
+       * good: valid, from a trusted key. untrusted: valid, but the key isn't
+       * trusted, has expired or was revoked. bad: doesn't match (tampered).
+       * unknown: can't be checked here (e.g. the public key is missing).
+       */
+      status: 'good' | 'untrusted' | 'bad' | 'unknown'
+      /** Who signed it, as the key says (e.g. "Ada <ada@example.com>"). */
+      signer: string | null
+      /** Key id or fingerprint. */
+      key: string | null
+    }
+
+/** Global settings for signing new commits. */
+export interface SigningConfig {
+  /** `commit.gpgsign`: sign every commit. */
+  signCommits: boolean
+  /** `gpg.format`: GPG (openpgp) or an SSH key. */
+  format: 'openpgp' | 'ssh'
+  /** `user.signingkey`: a GPG key id, or an SSH public key / path to one. Empty = default. */
+  key: string
+}
+
+/** One reflog entry (see reflog.ts). */
+export interface ReflogEntry {
+  sha: string
+  /** e.g. "HEAD@{3}". */
+  selector: string
+  /** What happened: "commit", "checkout", "reset", "rebase (finish)"... */
+  kind: string
+  /** The rest of git's description, e.g. "moving from main to topic". */
+  description: string
+  /** When, in ms since the epoch. */
+  date: number
+  /** The commit's subject line. */
+  subject: string
+}

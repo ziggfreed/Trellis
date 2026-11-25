@@ -15,30 +15,36 @@ export function Section(props: {
   defaultOpen?: boolean
   /** A small "+" button in the header. */
   action?: { label: string; onClick: () => void }
+  /** Wraps the header button, e.g. in a right-click menu. */
+  wrapHeader?: (header: React.ReactElement) => React.ReactNode
+  /** Hover text for the header. */
+  tooltip?: string
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(props.defaultOpen ?? true)
   const Icon = props.icon
+  const header = (
+    <button
+      title={props.tooltip}
+      type="button"
+      onClick={() => setOpen(!open)}
+      aria-expanded={open}
+      className={cn(
+        'flex w-full items-center gap-1.5 px-2 py-1 text-left hover:bg-sidebar-accent',
+        props.nested
+          ? 'pl-5 text-sm'
+          : 'text-xs font-medium tracking-wide text-muted-foreground uppercase',
+      )}
+    >
+      <ChevronRight className={cn('size-3.5 shrink-0 transition-transform', open && 'rotate-90')} />
+      {Icon && <Icon className="size-3.5 shrink-0" />}
+      <span className="truncate">{props.title}</span>
+      <span className="ml-auto text-xs font-normal text-muted-foreground">{props.count}</span>
+    </button>
+  )
   return (
     <div className={cn('group/section relative', !props.nested && 'mb-2')}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        className={cn(
-          'flex w-full items-center gap-1.5 px-2 py-1 text-left hover:bg-sidebar-accent',
-          props.nested
-            ? 'pl-5 text-sm'
-            : 'text-xs font-medium tracking-wide text-muted-foreground uppercase',
-        )}
-      >
-        <ChevronRight
-          className={cn('size-3.5 shrink-0 transition-transform', open && 'rotate-90')}
-        />
-        {Icon && <Icon className="size-3.5 shrink-0" />}
-        <span className="truncate">{props.title}</span>
-        <span className="ml-auto text-xs font-normal text-muted-foreground">{props.count}</span>
-      </button>
+      {props.wrapHeader ? props.wrapHeader(header) : header}
       {props.action && (
         <button
           type="button"

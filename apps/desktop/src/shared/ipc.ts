@@ -34,7 +34,10 @@ import type {
   FileHistoryEntry,
   RebasePlanItem,
   UndoState,
+  CommitSignature,
   GitIdentity,
+  ReflogEntry,
+  SigningConfig,
   RepoStatus,
   Stash,
 } from '@trellis/git/types'
@@ -418,6 +421,50 @@ export interface IpcContract {
   }
   'repo:deleteTag': { args: [path: string, name: string]; result: void }
 
+  // --- Managing remotes ---------------------------------------------------------
+  'repo:addRemote': { args: [path: string, name: string, url: string]; result: void }
+  'repo:renameRemote': { args: [path: string, from: string, to: string]; result: void }
+  'repo:setRemoteUrl': { args: [path: string, name: string, url: string]; result: void }
+  'repo:removeRemote': { args: [path: string, name: string]; result: void }
+
+  // --- Signatures ---------------------------------------------------------------
+  /** Check a commit's GPG/SSH signature (runs gpg/ssh-keygen, so one commit at a time). */
+  'repo:getSignature': { args: [path: string, sha: string]; result: CommitSignature }
+  /** The global commit-signing settings. */
+  'git:getSigning': { args: []; result: SigningConfig }
+  'git:setSigning': { args: [config: SigningConfig]; result: void }
+
+  // --- Reflog -------------------------------------------------------------------
+  /** Recent HEAD reflog entries, and which of their commits are on no branch. */
+  'repo:getReflog': {
+    args: [path: string]
+    result: { entries: ReflogEntry[]; unreachable: string[] }
+  }
+
+  // --- .gitignore ---------------------------------------------------------------
+  /**
+   * Add an ignore pattern for `file` (this file, its extension or its folder)
+   * to the root .gitignore. Returns the pattern and the tracked files that
+   * now match ignore rules (ignoring doesn't affect them until untracked).
+   */
+  'repo:ignore': {
+    args: [path: string, file: string, kind: 'file' | 'extension' | 'folder']
+    result: { pattern: string; added: boolean; trackedMatches: string[] }
+  }
+  /** Stop tracking files, keeping them on disk (git rm --cached). */
+  'repo:untrack': { args: [path: string, files: string[]]; result: void }
+
+  // --- Cleaning up merged branches ----------------------------------------------
+  /** The main branch (origin's default, or main/master), or null. */
+  'repo:getDefaultBranch': { args: [path: string]; result: string | null }
+  /** Local branches fully merged into `target` that are safe to delete. */
+  'repo:getMergedBranches': { args: [path: string, target: string]; result: string[] }
+  /** Delete several merged branches as one undoable operation. */
+  'repo:deleteBranches': {
+    args: [path: string, names: string[]]
+    result: { deleted: string[]; failed: { name: string; error: string }[] }
+  }
+
   // --- Remotes (progress via 'operation:progress') ----------------------------
   'repo:fetch': { args: [operationId: string, path: string, remote: string]; result: void }
   'repo:pull': {
@@ -635,6 +682,19 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:stashDrop': true,
   'repo:createTag': true,
   'repo:deleteTag': true,
+  'repo:addRemote': true,
+  'repo:renameRemote': true,
+  'repo:setRemoteUrl': true,
+  'repo:removeRemote': true,
+  'repo:getSignature': true,
+  'git:getSigning': true,
+  'git:setSigning': true,
+  'repo:getReflog': true,
+  'repo:ignore': true,
+  'repo:untrack': true,
+  'repo:getDefaultBranch': true,
+  'repo:getMergedBranches': true,
+  'repo:deleteBranches': true,
   'repo:fetch': true,
   'repo:pull': true,
   'repo:push': true,
