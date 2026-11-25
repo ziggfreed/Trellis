@@ -24,6 +24,8 @@ import { reloadPlugins } from '@/features/plugins/plugin-actions'
 import type { Command, CommandContext } from './registry'
 import { openIdentityDialog } from '@/features/onboarding/git-identity'
 import { openReflog } from '@/features/repo-tools/reflog-dialog'
+import { addSubmodule, updateSubmodules } from '@/features/submodules/submodules'
+import { openLfsLocks } from '@/features/lfs/lfs'
 import { openPruneDialog } from '@/features/repo-tools/prune-dialog'
 import * as remoteActions from '@/features/repo-tools/remote-actions'
 
@@ -230,6 +232,26 @@ export function builtInCommands(context: CommandContext): Command[] {
       group: 'Branches',
       keywords: ['prune', 'clean up', 'tidy'],
       run: () => openPruneDialog(path),
+    },
+    {
+      id: 'git.addSubmodule',
+      title: 'Add submodule…',
+      group: 'Git',
+      run: () => void addSubmodule(path),
+    },
+    {
+      id: 'git.updateSubmodules',
+      title: 'Update submodules',
+      group: 'Git',
+      keywords: ['submodule', 'init'],
+      run: () => void updateSubmodules(path),
+    },
+    {
+      id: 'git.lfsLocks',
+      title: 'Git LFS: locked files…',
+      group: 'Git',
+      keywords: ['lfs', 'lock', 'unlock'],
+      run: () => openLfsLocks(path),
     },
     {
       id: 'git.addRemote',

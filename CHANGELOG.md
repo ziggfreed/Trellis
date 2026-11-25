@@ -8,6 +8,10 @@ All notable changes to Trellis are listed here. The format follows
 
 ### Added
 
+- **Submodules**: see each submodule's state in the sidebar, set them up after cloning, update them, open one in its own tab, or add a new one.
+- **Git LFS**: see which files use LFS (with a warning if git-lfs isn't installed), store a file type with LFS, lock and unlock files, and see real file sizes in diffs of LFS files.
+- **Edit in the diff**: change a file right where you review its changes, and save with Ctrl/Cmd+S.
+- **Rendered Markdown diffs** and **JSON diffs** that list changed values by path, ignoring formatting and key order.
 - **Manage remotes**: add, rename, change the URL of, fetch from and remove remotes from the sidebar.
 - **Commit signatures**: commit details show whether a commit is signed (GPG or SSH) and verified; turn on signing for your commits in Settings > General.
 - **Find lost commits**: a reflog browser that marks commits on no branch and rescues them onto a new branch.

@@ -2,7 +2,8 @@
  * The diff area: a header with the file name and layout switch, and the
  * diff itself (or a message for binary, too-large or unchanged files).
  */
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
+import { parseLfsPointer } from '@trellis/git/lfs-pointer'
 import { Columns2, Rows2 } from 'lucide-react'
 import type { DiffTarget, FileContent } from '@shared/ipc'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,9 @@ import { formatBytes } from '@/lib/format'
 import { useSettingsStore } from '@/features/settings/settings-store'
 import { useFileDiff } from '@/features/repos/use-repo-data'
 import { cn } from '@/lib/utils'
+import { specialViews } from './structured-diff'
+import { JsonDiffView, LfsPointerView, MarkdownDiffView } from './special-views'
+import { ViewSwitch, type DiffMode } from './view-switch'
 
 // The diff editor (CodeMirror) is a large chunk of code that isn't needed
 // until a diff is shown, so it loads on first use instead of at start-up.
@@ -30,6 +34,9 @@ export function DiffPanel({ repoPath, target }: { repoPath: string; target: Diff
   const layout = useSettingsStore((s) => s.settings.diffLayout)
   const update = useSettingsStore((s) => s.update)
   const { data, error, isPending } = useFileDiff(repoPath, target)
+  const [chosenMode, setMode] = useState<DiffMode>('diff')
+  const modes: DiffMode[] = target ? ['diff', ...specialViews(target.path)] : ['diff']
+  const mode = modes.includes(chosenMode) ? chosenMode : 'diff'
 
   if (!target) {
     return <Message>Select a file to see its changes.</Message>
@@ -42,8 +49,14 @@ export function DiffPanel({ repoPath, target }: { repoPath: string; target: Diff
     const reason = describeNonText(data.new) ?? describeNonText(data.old)
     const oldText = textOf(data.old)
     const newText = textOf(data.new)
+    const oldPointer = parseLfsPointer(oldText)
+    const newPointer = parseLfsPointer(newText)
     if (reason) body = <Message>{reason}</Message>
     else if (oldText === newText) body = <Message>No changes to the file's contents.</Message>
+    else if ((oldPointer || !oldText) && (newPointer || !newText) && (oldPointer || newPointer))
+      body = <LfsPointerView before={oldPointer} after={newPointer} />
+    else if (mode === 'rendered') body = <MarkdownDiffView oldText={oldText} newText={newText} />
+    else if (mode === 'structure') body = <JsonDiffView oldText={oldText} newText={newText} />
     else
       body = (
         <Suspense fallback={null}>
@@ -56,21 +69,26 @@ export function DiffPanel({ repoPath, target }: { repoPath: string; target: Diff
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex h-9 shrink-0 items-center gap-2 border-b px-3 text-sm">
         <FilePath path={target.path} oldPath={'oldPath' in target ? target.oldPath : undefined} />
-        <div className="ml-auto flex items-center">
-          <LayoutButton
-            label="Unified view"
-            active={layout === 'unified'}
-            onClick={() => update({ diffLayout: 'unified' })}
-          >
-            <Rows2 />
-          </LayoutButton>
-          <LayoutButton
-            label="Side-by-side view"
-            active={layout === 'split'}
-            onClick={() => update({ diffLayout: 'split' })}
-          >
-            <Columns2 />
-          </LayoutButton>
+        <div className="ml-auto flex items-center gap-2">
+          <ViewSwitch modes={modes} mode={mode} onChange={setMode} />
+          {mode === 'diff' && (
+            <>
+              <LayoutButton
+                label="Unified view"
+                active={layout === 'unified'}
+                onClick={() => update({ diffLayout: 'unified' })}
+              >
+                <Rows2 />
+              </LayoutButton>
+              <LayoutButton
+                label="Side-by-side view"
+                active={layout === 'split'}
+                onClick={() => update({ diffLayout: 'split' })}
+              >
+                <Columns2 />
+              </LayoutButton>
+            </>
+          )}
         </div>
       </div>
       <div className="min-h-0 flex-1">{body}</div>

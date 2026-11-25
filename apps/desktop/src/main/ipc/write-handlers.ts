@@ -54,10 +54,10 @@ function recorded<T>(
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 /** Send progress for a long operation to the UI. */
-type ProgressSender = (operationId: string, phase: string, percent: number) => void
+export type ProgressSender = (operationId: string, phase: string, percent: number) => void
 
 /** Run a remote operation with progress reporting and cancellation. */
-async function remoteOperation<T>(
+export async function remoteOperation<T>(
   operationId: string,
   repoPath: string,
   sendProgress: ProgressSender,

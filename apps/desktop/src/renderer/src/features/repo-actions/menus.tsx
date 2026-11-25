@@ -33,6 +33,7 @@ import { explainCommitWithAi } from '@/features/ai/ai-dialog'
 import * as remoteActions from '@/features/repo-tools/remote-actions'
 import { ignore, ignoreChoices } from '@/features/repo-tools/ignore-actions'
 import { openPruneDialog } from '@/features/repo-tools/prune-dialog'
+import { LfsMenuItems } from '@/features/lfs/lfs'
 
 interface MenuProps {
   repo: string
@@ -361,6 +362,7 @@ export function FileMenu({ repo, path, children }: MenuProps & { path: string })
               ))}
             </ContextMenuSubContent>
           </ContextMenuSub>
+          <LfsMenuItems repo={repo} path={path} />
           <PluginMenuItems location="file" args={{ repo, path }} />
         </>
       }

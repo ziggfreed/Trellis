@@ -11,7 +11,8 @@
     "./patch": "./src/patch.ts",
     "./rebase-plan": "./src/rebase-plan.ts",
     "./conflicts": "./src/conflicts.ts",
-    "./remote-names": "./src/remote-names.ts"
+    "./remote-names": "./src/remote-names.ts",
+    "./lfs-pointer": "./src/lfs-pointer.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

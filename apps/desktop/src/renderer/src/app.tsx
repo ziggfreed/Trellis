@@ -23,6 +23,7 @@ import { AiDialog } from '@/features/ai/ai-dialog'
 import { IdentityDialog } from '@/features/onboarding/git-identity'
 import { ReflogDialog } from '@/features/repo-tools/reflog-dialog'
 import { PruneDialog } from '@/features/repo-tools/prune-dialog'
+import { LfsLocksDialog } from '@/features/lfs/lfs'
 import { useUpdateSync } from '@/features/updates/updates'
 import { HomeScreen } from '@/features/home/home-screen'
 import { RepoView } from '@/features/repo-view/repo-view'
@@ -98,6 +99,7 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
       <IdentityDialog />
       <ReflogDialog />
       <PruneDialog />
+      <LfsLocksDialog />
       <ScanDialog />
       <Dialogs />
       <AuthPrompt />
