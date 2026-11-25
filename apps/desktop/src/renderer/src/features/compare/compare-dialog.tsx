@@ -58,7 +58,10 @@ function CompareForm({ request }: { request: CompareDialogRequest }) {
   const { repo } = request
   const refs = useRefs(repo).data ?? []
   const currentBranch = useStatus(repo).data?.branch.head ?? ''
-  const [base, setBase] = useState(currentBranch)
+  // null until edited: shows the current branch, even if the status loads
+  // after the dialog opens.
+  const [editedBase, setBase] = useState<string | null>(null)
+  const base = editedBase ?? currentBranch
   const [head, setHead] = useState(request.head ?? '')
   const [errors, setErrors] = useState<{ base?: string; head?: string }>({})
   const [busy, setBusy] = useState(false)
