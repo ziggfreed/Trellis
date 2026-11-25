@@ -1,12 +1,12 @@
 /**
- * Toolbar above the commit list: which branches to show, and search.
+ * Toolbar above the commit list: which branches to show, Compare, and search.
  *
  * Search matches commit messages, authors and hashes. Matching commits are
  * highlighted in the list; ↑/↓ buttons (or Enter / Shift+Enter in the box)
  * jump between them, loading more history if a match is further back.
  */
 import { useRef } from 'react'
-import { ChevronDown, ChevronUp, Search, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, GitCompareArrows, Search, X } from 'lucide-react'
 import type { LogScope } from '@shared/ipc'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { shortcutLabel } from '@/features/shortcuts/shortcut-label'
+import { openCompareDialog } from '@/features/compare/compare-dialog'
 
 export const SCOPE_LABELS: Record<LogScope, string> = {
   all: 'All branches',
@@ -76,6 +77,16 @@ export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-muted-foreground"
+        title="Compare two branches, tags or commits (or Ctrl/Cmd+click a second commit)"
+        onClick={() => openCompareDialog(repoPath)}
+      >
+        <GitCompareArrows />
+        Compare…
+      </Button>
 
       <div className="ml-auto flex items-center gap-1">
         <div className="flex h-7 w-72 items-center gap-1.5 rounded-md border bg-background px-2 focus-within:ring-2 focus-within:ring-ring/50">

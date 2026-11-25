@@ -22,6 +22,8 @@ export function CompareView({ repoPath, compare }: { repoPath: string; compare: 
   const [view, setView] = useRepoView(repoPath)
   const { data, error } = useComparison(repoPath, compare.base, compare.head)
   const selected = view.selectedFile?.kind === 'range' ? view.selectedFile : null
+  const swap = () =>
+    setView({ compare: { base: compare.head, head: compare.base }, selectedFile: null })
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="compare-view">
@@ -38,14 +40,7 @@ export function CompareView({ repoPath, compare }: { repoPath: string; compare: 
             changed
           </span>
         )}
-        <Button
-          variant="ghost"
-          size="xs"
-          className="ml-auto"
-          onClick={() =>
-            setView({ compare: { base: compare.head, head: compare.base }, selectedFile: null })
-          }
-        >
+        <Button variant="ghost" size="xs" className="ml-auto" onClick={swap}>
           <ArrowLeftRight />
           Swap
         </Button>
@@ -73,6 +68,22 @@ export function CompareView({ repoPath, compare }: { repoPath: string; compare: 
                 <p className="px-3 py-2 text-sm text-muted-foreground">
                   These have no history in common.
                 </p>
+              )}
+              {data.mergeBase !== null && data.commits.length === 0 && (
+                // Nothing to show this way round; explain, and offer the other direction.
+                <div className="space-y-2 px-3 py-2 text-sm" data-testid="compare-empty">
+                  <p className="text-muted-foreground">
+                    {data.behind === 0
+                      ? `${label(compare.head)} and ${label(compare.base)} point to the same commit.`
+                      : `${label(compare.head)} has no commits that ${label(compare.base)} doesn’t.`}
+                  </p>
+                  {data.behind > 0 && (
+                    <Button variant="outline" size="xs" onClick={swap}>
+                      <ArrowLeftRight />
+                      Show what {label(compare.base)} has instead
+                    </Button>
+                  )}
+                </div>
               )}
               <h3 className="px-3 py-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 Files ({data.files.length})

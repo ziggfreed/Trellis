@@ -4,7 +4,9 @@ import {
   getComparison,
   getFileDiffContents,
   getFileHistory,
+  isAncestor,
   parseBlame,
+  resolveCommit,
   UNCOMMITTED_SHA,
 } from '../src'
 import { createTempRepo, type TempRepo } from './helpers'
@@ -115,5 +117,25 @@ describe('getComparison', () => {
       path: 'feature.txt',
     })
     expect(diff).toEqual({ old: { kind: 'missing' }, new: { kind: 'text', text: 'f\nf2\n' } })
+  })
+})
+
+describe('isAncestor and resolveCommit', () => {
+  it('tells which commit is older, and resolves names to hashes', async () => {
+    repo = await createTempRepo()
+    const r = repo
+    await r.write('a.txt', 'a\n')
+    await author(r, 'Ann', 'first')
+    const first = (await r.git('rev-parse', 'HEAD')).trim()
+    await r.write('b.txt', 'b\n')
+    await author(r, 'Ann', 'second')
+
+    expect(await isAncestor(r.path, first, 'main')).toBe(true)
+    expect(await isAncestor(r.path, 'main', first)).toBe(false)
+    expect(await isAncestor(r.path, 'main', 'no-such-branch')).toBe(false)
+
+    expect(await resolveCommit(r.path, 'main')).toBe((await r.git('rev-parse', 'main')).trim())
+    expect(await resolveCommit(r.path, first.slice(0, 7))).toBe(first)
+    expect(await resolveCommit(r.path, 'no-such-branch')).toBeNull()
   })
 })

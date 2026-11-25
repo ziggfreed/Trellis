@@ -9,6 +9,7 @@
  * Keyboard: ↑/↓ move the selection when the list has focus.
  * Right-click a commit for actions (branch, tag, cherry-pick, revert, reset...).
  * Drag a branch label onto another row to merge, rebase or move it.
+ * Ctrl/Cmd+click a second commit to compare the two.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
@@ -20,6 +21,7 @@ import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { refsBySha } from '@/features/sidebar/group-refs'
 import { RefBadge } from './ref-badge'
 import { CommitMenu } from '@/features/repo-actions/menus'
+import { openCompare } from '@/features/repo-actions/actions'
 import { handleRefDrop, isRefDrag } from '@/features/drag-drop/drop-menu'
 import { GraphCell, LANE_WIDTH } from './graph-cell'
 import { IncrementalLayout } from './incremental-layout'
@@ -149,7 +151,15 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
                 aria-selected={selected}
                 data-testid="commit-row"
                 data-match={matches?.has(commit.sha) || undefined}
-                onClick={() => select(commit)}
+                onClick={(event) => {
+                  // Ctrl/Cmd+click a second commit to compare it with the selected one.
+                  const other = view.selectedSha
+                  if ((event.ctrlKey || event.metaKey) && other && other !== commit.sha) {
+                    void openCompare(repoPath, commit.sha, other)
+                  } else {
+                    select(commit)
+                  }
+                }}
                 onDragOver={(event) => {
                   if (!isRefDrag(event)) return
                   event.preventDefault()

@@ -271,6 +271,10 @@ export interface IpcContract {
   'repo:getBlame': { args: [path: string, file: string, revision?: string]; result: BlameResult }
   /** What `head` has that `base` doesn't (commits and changed files). */
   'repo:getComparison': { args: [path: string, base: string, head: string]; result: Comparison }
+  /** Whether `ancestor` is in the history of `commit`. */
+  'repo:isAncestor': { args: [path: string, ancestor: string, commit: string]; result: boolean }
+  /** The commit hash a branch, tag or hash points to, or null if it names no commit. */
+  'repo:resolveCommit': { args: [path: string, ref: string]; result: string | null }
 
   // --- Worktrees ----------------------------------------------------------------
   'repo:getWorktrees': { args: [path: string]; result: Worktree[] }
@@ -406,6 +410,8 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:getFileHistory': true,
   'repo:getBlame': true,
   'repo:getComparison': true,
+  'repo:isAncestor': true,
+  'repo:resolveCommit': true,
   'repo:getWorktrees': true,
   'repo:addWorktree': true,
   'repo:removeWorktree': true,
