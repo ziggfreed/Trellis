@@ -139,8 +139,8 @@ export function ConflictEditor({ repoPath, file }: { repoPath: string; file: str
           )
         })}
       </div>
-      <div className="flex shrink-0 items-center gap-2 border-t px-3 py-2">
-        <span className="text-sm text-muted-foreground" role="status">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-t px-3 py-2">
+        <span className="text-sm whitespace-nowrap text-muted-foreground" role="status">
           {resolvedCount} of {conflicts.length} {conflicts.length === 1 ? 'conflict' : 'conflicts'}{' '}
           resolved
         </span>
