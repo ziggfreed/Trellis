@@ -155,6 +155,8 @@ The UI side is `renderer/src/features/ai/`: Settings > AI, the answer dialog, an
 
 ## 8. Build & release
 
+Releases, code signing and auto-update (`src/main/services/updater.ts`) are described in [`docs/RELEASING.md`](RELEASING.md). Accessibility is checked automatically by `e2e/accessibility.spec.ts` (axe-core); keep it passing when changing colours or markup.
+
 - `electron-vite` builds main, preload and renderer into `apps/desktop/out/`.
 - The only native module is `@parcel/watcher`. Its per-platform binaries are listed in the app's `optionalDependencies` so electron-builder packages them (see the comment in `electron-builder.yml`).
 - `electron-builder` (`apps/desktop/electron-builder.yml`) packages `out/` into installers: NSIS (Windows), DMG (macOS), AppImage and deb (Linux).

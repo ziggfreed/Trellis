@@ -8,6 +8,10 @@ All notable changes to Trellis are listed here. The format follows
 
 ### Added
 
+- **Automatic updates**: Trellis checks GitHub for new versions, downloads them in the background and offers **Restart to update**. Turn it off or check now in **Settings > General > Updates**.
+- **First-run help**: if git doesn't know your name and email yet, the home screen asks for them (commits need them).
+- **Keyboard and screen reader improvements**: repository tabs work with the arrow keys and Delete; better contrast throughout the light theme; the reduce-motion system setting is respected.
+- An app icon, and a [user guide](docs/USER_GUIDE.md).
 - **Plugins.** Plugins add commands to the command palette, items to the commit, branch and file right-click menus, status bar items and their own settings. They run in a separate process so they can't freeze Trellis. See [docs/PLUGINS.md](docs/PLUGINS.md).
 - **Settings > Plugins**: turn plugins on and off, change their settings, install from npm or a folder, uninstall, and load a plugin you're developing straight from its folder.
 - Built-in plugins: **Open on Remote** (open a commit, branch, file or the repository on GitHub, GitLab, Bitbucket or Gitea) and **Conventional Commits** (write a conventional commit message step by step; the status bar warns about unpushed commits that don't follow the convention).
@@ -16,6 +20,10 @@ All notable changes to Trellis are listed here. The format follows
 - **AI features** (off by default, bring your own key): suggest a commit message from the staged changes, explain a commit, and get help with a merge conflict, including a suggested resolution. Works with Anthropic (Claude) or any OpenAI-compatible service, including local models (Ollama, LM Studio). Turn it on in **Settings > AI**; the key is stored encrypted.
 - **GitHub plugin** (built in): sign in with a token or the GitHub CLI, see pull requests in the sidebar with their CI and review state, CI results on commits in the history, and this branch's pull request in the status bar.
 - Plugin API: sidebar panels, commit badges in the history graph, encrypted secret storage, operation events (commit, checkout, fetch, push...) and password input boxes. These need Trellis 0.3.0.
+
+### Changed
+
+- Faster start-up: the diff editor now loads when it's first needed.
 
 ## [0.2.0] - 2026-11-25
 

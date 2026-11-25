@@ -2,7 +2,7 @@
 
 A fast, good-looking, open-source git client with **multiple repositories in tabs**, a **visual commit graph** and a **plugin system**. Built with Electron, React, TypeScript, Tailwind CSS and shadcn/ui. Runs on Windows, macOS and Linux.
 
-> **Status: early development.** Everyday git work (v0.1) plus power features (undo, interactive rebase, a conflict editor, blame, worktrees and workspaces) plugins, a GitHub integration and optional AI. Polish for v1.0 is next. See the [roadmap](docs/PLAN.md#5-phased-roadmap) and [changelog](CHANGELOG.md).
+> **Status: early development.** Everyday git work (v0.1) plus power features (undo, interactive rebase, a conflict editor, blame, worktrees and workspaces), plugins, a GitHub integration, optional AI and automatic updates. v1.0 is close. New here? Read the [user guide](docs/USER_GUIDE.md). See the [roadmap](docs/PLAN.md#5-phased-roadmap) and [changelog](CHANGELOG.md).
 
 ## Features
 
@@ -59,10 +59,12 @@ pnpm dev
 ## Documentation
 
 - [Contributing guide](CONTRIBUTING.md): start here if you want to help
+- [User guide](docs/USER_GUIDE.md): how to use Trellis
 - [Architecture](docs/ARCHITECTURE.md): how the code is organised and why
 - [Plan & roadmap](docs/PLAN.md)
 - [Features & ideas](docs/FEATURES.md)
 - [Market research](docs/RESEARCH.md)
+- [Releasing](docs/RELEASING.md): making a release, code signing and auto-update (maintainers)
 
 ## License
 

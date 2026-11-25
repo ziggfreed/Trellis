@@ -254,8 +254,17 @@ Moved to later: toolbar buttons, custom panels (sandboxed iframes), more events 
 
 Moved to later: GitLab/Bitbucket plugins, checking out PRs and inline review comments, OAuth sign-in (needs a registered OAuth app), explaining an arbitrary diff, PR descriptions, the natural-language command bar, iframe panels and toolbar buttons.
 
-## 15. Phase 7 plan (next): polish and v1.0
+## 15. Phase 7 delivered: polish (towards v1.0)
 
-1. Performance pass on very large repositories, accessibility review, onboarding
-2. Signing/notarisation and auto-update
-3. Website and user docs
+- **Onboarding**: the home screen asks for the git name and email when none is set (with a warning in the commit box too); `docs/USER_GUIDE.md` covers everyday use
+- **Accessibility**: automated axe-core checks (WCAG 2 A/AA) on the main screens, dialogs and diffs in both themes, run in CI. Fixed contrast (muted text, brand, change and syntax colours), proper ARIA tab lists with keyboard navigation, labelled diff editors, reduced motion
+- **Auto-update** from GitHub Releases (electron-updater), with a setting, "Check now" and "Restart to update"
+- **Signing-ready releases**: the release workflow signs and notarises when certificate secrets exist (`docs/RELEASING.md`); an app icon
+- **Performance**: the UI bundle is minified and the diff editor loads on first use (start-up bundle 2.4 MB → 0.8 MB). Benchmarked 100,000 commits: first rows in about 0.3 s, scrolling at 60 fps
+
+Still to do for v1.0:
+
+- Certificates for signing (a maintainer purchase; see `docs/RELEASING.md`)
+- A website (could be GitHub Pages built from `docs/`)
+- i18n: left out deliberately until the UI text settles; retrofitting every string now would churn every file
+- Beginner tooltips ("git explained"), embedded terminal, custom themes

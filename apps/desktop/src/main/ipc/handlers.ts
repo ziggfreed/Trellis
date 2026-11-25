@@ -34,6 +34,7 @@ import { createPluginService } from '../plugins/plugin-ipc'
 import { createAiService } from '../ai/ai-ipc'
 import { SecretStore, safeStorageEncryptor } from '../services/secret-store'
 import { Updater } from '../services/updater'
+import { APP_VERSION } from '../app-version'
 import { scanForRepos } from '../services/scan-repos'
 import {
   assertDiffTarget,
@@ -84,7 +85,7 @@ export function createHandlers(
       sendToAllWindows('operation:progress', { operationId, phase, percent }),
     ),
 
-    'app:getInfo': () => ({ version: app.getVersion(), platform: process.platform }),
+    'app:getInfo': () => ({ version: APP_VERSION, platform: process.platform }),
 
     'git:checkInstallation': () => git.checkGitInstallation(),
 
