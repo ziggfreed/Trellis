@@ -53,7 +53,7 @@ export function Section(props: {
       {open && (
         <div>
           {props.count === 0 && !props.nested ? (
-            <p className="px-8 py-0.5 text-xs text-muted-foreground/70 italic">None</p>
+            <p className="px-8 py-0.5 text-xs text-muted-foreground italic">None</p>
           ) : (
             props.children
           )}

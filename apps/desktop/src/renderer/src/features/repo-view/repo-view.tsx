@@ -63,43 +63,45 @@ export function RepoView({ repo }: { repo: RepoTab }) {
       <ResizablePanel minSize="40%">
         <div className="flex h-full min-h-0 flex-col">
           <div className="flex h-10 shrink-0 items-center gap-1 border-b px-2">
-            <ViewTab
-              active={view.view === 'history'}
-              onClick={() => setView({ view: 'history', selectedFile: null })}
-              icon={<GitCommitHorizontal />}
-            >
-              History
-            </ViewTab>
-            {view.file && (
+            <div role="tablist" aria-label="Views" className="flex items-center gap-1">
               <ViewTab
-                active={view.view === 'file'}
-                onClick={() => setView({ view: 'file', selectedFile: null })}
-                icon={<FileText />}
+                active={view.view === 'history'}
+                onClick={() => setView({ view: 'history', selectedFile: null })}
+                icon={<GitCommitHorizontal />}
               >
-                <span className="max-w-40 truncate">{view.file.path.split('/').pop()}</span>
+                History
               </ViewTab>
-            )}
-            {view.compare && (
-              <ViewTab
-                active={view.view === 'compare'}
-                onClick={() => setView({ view: 'compare', selectedFile: null })}
-                icon={<GitCompare />}
-              >
-                Compare
-              </ViewTab>
-            )}
-            <ViewTab
-              active={view.view === 'changes'}
-              onClick={() => setView({ view: 'changes', selectedFile: null })}
-              icon={<FilePen />}
-            >
-              Changes
-              {changeCount > 0 && (
-                <span className="rounded bg-brand/20 px-1.5 text-xs" data-testid="change-count">
-                  {changeCount}
-                </span>
+              {view.file && (
+                <ViewTab
+                  active={view.view === 'file'}
+                  onClick={() => setView({ view: 'file', selectedFile: null })}
+                  icon={<FileText />}
+                >
+                  <span className="max-w-40 truncate">{view.file.path.split('/').pop()}</span>
+                </ViewTab>
               )}
-            </ViewTab>
+              {view.compare && (
+                <ViewTab
+                  active={view.view === 'compare'}
+                  onClick={() => setView({ view: 'compare', selectedFile: null })}
+                  icon={<GitCompare />}
+                >
+                  Compare
+                </ViewTab>
+              )}
+              <ViewTab
+                active={view.view === 'changes'}
+                onClick={() => setView({ view: 'changes', selectedFile: null })}
+                icon={<FilePen />}
+              >
+                Changes
+                {changeCount > 0 && (
+                  <span className="rounded bg-brand/20 px-1.5 text-xs" data-testid="change-count">
+                    {changeCount}
+                  </span>
+                )}
+              </ViewTab>
+            </div>
             <div className="ml-auto flex items-center gap-1">
               <RepoToolbar repoPath={repo.path} />
               <DropdownMenu>

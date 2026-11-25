@@ -24,7 +24,8 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  /* Dark enough for 4.5:1 contrast on muted/accent backgrounds (WCAG AA). */
+  --muted-foreground: oklch(0.51 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -36,23 +37,25 @@
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  /* Trellis brand colour (a leafy green), used for highlights and the logo. */
-  --brand: oklch(0.62 0.15 150);
+  /* Trellis brand colour (a leafy green), used for highlights and the logo.
+     Dark enough to be readable as text on white (WCAG AA). */
+  --brand: oklch(0.53 0.14 150);
   /* Text drawn on top of the brand colour. */
   --brand-foreground: oklch(0.99 0 0);
 
-  /* File change types (badges in file lists). */
-  --change-added: oklch(0.55 0.15 150);
-  --change-modified: oklch(0.62 0.14 70);
-  --change-deleted: oklch(0.58 0.2 25);
-  --change-renamed: oklch(0.55 0.15 250);
-  --change-conflicted: oklch(0.55 0.22 15);
+  /* File change types (badges in file lists). Light-theme values are dark
+     enough for 4.5:1 text contrast (WCAG AA); e2e/accessibility.spec.ts checks. */
+  --change-added: oklch(0.5 0.15 150);
+  --change-modified: oklch(0.53 0.13 70);
+  --change-deleted: oklch(0.52 0.2 25);
+  --change-renamed: oklch(0.5 0.15 250);
+  --change-conflicted: oklch(0.5 0.22 15);
 
   /* Diff viewer backgrounds for inserted/deleted lines and characters. */
   --diff-insert: oklch(0.75 0.15 150 / 18%);
-  --diff-insert-strong: oklch(0.7 0.17 150 / 35%);
+  --diff-insert-strong: oklch(0.7 0.17 150 / 28%);
   --diff-delete: oklch(0.7 0.18 25 / 15%);
-  --diff-delete-strong: oklch(0.65 0.2 25 / 32%);
+  --diff-delete-strong: oklch(0.65 0.2 25 / 26%);
 
   /*
    * Commit graph lane colours. Lanes cycle through these 8 colours; they are
@@ -68,14 +71,14 @@
   --graph-7: oklch(0.55 0.13 280);
 
   /* Syntax highlighting. */
-  --syntax-keyword: oklch(0.5 0.2 300);
-  --syntax-string: oklch(0.5 0.13 150);
-  --syntax-number: oklch(0.55 0.15 50);
-  --syntax-comment: oklch(0.6 0.02 250);
-  --syntax-function: oklch(0.5 0.15 250);
-  --syntax-type: oklch(0.52 0.12 200);
-  --syntax-tag: oklch(0.52 0.18 25);
-  --syntax-attribute: oklch(0.55 0.14 70);
+  --syntax-keyword: oklch(0.45 0.2 300);
+  --syntax-string: oklch(0.45 0.13 150);
+  --syntax-number: oklch(0.48 0.15 50);
+  --syntax-comment: oklch(0.5 0.02 250);
+  --syntax-function: oklch(0.45 0.15 250);
+  --syntax-type: oklch(0.46 0.12 200);
+  --syntax-tag: oklch(0.47 0.18 25);
+  --syntax-attribute: oklch(0.48 0.13 70);
 }
 
 .dark {
@@ -112,9 +115,9 @@
   --change-conflicted: oklch(0.7 0.2 15);
 
   --diff-insert: oklch(0.6 0.15 150 / 16%);
-  --diff-insert-strong: oklch(0.65 0.17 150 / 35%);
+  --diff-insert-strong: oklch(0.65 0.17 150 / 24%);
   --diff-delete: oklch(0.6 0.18 25 / 16%);
-  --diff-delete-strong: oklch(0.62 0.2 25 / 35%);
+  --diff-delete-strong: oklch(0.62 0.2 25 / 24%);
 
   --graph-0: oklch(0.72 0.16 150);
   --graph-1: oklch(0.7 0.14 250);
@@ -125,10 +128,10 @@
   --graph-6: oklch(0.82 0.14 95);
   --graph-7: oklch(0.68 0.12 280);
 
-  --syntax-keyword: oklch(0.75 0.15 300);
+  --syntax-keyword: oklch(0.8 0.13 300);
   --syntax-string: oklch(0.78 0.13 150);
   --syntax-number: oklch(0.78 0.13 60);
-  --syntax-comment: oklch(0.6 0.02 250);
+  --syntax-comment: oklch(0.7 0.02 250);
   --syntax-function: oklch(0.78 0.12 250);
   --syntax-type: oklch(0.8 0.1 200);
   --syntax-tag: oklch(0.75 0.15 25);
@@ -228,5 +231,16 @@
   }
   body {
     @apply overflow-hidden bg-background text-foreground antialiased select-none;
+  }
+}
+
+/* Respect the system "reduce motion" setting: skip animations and transitions. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
