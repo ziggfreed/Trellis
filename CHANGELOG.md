@@ -58,5 +58,6 @@ The first release: Trellis can now replace the git command line for everyday wor
 - **Git command log** (Ctrl+`): see every git command Trellis runs, and copy it.
 - Live refresh when files change, light/dark/system themes.
 
-[Unreleased]: https://github.com/ziggfreed/trellis/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ziggfreed/trellis/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/ziggfreed/trellis/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ziggfreed/trellis/releases/tag/v0.1.0
