@@ -5,12 +5,13 @@
  */
 import { cn } from '@/lib/utils'
 
-export type DiffMode = 'diff' | 'rendered' | 'structure' | 'edit'
+export type DiffMode = 'diff' | 'rendered' | 'structure' | 'image' | 'edit'
 
 const LABELS: Record<DiffMode, { label: string; title: string }> = {
   diff: { label: 'Diff', title: 'Line-by-line changes' },
   rendered: { label: 'Rendered', title: 'The document as it displays, with changed blocks marked' },
   structure: { label: 'Data', title: 'Changed values, ignoring formatting and key order' },
+  image: { label: 'Image', title: 'Compare the pictures' },
   edit: { label: 'Edit', title: 'Edit the file here (Ctrl/Cmd+S saves)' },
 }
 

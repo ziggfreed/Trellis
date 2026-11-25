@@ -34,6 +34,8 @@ import * as remoteActions from '@/features/repo-tools/remote-actions'
 import { ignore, ignoreChoices } from '@/features/repo-tools/ignore-actions'
 import { openPruneDialog } from '@/features/repo-tools/prune-dialog'
 import { LfsMenuItems } from '@/features/lfs/lfs'
+import { BisectMenuItems } from '@/features/bisect/bisect'
+import { openStack } from '@/features/stacks/stack-dialog'
 
 interface MenuProps {
   repo: string
@@ -107,6 +109,9 @@ export function BranchMenu({ repo, branch, children }: MenuProps & { branch: Ref
           </ContextMenuItem>
           <ContextMenuItem onSelect={() => openPruneDialog(repo, branch.name)}>
             Delete branches merged into {branch.name}…
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => openStack(repo, branch.name)}>
+            Show stack…
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem
@@ -278,6 +283,7 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
               Explain with AI
             </ContextMenuItem>
           )}
+          <BisectMenuItems repo={repo} sha={commit.sha} />
           <ContextMenuSeparator />
           <ContextMenuItem onSelect={() => void openInteractiveRebase(repo, commit)}>
             Interactive rebase from here…

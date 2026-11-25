@@ -13,6 +13,7 @@ import { runAction } from '@/lib/run-action'
 import { Button } from '@/components/ui/button'
 import { useFileDiff } from '@/features/repos/use-repo-data'
 import { JsonDiffView, MarkdownDiffView } from '@/features/diff/special-views'
+import { ImageDiffView } from '@/features/diff/image-diff'
 import type { DiffMode } from '@/features/diff/view-switch'
 
 // Part of the CodeMirror chunk, loaded on first use (see diff-panel.tsx).
@@ -29,6 +30,11 @@ export function FileAlternateView(props: {
   onDirtyChange: (dirty: boolean) => void
 }) {
   const { data, error } = useFileDiff(props.repoPath, { kind: props.area, path: props.file })
+  if (props.mode === 'image') {
+    return (
+      <ImageDiffView repoPath={props.repoPath} target={{ kind: props.area, path: props.file }} />
+    )
+  }
   if (error) return <p className="p-4 text-sm text-destructive">{error.message}</p>
   if (!data) return null
   if (data.old.kind !== 'text' && data.old.kind !== 'missing') return <Binary />

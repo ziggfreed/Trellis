@@ -1,6 +1,6 @@
 /**
- * IPC handlers for submodules, Git LFS and saving files edited in the diff
- * view. Spread into the full handler list in handlers.ts.
+ * IPC handlers for submodules, Git LFS, saving files edited in the diff
+ * view, image diffs, bisect and stacked branches. Spread into the full handler list in handlers.ts.
  *
  * Network commands (updating or adding submodules) report progress and can
  * be cancelled, like fetch and push (see remoteOperation).
@@ -9,7 +9,14 @@ import * as git from '@trellis/git'
 import type { IpcArgs, IpcResult } from '@shared/ipc'
 import { runExclusive } from '../services/repo-queue'
 import { remoteOperation, type ProgressSender } from './write-handlers'
-import { assertFileInRepo, assertString, assertStringArray } from './validate'
+import {
+  assertDiffTarget,
+  assertOneOf,
+  assertRefArg,
+  assertFileInRepo,
+  assertString,
+  assertStringArray,
+} from './validate'
 
 type ContentChannel =
   | 'repo:getSubmodules'
@@ -23,6 +30,14 @@ type ContentChannel =
   | 'repo:lfsLock'
   | 'repo:lfsUnlock'
   | 'repo:writeWorkingFile'
+  | 'repo:getImageDiff'
+  | 'repo:getBisect'
+  | 'repo:bisectStart'
+  | 'repo:bisectMark'
+  | 'repo:bisectReset'
+  | 'repo:getStack'
+  | 'repo:rebaseStack'
+  | 'repo:pushStack'
 
 type ContentHandlers = {
   [C in ContentChannel]: (...args: IpcArgs<C>) => Promise<IpcResult<C>> | IpcResult<C>
@@ -95,6 +110,61 @@ export function createContentHandlers(sendProgress: ProgressSender): ContentHand
       assertString(path, 'path')
       assertFileInRepo(path, file)
       return runExclusive(path, () => git.lfsUnlock(path, file, force === true))
+    },
+
+    // --- Image diff ------------------------------------------------------------
+    'repo:getImageDiff': (path, target) => {
+      assertString(path, 'path')
+      assertDiffTarget(target)
+      return git.getImageDiff(path, target)
+    },
+
+    // --- Bisect ----------------------------------------------------------------
+    'repo:getBisect': (path) => {
+      assertString(path, 'path')
+      return git.getBisectState(path)
+    },
+    'repo:bisectStart': (path, bad, good) => {
+      assertString(path, 'path')
+      assertRefArg(bad, 'bad')
+      if (good !== null) assertRefArg(good, 'good')
+      return runExclusive(path, () => git.bisectStart(path, bad, good ?? undefined))
+    },
+    'repo:bisectMark': (path, verdict, sha) => {
+      assertString(path, 'path')
+      assertOneOf(verdict, ['good', 'bad', 'skip'] as const, 'verdict')
+      if (sha !== null) assertRefArg(sha, 'sha')
+      return runExclusive(path, () => git.bisectMark(path, verdict, sha ?? undefined))
+    },
+    'repo:bisectReset': (path) => {
+      assertString(path, 'path')
+      return runExclusive(path, () => git.bisectReset(path))
+    },
+
+    // --- Stacked branches --------------------------------------------------------
+    'repo:getStack': (path, top, base) => {
+      assertString(path, 'path')
+      assertRefArg(top, 'top')
+      assertRefArg(base, 'base')
+      return git.getStack(path, top, base)
+    },
+    'repo:rebaseStack': (path, onto) => {
+      assertString(path, 'path')
+      assertRefArg(onto, 'onto')
+      // Recorded, so one undo puts every branch in the stack back.
+      return runExclusive(path, () =>
+        git.recordOperation(path, `Rebase stack onto ${onto}`, { worktree: true }, () =>
+          git.rebase(path, onto, { updateRefs: true }),
+        ),
+      )
+    },
+    'repo:pushStack': (operationId, path, remote, branches) => {
+      assertRefArg(remote, 'remote')
+      assertStringArray(branches, 'branches')
+      for (const branch of branches) assertRefArg(branch, 'branch')
+      return remoteOperation(operationId, path, sendProgress, (o) =>
+        git.pushBranches(path, remote, branches, o),
+      )
     },
 
     // --- Editing ---------------------------------------------------------------

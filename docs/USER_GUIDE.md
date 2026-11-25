@@ -49,7 +49,7 @@ Trellis watches the repository's files, so changes made in other tools appear st
 
 The history shows every commit as a graph, newest first, with branch and tag labels. It stays fast even with hundreds of thousands of commits.
 
-- **Select** a commit to see its details and changed files. Click a file to see its diff, unified or side by side (switch with the buttons above the diff). For Markdown files, **Rendered** shows the document as it displays, with added blocks in green and removed ones in red. For JSON files, **Data** lists the values that changed, ignoring formatting and key order.
+- **Select** a commit to see its details and changed files. Click a file to see its diff, unified or side by side (switch with the buttons above the diff). For Markdown files, **Rendered** shows the document as it displays, with added blocks in green and removed ones in red. For JSON files, **Data** lists the values that changed, ignoring formatting and key order. Changed **images** are shown as pictures: **Side by side**, **Swipe** (drag the slider to wipe between old and new) or **Onion skin** (fade the new image over the old one, which makes small shifts stand out).
 - **Search** (`Ctrl+F`) by message, author or hash; the arrows jump between matches.
 - **Filter** to one branch, an author, a file or folder, a date range, or commits that added or removed some text.
 - **Compare**: right-click a commit and choose a compare option, or `Ctrl`+click a second commit to compare the two.
@@ -82,7 +82,11 @@ When git needs a password, token or SSH passphrase, Trellis asks for it.
 
 **Remotes.** Add one with the **+** next to Remotes in the sidebar (hover over the heading to see it). Right-click a remote to fetch from it, change its URL, rename it or remove it. Removing a remote only makes Trellis forget it; nothing is deleted on the server.
 
+**Stacked branches.** If you build branches on top of each other (say `feature-api`, then `feature-ui` on top of it), search the command palette for "Branch stack", or right-click the top branch and choose **Show stack…**. It lists the branches between it and the base (usually main). **Rebase stack onto main** moves them all at once, keeping each branch's own commits (one undo puts them all back). **Push stack** then pushes them all, safely (force with lease). This needs git 2.38 or newer.
+
 **Cleaning up branches.** Search the command palette for "Delete merged branches" (or right-click a branch and choose **Delete branches merged into …**). Trellis lists the local branches whose commits are all on the target branch, so deleting them loses nothing. Untick any you want to keep. main, master, develop and checked-out branches are never offered, and one undo brings the deleted ones back.
+
+**Finding the commit that broke something (bisect).** Right-click a commit that has the bug and choose **Bisect › Start: this commit has the bug**. Then right-click an older commit where it worked and choose **Bisect › Mark good**. Trellis checks out a commit halfway between: test it, then click **Good**, **Bad** or **Skip** in the banner. Each answer halves the range (about 10 steps for 1,000 commits) until the banner names the first bad commit, which is marked in the history. Click **Stop bisecting** to go back to where you were.
 
 ## Merges, rebases and conflicts
 

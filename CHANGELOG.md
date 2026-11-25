@@ -8,6 +8,9 @@ All notable changes to Trellis are listed here. The format follows
 
 ### Added
 
+- **Image diffs**: compare changed images side by side, by swiping between them, or as an onion skin.
+- **Bisect assistant**: find the commit that introduced a bug by marking commits good or bad from the history; a banner guides each step and the culprit is marked in the graph.
+- **Stacked branches**: see the branches stacked under a branch, rebase the whole stack onto main in one go (one undo reverses it), and push them all.
 - **Submodules**: see each submodule's state in the sidebar, set them up after cloning, update them, open one in its own tab, or add a new one.
 - **Git LFS**: see which files use LFS (with a warning if git-lfs isn't installed), store a file type with LFS, lock and unlock files, and see real file sizes in diffs of LFS files.
 - **Edit in the diff**: change a file right where you review its changes, and save with Ctrl/Cmd+S.

@@ -149,9 +149,21 @@ export function merge(
   ])
 }
 
-/** Rebase the current branch onto `onto`. */
-export function rebase(repoPath: string, onto: string): Promise<MergeResult> {
-  return runMayConflict(repoPath, ['rebase', onto])
+/**
+ * Rebase the current branch onto `onto`. With `updateRefs`, other local
+ * branches pointing into the rebased commits move with them (a "stack" of
+ * branches, see stacks.ts; needs git 2.38 or later).
+ */
+export function rebase(
+  repoPath: string,
+  onto: string,
+  options: { updateRefs?: boolean } = {},
+): Promise<MergeResult> {
+  return runMayConflict(repoPath, [
+    'rebase',
+    ...(options.updateRefs ? ['--update-refs'] : []),
+    onto,
+  ])
 }
 
 // ---------------------------------------------------------------------------
