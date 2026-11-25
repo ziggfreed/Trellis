@@ -1,6 +1,6 @@
 # Handover: where Trellis is up to
 
-A snapshot for whoever (human or AI assistant) picks up the work next. Last updated 2026-11-25, after PR #11 was merged.
+A snapshot for whoever (human or AI assistant) picks up the work next. Last updated 2026-11-25, after PR #13 was merged.
 
 ## The project
 
@@ -11,7 +11,7 @@ Trellis is an open-source (MIT) desktop git client: Electron + React + TypeScrip
 
 ## State right now
 
-- **All work is merged into `main`** (PRs #1–#11). There are no open PRs and no other branches with unmerged work.
+- **All work up to PR #13 is merged into `main`.** `feature/ui-polish` (panel sizes, commit and push, side-by-side hunks, history columns, remote branch clean-up) is open as a PR.
 - **CI is turned off on purpose**: the "CI" GitHub Actions workflow (`.github/workflows/ci.yml`) was disabled by the owner because the account's Actions minutes are nearly used up (the repo is private, and macOS minutes count 10×, Windows 2×). Don't re-enable it without asking. Verify changes locally instead (commands below). The "Release" workflow is still enabled.
 - **Owner's working preferences**:
   - Open a pull request (via `gh api repos/ziggfreed/trellis/pulls`) as soon as a substantial piece of work is finished, without waiting to be asked. Work on a new branch from the latest `main`.
@@ -33,6 +33,8 @@ The roadmap is `docs/PLAN.md` (sections 8–15 record what each phase delivered)
 | #9         | Manage remotes, commit signatures + signing settings, reflog browser ("find lost commits"), .gitignore helper, delete merged branches                                                                                     |
 | #10        | Submodules, Git LFS, editing in the diff, rendered Markdown and JSON diffs                                                                                                                                                |
 | #11        | Image diffs (side by side / swipe / onion skin), bisect assistant, stacked branches                                                                                                                                       |
+| #13        | Double-click to check out (remote branches, history commits and labels), "local"/"gone" branch markers, clean-up finds squash- and rebase-merged branches                                                                 |
+| next       | Remembered panel sizes and history columns (Changes, Committer, Commit date), commit-and-push, side-by-side hunks in Changes, themed scrollbars, deleting merged remote branches                                          |
 
 ## What's left
 
@@ -76,7 +78,7 @@ pnpm test                                   # unit tests, all packages
 cd apps/desktop && npx electron-vite build && xvfb-run -a npx playwright test --trace off   # e2e (Linux)
 ```
 
-At the last run: all unit tests and all 74 e2e tests passed on Linux. A few e2e tests are timing-sensitive on slow Windows CI runners and have flaked there before; re-running passed them.
+At the last run: all unit tests and all 83 e2e tests passed on Linux. A few e2e tests are timing-sensitive on slow Windows CI runners and have flaked there before; re-running passed them.
 
 Gotchas seen in this environment:
 
