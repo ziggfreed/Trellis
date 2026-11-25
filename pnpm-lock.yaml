@@ -173,6 +173,15 @@ importers:
         specifier: 2.6.0
         version: 2.6.0
 
+  packages/create-trellis-plugin:
+    devDependencies:
+      '@trellis/plugin-api':
+        specifier: workspace:*
+        version: link:../plugin-api
+      vitest:
+        specifier: ^5.1.1
+        version: 5.1.1(@types/node@24.19.2)(vite@8.3.8(@types/node@24.19.2)(jiti@2.7.0))
+
   packages/git:
     devDependencies:
       '@types/node':

@@ -113,26 +113,26 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 8. Plugin system
 
-| Pri | Feature                                                                                              | Status |
-| --- | ---------------------------------------------------------------------------------------------------- | ------ |
-| P1  | Plugin manifest (`package.json` with `contributes` section, VS Code-style)                           | ⬜     |
-| P1  | Plugins run in an isolated **extension host** process with a typed, permission-gated API             | ⬜     |
-| P1  | Contribution points: commands, context menus (commit/branch/file), toolbar buttons, status bar items | ⬜     |
-| P1  | Custom panels/views (rendered in sandboxed iframes, themed via CSS variables)                        | ⬜     |
-| P1  | Events API: `onCommit`, `onCheckout`, `onFetch`, `onRepoOpen`, etc.                                  | ⬜     |
-| P1  | Plugin manager UI: install from folder/URL/npm, enable/disable, permissions view                     | ⬜     |
-| P2  | Graph decorations (badges and colours on commits, e.g. CI status)                                    | ⬜     |
-| P2  | Commit message providers (AI, templates, ticket IDs)                                                 | ⬜     |
-| P2  | Diff renderers (e.g. custom viewer for a file type)                                                  | ⬜     |
-| P2  | Plugin marketplace / registry                                                                        | ⬜     |
-| P2  | Plugin SDK package + `create-plugin` scaffolder + docs                                               | ⬜     |
+| Pri | Feature                                                                                              | Status                                                  |
+| --- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| P1  | Plugin manifest (`package.json` with `contributes` section, VS Code-style)                           | ✅                                                      |
+| P1  | Plugins run in an isolated **extension host** process with a typed, permission-gated API             | ✅ typed API; no permissions (plugins are trusted)      |
+| P1  | Contribution points: commands, context menus (commit/branch/file), toolbar buttons, status bar items | 🟨 commands, menus, status bar, settings; toolbar to do |
+| P1  | Custom panels/views (rendered in sandboxed iframes, themed via CSS variables)                        | ⬜                                                      |
+| P1  | Events API: `onCommit`, `onCheckout`, `onFetch`, `onRepoOpen`, etc.                                  | 🟨 active repo changed, repo changed                    |
+| P1  | Plugin manager UI: install from folder/URL/npm, enable/disable, permissions view                     | ✅ folder, npm, development folders                     |
+| P2  | Graph decorations (badges and colours on commits, e.g. CI status)                                    | ⬜                                                      |
+| P2  | Commit message providers (AI, templates, ticket IDs)                                                 | 🟨 `setCommitMessage`                                   |
+| P2  | Diff renderers (e.g. custom viewer for a file type)                                                  | ⬜                                                      |
+| P2  | Plugin marketplace / registry                                                                        | ⬜                                                      |
+| P2  | Plugin SDK package + `create-plugin` scaffolder + docs                                               | ✅ docs/PLUGINS.md                                      |
 
 **First-party plugins to build (they also validate the API):**
 
-- GitHub / GitLab / Bitbucket integration (PRs, issues, CI status)
+- GitHub / GitLab / Bitbucket integration (PRs, issues, CI status) (🟨 Open on Remote is built in)
 - AI assistant (commit messages, explain commit, conflict suggestions, PR descriptions)
 - Jira / Linear ticket linking
-- Conventional Commits + changelog generator
+- Conventional Commits + changelog generator (✅ Conventional Commits helper is built in)
 - Repo stats (contributors, activity heatmap, code churn)
 
 ## 9. Integrations (likely shipped as plugins)

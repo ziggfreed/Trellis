@@ -1,0 +1,22 @@
+{
+  "name": "create-trellis-plugin",
+  "version": "0.2.0",
+  "description": "Create a new Trellis plugin: npm create trellis-plugin my-plugin",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "create-trellis-plugin": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "scaffold.js",
+    "template"
+  ],
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@trellis/plugin-api": "workspace:*",
+    "vitest": "^5.1.1"
+  }
+}

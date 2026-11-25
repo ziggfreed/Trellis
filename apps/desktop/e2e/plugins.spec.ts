@@ -187,3 +187,24 @@ test('installs a plugin from a folder and uninstalls it', async () => {
   await expect(row).toHaveCount(0)
   await app.close()
 })
+
+test('a plugin made with create-trellis-plugin works straight away', async () => {
+  // Run the real scaffolder, as `npm create trellis-plugin hello-sdk` would.
+  const parent = tempDir()
+  const cli = join(import.meta.dirname, '../../../packages/create-trellis-plugin/index.js')
+  execFileSync(process.execPath, [cli, 'hello-sdk'], { cwd: parent })
+
+  const { app, window } = await launch()
+  await window.getByRole('heading', { name: 'Welcome to Trellis' }).click()
+  await stubFolderPicker(app, join(parent, 'hello-sdk'))
+  const panel = await openPluginSettings(window)
+  await panel.getByRole('button', { name: 'Load development folder…' }).click()
+  await expect(panel.getByRole('listitem', { name: 'Hello Sdk' })).toContainText('Running')
+  await window.keyboard.press('Escape')
+
+  await window.keyboard.press('ControlOrMeta+k')
+  await window.getByPlaceholder('Type a command…').fill('say hello')
+  await window.getByRole('option', { name: 'Say hello' }).click()
+  await expect(window.getByText('Hello! Open a repository and try again.')).toBeVisible()
+  await app.close()
+})

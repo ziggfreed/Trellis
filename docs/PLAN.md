@@ -234,11 +234,19 @@ Fixed along the way (found by CI on Windows): the file watcher blocked the main 
 
 Deferred: an embedded terminal (needs the native `node-pty` module built per platform). The external terminal covers it for now; revisit with the plugin work.
 
-## 13. Phase 5 plan (next): plugins
+## 13. Phase 5 delivered: plugins
 
-1. `packages/plugin-api`: the types plugin authors code against (commands, menus, panels, git, events, storage, settings)
-2. Extension host in an Electron `utilityProcess` that loads plugins and talks to main over a message port
-3. Contribution points: commands (into the existing palette registry), context-menu items, toolbar buttons, status bar items, panels (sandboxed iframes using the theme CSS variables)
-4. Plugin manager UI: install from a folder or npm, enable/disable, uninstall
-5. First-party plugins to prove the API: GitHub (PRs, CI status), conventional commits helper
-6. SDK docs and a `create-trellis-plugin` template
+- `packages/plugin-api`: manifest format and validation (`parseManifest`), engine version ranges (`satisfiesEngine`), and the typed `trellis` API
+- **Plugin host**: plugins run in their own `utilityProcess`, talking to main over a small RPC layer. Main runs their git commands through the per-repo queue (optionally recorded for undo) and relays their prompts to the window
+- **Contribution points**: palette commands, commit/branch/file menu items, status bar items, settings; prompts (messages, input boxes, pick lists) and filling the commit box
+- **Plugin manager** (Settings > Plugins): turn on/off, plugin settings, install from npm or a folder (with a trust warning), uninstall, development folders loaded in place, reload
+- **Built-in plugins**: Open on Remote (GitHub, GitLab, Bitbucket, Gitea links) and Conventional Commits (message helper and unpushed-commit check)
+- **SDK**: `create-trellis-plugin` scaffolder, `docs/PLUGINS.md` guide and API reference
+
+Moved to later: toolbar buttons, custom panels (sandboxed iframes), more events (`onCommit`, `onCheckout`...), graph decorations, and a GitHub integration with PRs and CI status (Phase 6, as a plugin). `@trellis/plugin-api` and `create-trellis-plugin` still need publishing to npm (a maintainer step).
+
+## 14. Phase 6 plan (next): integrations and AI
+
+1. Plugin API additions these need: panels, graph decorations, more events, secrets storage for tokens
+2. GitHub plugin: sign in, pull requests for the current branch, CI status on commits in the graph
+3. AI (built in, bring your own key, can be turned off): commit message suggestions, explain a commit or diff, conflict help

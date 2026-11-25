@@ -47,13 +47,14 @@ The UI tells main which repos to watch (`repo:setWatched`) whenever the open tab
 
 ## 3. Packages
 
-| Package                                           | Purpose                                                                                                                                                                                          | Depends on                              |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
-| `packages/git` (`@trellis/git`)                   | Runs `git` and parses its output into typed objects. Pure Node.js, unit tested against real temporary repos.                                                                                     | nothing                                 |
-| `packages/graph-layout` (`@trellis/graph-layout`) | Commit graph lane layout (which column each commit goes in, which lines join them). Pure TypeScript; see the comment at the top of `layout.ts`. It can pin a commit (HEAD) to the leftmost lane. | nothing                                 |
-| `apps/desktop` (`@trellis/desktop`)               | The Electron app.                                                                                                                                                                                | `@trellis/git`, `@trellis/graph-layout` |
-
-Planned: `packages/plugin-api` (types for plugin authors).
+| Package                                           | Purpose                                                                                                                                                                                          | Depends on                                                     |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| `packages/git` (`@trellis/git`)                   | Runs `git` and parses its output into typed objects. Pure Node.js, unit tested against real temporary repos.                                                                                     | nothing                                                        |
+| `packages/graph-layout` (`@trellis/graph-layout`) | Commit graph lane layout (which column each commit goes in, which lines join them). Pure TypeScript; see the comment at the top of `layout.ts`. It can pin a commit (HEAD) to the leftmost lane. | nothing                                                        |
+| `packages/plugin-api` (`@trellis/plugin-api`)     | Plugin manifest format and checks, and the types of the API plugins use. See `docs/PLUGINS.md`.                                                                                                  | nothing                                                        |
+| `packages/create-trellis-plugin`                  | The `npm create trellis-plugin` scaffolder and its template.                                                                                                                                     | nothing                                                        |
+| `plugins/*`                                       | Built-in plugins (Open on Remote, Conventional Commits), shipped with the app.                                                                                                                   | `@trellis/plugin-api` (types only)                             |
+| `apps/desktop` (`@trellis/desktop`)               | The Electron app.                                                                                                                                                                                | `@trellis/git`, `@trellis/graph-layout`, `@trellis/plugin-api` |
 
 `@trellis/git` exposes Node-free types at `@trellis/git/types`, so the renderer can import types like `HeadState` without pulling in Node code.
 
@@ -130,9 +131,11 @@ The log is `.git/trellis/oplog.json`; the file watcher ignores `.git/trellis/` s
 - supports cancellation via `AbortSignal`,
 - reports every command to `onGitCommand` listeners (this will power the "git command log" panel).
 
-## 7. Plugins (planned, Phase 5)
+## 7. Plugins
 
-Plugins will work like VS Code extensions: trusted code that the user chooses to install. A plugin is a package with a manifest (`package.json` with a `contributes` section) and an `activate(context)` function. It runs in a separate extension-host process (Electron `utilityProcess`) so a slow plugin can't freeze the UI, and gets a typed API for commands, menus, panels, git and events. Details will be in `docs/PLUGINS.md` when that phase starts.
+Plugins work like VS Code extensions: trusted code the user chooses to install. A plugin is a package with a manifest (`package.json` with a `trellis` section declaring commands, menu items and settings) and an `activate(trellis, context)` function. Plugins run in a separate **plugin host** process (an Electron `utilityProcess`), so a slow or crashing plugin can't freeze the UI. Main runs their git commands through the same per-repo queue as the app, and relays their prompts to the window.
+
+The authoring guide, API reference and a map of the implementation are in [`docs/PLUGINS.md`](PLUGINS.md).
 
 ## 8. Build & release
 

@@ -24,7 +24,12 @@ apps/desktop/                 The Electron app
     hooks/                    Hooks shared across features
     lib/                      Small shared helpers
   e2e/                        End-to-end tests (Playwright)
+  src/main/plugins/           The plugin system: plugin host process, manager, installing
 packages/git/                 Typed wrapper around the git CLI (no Electron/React)
+packages/graph-layout/        Commit graph lane layout (pure TypeScript)
+packages/plugin-api/          Plugin manifest checks and the API types plugins use
+packages/create-trellis-plugin/  `npm create trellis-plugin` scaffolder
+plugins/                      Built-in plugins, shipped with the app
 docs/                         Plans, architecture, research
 ```
 
@@ -79,6 +84,10 @@ These matter because Trellis is open source: code is read far more often than it
 1. Add the git operation (above) and an IPC channel; implement the handler in `apps/desktop/src/main/ipc/write-handlers.ts`, wrapped in `runExclusive(path, ...)`.
 2. Add a function to `apps/desktop/src/renderer/src/features/repo-actions/actions.ts` that asks for any input with `textDialog`/`confirmDialog` and calls the channel through `runAction`.
 3. Expose it where it makes sense: a right-click menu (`repo-actions/menus.tsx`), the toolbar, and the command palette (`command-palette/built-in-commands.ts`).
+
+### Add a feature as a plugin
+
+Features that not everyone wants (integrations with a particular service, conventions some teams follow) are often best as a plugin in `plugins/`. Built-in plugins use the same public API as anyone else's, which keeps that API honest. See [docs/PLUGINS.md](docs/PLUGINS.md).
 
 ### Add a command to the command palette
 
