@@ -48,6 +48,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | P0  | Stage/unstage/discard file                                                               | ✅                                                                               |
 | P0  | **Hunk-level and line-level staging** from the diff view                                 | ✅                                                                               |
 | P0  | Commit, amend, commit message editor with subject-length guide                           | ✅                                                                               |
+| P2  | Reuse a recent commit message (summary and/or description)                               | ✅                                                                               |
 | P1  | Commit and push in one go (“Push” option, remembered)                                    | ✅                                                                               |
 | P1  | Live auto-refresh via file watcher                                                       | ✅                                                                               |
 | P1  | Commit templates, co-author picker, Conventional Commits helper                          | 🟨 Conventional Commits helper (built-in plugin); templates and co-authors to do |

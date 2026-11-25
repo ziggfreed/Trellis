@@ -147,6 +147,11 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       return git.getHeadMessage(path)
     },
 
+    'repo:getRecentMessages': (path) => {
+      assertString(path, 'path')
+      return git.getRecentMessages(path)
+    },
+
     // --- Branches and history -----------------------------------------------
     'repo:createBranch': (path, name, options) => {
       assertString(path, 'path')

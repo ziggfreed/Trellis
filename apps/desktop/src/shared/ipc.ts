@@ -31,6 +31,7 @@ import type {
   CleanupBranch,
   RemoteCleanupBranch,
   CommitStats,
+  RecentMessage,
   Worktree,
   BlameResult,
   Comparison,
@@ -414,6 +415,8 @@ export interface IpcContract {
     result: string
   }
   'repo:getHeadMessage': { args: [path: string]; result: string | null }
+  /** Your recent distinct commit messages, newest first (for reusing them). */
+  'repo:getRecentMessages': { args: [path: string]; result: RecentMessage[] }
 
   // --- Branches and history -------------------------------------------------
   'repo:createBranch': {
@@ -772,6 +775,7 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:applyPatch': true,
   'repo:commit': true,
   'repo:getHeadMessage': true,
+  'repo:getRecentMessages': true,
   'repo:createBranch': true,
   'repo:checkout': true,
   'repo:moveBranch': true,

@@ -65,7 +65,7 @@ The history shows every commit as a graph, newest first, with branch and tag lab
 Open **Changes** (`Ctrl+Shift+G`) to see what you've changed.
 
 1. **Stage** what should go in the commit: a whole file (the + button, or **Stage all**), or select a file and stage single hunks or lines in its diff. Staged files are listed at the top and unstaged ones below.
-2. Write a **summary** (the first line, ideally under about 72 characters) and, if useful, a **description**.
+2. Write a **summary** (the first line, ideally under about 72 characters) and, if useful, a **description**. To reuse an earlier message (handy when several commits belong to one ticket), click the clock button next to the summary: it lists your recent commit messages. Click one to fill in both parts, or use its **Summary** or **Description** button to take just one.
 3. Click **Commit** or press `Ctrl+Enter`.
 
 **Working with several files.** The Changes view has two lists: **Staged** (what the next commit will contain) above **Unstaged**. Drag the divider between them to resize them. Each list's header has buttons to stage or unstage, **stash** and **discard** the whole list.
