@@ -6,7 +6,7 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
-## [0.1.1] - 2026-11-25
+## [0.2.0] - 2026-11-25
 
 ### Added
 
@@ -58,6 +58,6 @@ The first release: Trellis can now replace the git command line for everyday wor
 - **Git command log** (Ctrl+`): see every git command Trellis runs, and copy it.
 - Live refresh when files change, light/dark/system themes.
 
-[Unreleased]: https://github.com/ziggfreed/trellis/compare/v0.1.1...HEAD
-[0.1.1]: https://github.com/ziggfreed/trellis/compare/v0.1.0...v0.1.1
+[Unreleased]: https://github.com/ziggfreed/trellis/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/ziggfreed/trellis/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/ziggfreed/trellis/releases/tag/v0.1.0
