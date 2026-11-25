@@ -1,6 +1,6 @@
 # Trellis: notes for AI coding assistants
 
-Read CONTRIBUTING.md and docs/ARCHITECTURE.md before making changes. Key rules:
+Read docs/HANDOVER.md (current state and the owner's preferences), CONTRIBUTING.md and docs/ARCHITECTURE.md before making changes. Key rules:
 
 - Monorepo with pnpm. App in `apps/desktop` (Electron + React + TS + Tailwind v4 + shadcn/ui), git wrapper in `packages/git`.
 - The project is open source and the owner wants human contributors to follow the code easily: add a header comment to new files, comment anything complex (explain _why_), and doc-comment exported functions.
