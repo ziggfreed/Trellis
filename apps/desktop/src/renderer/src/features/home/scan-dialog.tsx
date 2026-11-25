@@ -99,7 +99,8 @@ function ScanForm({ request }: { request: ScanRequest }) {
 
   return (
     <DialogContent className="sm:max-w-lg">
-      <form onSubmit={submit} className="space-y-4">
+      {/* min-w-0: let long paths truncate instead of widening the dialog. */}
+      <form onSubmit={submit} className="min-w-0 space-y-4">
         <DialogHeader>
           <DialogTitle>
             Found {repos.length} {repos.length === 1 ? 'repository' : 'repositories'}
@@ -137,7 +138,7 @@ function ScanForm({ request }: { request: ScanRequest }) {
                   checked={selected.has(repo.path)}
                   onChange={() => toggle(repo.path)}
                 />
-                <span className="min-w-0">
+                <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm">{repo.name}</span>
                   <span className="block truncate text-xs text-muted-foreground">{repo.path}</span>
                 </span>
