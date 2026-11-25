@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { GitError, onGitCommand, runGit } from '../src'
+import { GitError, errorDetail, onGitCommand, runGit } from '../src'
 import { createTempRepo, type TempRepo } from './helpers'
 
 let repo: TempRepo | undefined
@@ -69,5 +69,34 @@ describe('runGit', () => {
     await expect(
       runGit(['status'], { cwd: repo.path, signal: controller.signal }),
     ).rejects.toThrow()
+  })
+})
+
+describe('errorDetail', () => {
+  it('drops progress lines, keeping the actual error', () => {
+    const stderr =
+      'remote: Enumerating objects: 56505, done.\n' +
+      'remote: Counting objects:  50% (1/2)\rremote: Counting objects: 100% (2/2), done.\n' +
+      'remote: Total 56505 (delta 0), reused 0 (delta 0), pack-reused 56505\n' +
+      Array.from(
+        { length: 300 },
+        (_, i) => `Receiving objects: ${i % 100}% (${i}/56505), 32.40 MiB | 21.57 MiB/s`,
+      ).join('\r') +
+      '\nerror: RPC failed; curl 56 Recv failure: Connection was reset\n' +
+      'fatal: early EOF\n'
+    expect(errorDetail(stderr)).toBe(
+      'error: RPC failed; curl 56 Recv failure: Connection was reset\nfatal: early EOF',
+    )
+  })
+
+  it('keeps ordinary messages, and only the last lines of a very long one', () => {
+    expect(errorDetail("fatal: couldn't find remote ref nope\n")).toBe(
+      "fatal: couldn't find remote ref nope",
+    )
+    const long = Array.from({ length: 30 }, (_, i) => `line ${i}`).join('\n')
+    const detail = errorDetail(long).split('\n')
+    expect(detail[0]).toBe('…')
+    expect(detail.at(-1)).toBe('line 29')
+    expect(detail).toHaveLength(13)
   })
 })

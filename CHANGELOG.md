@@ -6,6 +6,10 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Very long error messages (for example a failed fetch, which included every "Receiving objects" progress line) no longer grow past the top of the screen: git's progress lines are left out, long messages scroll, and toasts have a close button. Tall dialogs scroll too.
+
 ### Added
 
 - **Staged and unstaged in separate lists**: the Changes view shows Staged above Unstaged, each with buttons to stage or unstage, stash and discard the whole list.

@@ -45,6 +45,32 @@ export interface GitResult<T = string> {
   exitCode: number
 }
 
+/**
+ * Lines git writes to show progress ("Receiving objects: 81% (45905/56505)",
+ * "remote: Counting objects: ..."). Network commands run with --progress so
+ * the UI can show a progress bar, which floods stderr with them; they say
+ * nothing about why a command failed.
+ */
+const PROGRESS_LINE =
+  /^(?:remote: )?(?:Enumerating|Counting|Compressing|Receiving|Resolving|Writing|Unpacking|Updating files|Checking out files|Filtering content|Updating index flags|Finding sources|Auto packing)\b.*(?:\d+%|done\.?)|^(?:remote: )?Total \d+/
+
+/** Most lines of git's error output to keep in a message. */
+const MAX_ERROR_LINES = 12
+
+/**
+ * The useful part of git's error output for an error message: progress
+ * lines dropped (git separates their updates with \r), and at most the last
+ * MAX_ERROR_LINES lines, since git prints the actual error last.
+ */
+export function errorDetail(stderr: string): string {
+  const lines = stderr
+    .split(/\r\n|\r|\n/)
+    .map((line) => line.trimEnd())
+    .filter((line) => line.trim() !== '' && !PROGRESS_LINE.test(line))
+  if (lines.length <= MAX_ERROR_LINES) return lines.join('\n')
+  return ['…', ...lines.slice(-MAX_ERROR_LINES)].join('\n')
+}
+
 /** Thrown when git exits with an unexpected code or can't be started. */
 export class GitError extends Error {
   constructor(
@@ -233,7 +259,7 @@ export function runGitBuffer(
       if (okExitCodes.includes(code)) {
         resolve(result)
       } else {
-        const detail = result.stderr.trim() || `exit code ${code}`
+        const detail = errorDetail(result.stderr) || `exit code ${code}`
         reject(new GitError(`git ${args.join(' ')} failed: ${detail}`, args, result))
       }
     }

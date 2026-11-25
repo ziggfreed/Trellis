@@ -68,7 +68,7 @@ export function App() {
           ) : (
             <GitMissingScreen installation={git} onRetry={checkGit} />
           )}
-          <Toaster position="bottom-right" richColors />
+          <Toaster position="bottom-right" richColors closeButton />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
