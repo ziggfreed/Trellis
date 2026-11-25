@@ -21,6 +21,7 @@ import { useStatus } from '@/features/repos/use-repo-data'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { modKey } from '@/hooks/use-keyboard-shortcuts'
 import { startAiTask, useAiEnabled, type RunningAiTask } from '@/features/ai/ai-client'
+import { isComplete, openIdentityDialog, useGitIdentity } from '@/features/onboarding/git-identity'
 import {
   buildCommitMessage,
   splitCommitMessage,
@@ -40,6 +41,7 @@ export function CommitBox({ repoPath }: { repoPath: string }) {
     (stagedCount > 0 || view.amend || status?.operation === 'merge')
   const length = summaryLength(view.commitSummary)
   const aiEnabled = useAiEnabled()
+  const identity = useGitIdentity(repoPath)
   const [suggestion, setSuggestion] = useState<RunningAiTask | null>(null)
 
   /** Ask the AI for a message, showing it in the boxes as it arrives. */
@@ -108,6 +110,14 @@ export function CommitBox({ repoPath }: { repoPath: string }) {
 
   return (
     <div className="space-y-2 border-t p-3" onKeyDown={onKeyDown}>
+      {identity.data && !isComplete(identity.data) && (
+        <p className="text-xs text-change-modified" role="alert">
+          Git doesn&apos;t know your name and email yet, so committing will fail.{' '}
+          <button type="button" className="underline" onClick={openIdentityDialog}>
+            Set them up
+          </button>
+        </p>
+      )}
       <div className="relative">
         <input
           aria-label="Commit summary"

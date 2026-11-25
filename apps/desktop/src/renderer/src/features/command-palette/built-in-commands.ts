@@ -22,6 +22,7 @@ import { openCompareDialog } from '@/features/compare/compare-dialog'
 import { scanFolder } from '@/features/home/scan-dialog'
 import { reloadPlugins } from '@/features/plugins/plugin-actions'
 import type { Command, CommandContext } from './registry'
+import { openIdentityDialog } from '@/features/onboarding/git-identity'
 
 /** Focus an element after the palette has closed and the view has updated. */
 function focusLater(selector: string) {
@@ -65,6 +66,13 @@ export function builtInCommands(context: CommandContext): Command[] {
       shortcut: shortcutLabel('settings'),
       keywords: ['preferences', 'options'],
       run: () => openSettings(),
+    },
+    {
+      id: 'git.identity',
+      title: 'Set your git name and email…',
+      group: 'General',
+      keywords: ['user.name', 'user.email', 'author', 'identity', 'config'],
+      run: openIdentityDialog,
     },
     {
       id: 'ai.settings',

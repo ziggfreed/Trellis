@@ -5,6 +5,7 @@
  * - workspaces (named groups of repositories) with their live status,
  * - recently opened repositories,
  * - scanning a folder to find and add every repository in it.
+ * New users also see a card asking for their git name and email.
  */
 import {
   Download,
@@ -27,6 +28,7 @@ import { useRepos } from '@/features/repos/use-repos'
 import { repoActions } from '@/features/repos/repo-actions'
 import { useSettingsStore } from '@/features/settings/settings-store'
 import * as workspaceActions from '@/features/workspaces/workspace-actions'
+import { GitSetupCard } from '@/features/onboarding/git-identity'
 import { RepoDashboard } from './repo-dashboard'
 import { scanFolder } from './scan-dialog'
 
@@ -63,6 +65,8 @@ export function HomeScreen() {
             </Button>
           </div>
         </div>
+
+        <GitSetupCard />
 
         {favourites.length > 0 && (
           <RepoDashboard

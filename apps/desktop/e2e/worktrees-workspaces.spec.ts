@@ -62,7 +62,7 @@ test('saves open tabs as a workspace and shows it on the home screen', async () 
   while ((await repoTabs.count()) > 0) {
     await repoTabs
       .first()
-      .getByRole('button', { name: /^Close/ })
+      .getByTitle(/^Close/)
       .click()
   }
   await workspace.getByRole('button', { name: 'Open all' }).click()

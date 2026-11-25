@@ -20,7 +20,8 @@
     "@parcel/watcher": "^2.6.0",
     "@trellis/git": "workspace:*",
     "@trellis/graph-layout": "workspace:*",
-    "@trellis/plugin-api": "workspace:*"
+    "@trellis/plugin-api": "workspace:*",
+    "electron-updater": "6.8.12"
   },
   "devDependencies": {
     "@codemirror/lang-javascript": "6.2.5",
@@ -39,6 +40,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "axe-core": "4.14.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

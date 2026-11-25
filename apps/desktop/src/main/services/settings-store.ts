@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pluginDevFolders: [],
   pluginSettings: {},
   ai: { enabled: false, provider: 'anthropic', model: '', baseUrl: '' },
+  checkForUpdates: true,
 }
 
 export class SettingsStore {

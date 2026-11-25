@@ -27,8 +27,10 @@ interface DiffViewerProps {
 /** Hide long unchanged regions, keeping 3 lines of context around changes. */
 const COLLAPSE = { margin: 3, minSize: 6 }
 
-function baseExtensions(language: Extension | null): Extension[] {
+/** `label` names the editor for screen readers, e.g. "Changes in src/app.ts". */
+function baseExtensions(language: Extension | null, label: string): Extension[] {
   return [
+    EditorView.contentAttributes.of({ 'aria-label': label }),
     lineNumbers(),
     highlightSpecialChars(),
     EditorState.readOnly.of(true),
@@ -52,8 +54,8 @@ export function DiffViewer({ oldText, newText, path, layout }: DiffViewerProps) 
       if (destroyed) return
       if (layout === 'split') {
         const view = new MergeView({
-          a: { doc: oldText, extensions: baseExtensions(language) },
-          b: { doc: newText, extensions: baseExtensions(language) },
+          a: { doc: oldText, extensions: baseExtensions(language, `${path} before`) },
+          b: { doc: newText, extensions: baseExtensions(language, `${path} after`) },
           parent,
           gutter: true,
           collapseUnchanged: COLLAPSE,
@@ -64,7 +66,7 @@ export function DiffViewer({ oldText, newText, path, layout }: DiffViewerProps) 
           parent,
           doc: newText,
           extensions: [
-            ...baseExtensions(language),
+            ...baseExtensions(language, `Changes in ${path}`),
             unifiedMergeView({
               original: oldText,
               mergeControls: false,

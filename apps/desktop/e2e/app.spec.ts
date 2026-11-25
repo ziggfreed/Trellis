@@ -35,7 +35,8 @@ test('closing the last tab returns to the home screen with the repo in Recent', 
   const repo = createRepo()
   const { app, window } = await launch()
   await openRepo(app, window, repo.path)
-  await window.getByRole('button', { name: `Close ${basename(repo.path)}` }).click()
+  // Keyboard: Delete closes the focused tab.
+  await window.getByRole('tab', { name: basename(repo.path) }).press('Delete')
 
   await expect(window.getByRole('heading', { name: 'Welcome to Trellis' })).toBeVisible()
   await expect(window.getByTestId('recent-repos')).toContainText(basename(repo.path))

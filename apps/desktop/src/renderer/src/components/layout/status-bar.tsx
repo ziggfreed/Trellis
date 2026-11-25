@@ -25,6 +25,7 @@ import { useOperationsStore } from '@/features/repo-actions/operations-store'
 import { toggleCommandLog, useCommandLogStore } from '@/features/command-log/command-log-store'
 import { openSettings } from '@/features/settings/settings-dialog'
 import { PluginStatusItems } from '@/features/plugins/plugin-status-items'
+import { UpdateStatusItem } from '@/features/updates/updates'
 
 const THEME_ICONS = { light: Sun, dark: Moon, system: Monitor } as const
 
@@ -44,6 +45,7 @@ export function StatusBar({ gitVersion, repoPath }: StatusBarProps) {
       {repoPath && <BranchStatus repoPath={repoPath} />}
       <RunningOperations />
       <span className="ml-auto" />
+      <UpdateStatusItem />
       <PluginStatusItems repoPath={repoPath} />
       <span>{gitVersion}</span>
       <CommandLogToggle />

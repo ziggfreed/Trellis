@@ -108,8 +108,11 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | P1  | Toast notifications and an activity/operations panel with cancel                       | 🟨 toasts + status bar progress                            |
 | P1  | "Open in…" editor / file manager / terminal integrations                               | ✅                                                         |
 | P2  | Custom themes (and themes as plugins)                                                  | ⬜                                                         |
-| P2  | Onboarding and in-app "git explained" tooltips for beginners                           | ⬜                                                         |
+| P2  | Onboarding and in-app "git explained" tooltips for beginners                           | 🟨 git name/email setup, user guide; tooltips to do        |
 | P2  | i18n                                                                                   | ⬜                                                         |
+| P1  | Accessibility: keyboard navigation, screen reader labels, WCAG AA contrast             | ✅ checked automatically (axe) on the main screens         |
+| P1  | Automatic updates (GitHub Releases)                                                    | ✅ macOS needs a signed build to install                   |
+| P1  | Signed and notarised installers                                                        | 🟨 release workflow ready; needs certificates              |
 
 ## 8. Plugin system
 

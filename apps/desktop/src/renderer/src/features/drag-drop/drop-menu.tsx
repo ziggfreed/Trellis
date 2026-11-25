@@ -109,6 +109,7 @@ export function DropMenu() {
       {/* An invisible 1px trigger placed where the drop happened, to anchor the menu. */}
       <DropdownMenuTrigger asChild>
         <span
+          aria-hidden="true"
           className="pointer-events-none fixed size-px"
           style={{ left: menu?.x ?? 0, top: menu?.y ?? 0 }}
         />
