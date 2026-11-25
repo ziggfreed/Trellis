@@ -47,12 +47,13 @@ The UI tells main which repos to watch (`repo:setWatched`) whenever the open tab
 
 ## 3. Packages
 
-| Package                             | Purpose                                                                                                      | Depends on     |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------- |
-| `packages/git` (`@trellis/git`)     | Runs `git` and parses its output into typed objects. Pure Node.js, unit tested against real temporary repos. | nothing        |
-| `apps/desktop` (`@trellis/desktop`) | The Electron app.                                                                                            | `@trellis/git` |
+| Package                                           | Purpose                                                                                                                                                                                          | Depends on                              |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| `packages/git` (`@trellis/git`)                   | Runs `git` and parses its output into typed objects. Pure Node.js, unit tested against real temporary repos.                                                                                     | nothing                                 |
+| `packages/graph-layout` (`@trellis/graph-layout`) | Commit graph lane layout (which column each commit goes in, which lines join them). Pure TypeScript; see the comment at the top of `layout.ts`. It can pin a commit (HEAD) to the leftmost lane. | nothing                                 |
+| `apps/desktop` (`@trellis/desktop`)               | The Electron app.                                                                                                                                                                                | `@trellis/git`, `@trellis/graph-layout` |
 
-Planned: `packages/graph-layout` (commit graph lane algorithm), `packages/plugin-api` (types for plugin authors).
+Planned: `packages/plugin-api` (types for plugin authors).
 
 `@trellis/git` exposes Node-free types at `@trellis/git/types`, so the renderer can import types like `HeadState` without pulling in Node code.
 
@@ -79,6 +80,10 @@ Menu item / toolbar button / palette command
 Long remote operations (fetch, pull, push) are wrapped in `trackOperation`, which gives them an id; main sends `operation:progress` events for that id, shown in the status bar.
 
 Every action is also a command in the **command palette**. Commands come from providers registered with `registerCommands()` (`features/command-palette/registry.ts`); the built-in ones are in `built-in-commands.ts`. Plugins will register their own providers the same way.
+
+### Finding commits: search and filters
+
+The history search box and the Filter popover (author, file or folder, dates, code added or removed) build one `CommitFilter` (`features/history/history-filter.ts`). `findCommits` in `packages/git/src/log.ts` turns it into `git log` options (`--grep`, `--author`, `--since`/`--until`, `-S`, a pathspec) and returns matching hashes. The list keeps showing the full graph and fades commits that don't match, so the graph stays correct.
 
 ### Running git: when is a command finished?
 

@@ -19,6 +19,12 @@ All notable changes to Trellis are listed here. The format follows
 - **Settings** window (Ctrl/Cmd+,) with **customisable keyboard shortcuts**, editor command, theme and diff layout.
 - **Open in terminal** and **open in editor**.
 - Syntax highlighting in the hunk view.
+- **Compare any two branches, tags or commits**: a Compare… button in the history toolbar (and the palette and right-click menus), or Ctrl/Cmd+click a second commit.
+- **History filters**: by author, file or folder, date range, and code added or removed (pickaxe search).
+- The checked-out branch is always drawn in the leftmost graph lane.
+- Hovering a branch label highlights that branch's commits.
+- **Scan a folder** for repositories and add them to a workspace.
+- **Favourite** repositories with a star; they appear at the top of the home screen.
 
 ### Fixed
 
@@ -28,6 +34,7 @@ All notable changes to Trellis are listed here. The format follows
 - "Stage all changes" in the command palette could do nothing right after a repository opened.
 - On macOS, right-clicking near the bottom of the window could instantly run the context-menu item under the pointer.
 - On Windows, a mistyped editor command now shows an error instead of silently doing nothing.
+- Comparing an older commit with the current branch always showed nothing; it now shows what changed since that commit.
 
 ## [0.1.0] - 2026-11-24
 

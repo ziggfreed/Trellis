@@ -143,7 +143,7 @@ describe('pinning the current branch to the leftmost lane', () => {
       assertLayoutValid(commits, layout)
 
       const index = new Map(commits.map((commit, i) => [commit.sha, i]))
-      for (let sha: string | undefined = head.sha; sha !== undefined; ) {
+      for (let sha: string | undefined = head.sha; sha !== undefined;) {
         const i = index.get(sha)
         if (i === undefined) break
         expect(layout.rows[i]!.lane).toBe(0)

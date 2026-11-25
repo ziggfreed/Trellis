@@ -174,7 +174,8 @@ export class GraphLayout {
     // Bottom half: every lane that was already running passes straight
     // through, then the lines leaving the dot.
     lanes.forEach((sha, i) => {
-      if (sha !== null && sha !== RESERVED && !started.has(i)) bottom.push({ from: i, to: i, color: colors[i]! })
+      if (sha !== null && sha !== RESERVED && !started.has(i))
+        bottom.push({ from: i, to: i, color: colors[i]! })
     })
     bottom.push(...fromDot)
 
