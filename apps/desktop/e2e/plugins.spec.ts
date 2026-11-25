@@ -85,7 +85,7 @@ function writePlugin(name: string, code: string, extra: Record<string, unknown> 
       name,
       version: '1.0.0',
       main: 'index.js',
-      engines: { trellis: '>=0.2.0' },
+      engines: { trellis: '>=0.3.0' },
       trellis: {
         contributes: {
           commands: [{ id: `${name}.run`, title: `Run ${name}` }],
@@ -206,5 +206,78 @@ test('a plugin made with create-trellis-plugin works straight away', async () =>
   await window.getByPlaceholder('Type a command…').fill('say hello')
   await window.getByRole('option', { name: 'Say hello' }).click()
   await expect(window.getByText('Hello! Open a repository and try again.')).toBeVisible()
+  await app.close()
+})
+
+test('plugins can add sidebar panels, commit badges, keep secrets and hear about operations', async () => {
+  const folder = writePlugin(
+    'api-demo',
+    `
+    const item = trellis.ui.createStatusBarItem()
+    context.subscriptions.push(item)
+    // Secrets round-trip through the encrypted store.
+    trellis.secrets.set('token', 'abc').then(() => trellis.secrets.get('token')).then((value) => {
+      item.text = 'secret:' + value
+    })
+    let clicks = 0
+    const panel = trellis.ui.registerPanel('api-demo.panel', {
+      getItems: (repo) => [
+        { id: 'one', label: 'First item', description: 'clicked ' + clicks, icon: 'success', command: 'api-demo.run' },
+      ],
+    })
+    context.subscriptions.push(
+      panel,
+      trellis.commands.register('api-demo.run', ({ item: id }) => {
+        clicks++
+        trellis.ui.showMessage('Clicked ' + id)
+        panel.refresh()
+      }),
+      trellis.repos.onDidRunOperation(({ kind }) => { item.text = 'op:' + kind }),
+      trellis.repos.onDidChangeActive(async (repo) => {
+        if (!repo) return
+        const head = await trellis.git.run(repo, ['rev-parse', 'HEAD'])
+        trellis.graph.setDecorations(repo, [
+          { sha: head.stdout.trim(), icon: 'success', tooltip: 'Demo badge', url: 'https://example.com/' },
+        ])
+      }),
+    )`,
+    {
+      trellis: {
+        contributes: {
+          commands: [{ id: 'api-demo.run', title: 'Run demo', palette: false }],
+          panels: [{ id: 'api-demo.panel', title: 'Demo panel' }],
+        },
+      },
+    },
+  )
+  const userData = tempDir()
+  writeFileSync(join(userData, 'settings.json'), JSON.stringify({ pluginDevFolders: [folder] }))
+  const repo = createRepo()
+  const { app, window } = await launch(userData)
+  const status = window.getByTestId('plugin-status-item').filter({ hasText: /secret:|op:/ })
+  await expect(status).toHaveText('secret:abc')
+  await openRepo(app, window, repo.path)
+
+  // The panel and its item.
+  const sidebar = window.getByRole('navigation', { name: 'Repository' })
+  await expect(sidebar.getByRole('button', { name: /Demo panel/ })).toBeVisible()
+  const row = sidebar.getByRole('button', { name: /First item/ })
+  await expect(row).toContainText('clicked 0')
+  await row.click()
+  await expect(window.getByText('Clicked one')).toBeVisible()
+  await expect(row).toContainText('clicked 1') // the panel refreshed
+
+  // The badge on the checked-out commit.
+  await window.getByRole('tab', { name: /History/ }).click()
+  await expect(window.getByTestId('commit-decoration')).toHaveAttribute('title', 'Demo badge')
+
+  // Operations are reported for commands Trellis runs (not a terminal's),
+  // so commit through the UI.
+  await window.getByRole('tab', { name: /Changes/ }).click()
+  repo.write('new.txt', 'new\n')
+  await window.getByRole('button', { name: 'Stage all' }).click()
+  await window.getByLabel('Commit summary').fill('Add new file')
+  await window.getByLabel('Commit summary').press('ControlOrMeta+Enter')
+  await expect(status).toHaveText('op:commit')
   await app.close()
 })

@@ -8,10 +8,11 @@ import { useEffect } from 'react'
 import { toast } from 'sonner'
 import type { PluginUiRequest } from '@shared/ipc'
 import { api } from '@/lib/api'
+import { queryClient } from '@/lib/query-client'
 import { textDialog } from '@/features/dialogs/dialog-store'
 import { useRepoViewStore } from '@/features/repo-view/repo-view-store'
 import { splitCommitMessage } from '@/features/changes/commit-message'
-import { usePluginStore } from './plugin-store'
+import { pluginKeys, usePluginStore } from './plugin-store'
 import { quickPick } from './quick-pick-dialog'
 
 /** Do what a plugin asked; the result goes back to the plugin. */
@@ -28,6 +29,7 @@ async function handleUiRequest(request: PluginUiRequest): Promise<unknown> {
         title: request.title,
         label: request.prompt ?? request.title,
         optional: true,
+        ...(request.password ? { secret: true } : {}),
         ...(request.value !== undefined ? { initialValue: request.value } : {}),
         ...(request.placeholder ? { placeholder: request.placeholder } : {}),
       })
@@ -52,7 +54,17 @@ export function usePluginSync() {
     const { refresh } = usePluginStore.getState()
     void refresh()
     const stops = [
-      api.on('plugins:changed', () => void refresh()),
+      api.on('plugins:changed', () => {
+        void refresh()
+        // A panel may have just been registered (or its plugin restarted).
+        void queryClient.invalidateQueries({ queryKey: pluginKeys.panels })
+      }),
+      api.on('plugins:panelChanged', ({ panel }) => {
+        void queryClient.invalidateQueries({ queryKey: [...pluginKeys.panels, panel] })
+      }),
+      api.on('plugins:decorationsChanged', ({ repo }) => {
+        void queryClient.invalidateQueries({ queryKey: pluginKeys.decorations(repo) })
+      }),
       api.on('plugins:statusItems', (statusItems) => usePluginStore.setState({ statusItems })),
       api.on('plugins:ui', ({ requestId, request }) => {
         void handleUiRequest(request)

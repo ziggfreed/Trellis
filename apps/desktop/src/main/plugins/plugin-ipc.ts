@@ -7,11 +7,14 @@
  */
 import { join } from 'node:path'
 import { app, BrowserWindow, shell } from 'electron'
+import { onGitCommand } from '@trellis/git'
 import type { IpcArgs, IpcChannel, IpcResult, PluginUiRequest } from '@shared/ipc'
 import type { SettingsStore } from '../services/settings-store'
+import type { SecretStore } from '../services/secret-store'
 import { assertAbsolutePath, assertString } from '../ipc/validate'
 import { APP_VERSION } from '../app-version'
-import { PluginManager } from './plugin-manager'
+import { PluginManager, pluginSecretKey } from './plugin-manager'
+import { operationKind } from './operation-kind'
 import { installFromFolder, installFromNpm, uninstall } from './install'
 
 type PluginChannel = Extract<IpcChannel, `plugins:${string}`>
@@ -30,7 +33,7 @@ function builtInPluginsDir(): string {
     : join(import.meta.dirname, '../../../../plugins')
 }
 
-export function createPluginService(settings: SettingsStore) {
+export function createPluginService(settings: SettingsStore, secrets: SecretStore) {
   const userData = app.getPath('userData')
   const installedDir = join(userData, 'plugins')
   const send = (channel: string, payload: unknown) => {
@@ -58,6 +61,15 @@ export function createPluginService(settings: SettingsStore) {
     onStatusItems: (items) => send('plugins:statusItems', items),
     askUi,
     openExternal: (url) => shell.openExternal(url),
+    secrets,
+    onPanelChanged: (panel) => send('plugins:panelChanged', { panel }),
+    onDecorationsChanged: (repo) => send('plugins:decorationsChanged', { repo }),
+  })
+
+  // Tell plugins about git operations that changed a repository.
+  const stopListening = onGitCommand((event) => {
+    const kind = event.exitCode === 0 ? operationKind(event.args) : null
+    if (kind && event.cwd) manager.operationRan({ repo: event.cwd, kind })
   })
 
   /** Find the installed plugin with this id (built-in ones can't be removed). */
@@ -70,6 +82,15 @@ export function createPluginService(settings: SettingsStore) {
   const handlers: PluginHandlers = {
     'plugins:list': () => manager.list(),
     'plugins:statusItems': () => manager.getStatusItems(),
+    'plugins:panelItems': (panel, repo) => {
+      assertString(panel, 'panel')
+      assertString(repo, 'repo')
+      return manager.getPanelItems(panel, repo)
+    },
+    'plugins:decorations': (repo) => {
+      assertString(repo, 'repo')
+      return manager.getDecorations(repo)
+    },
     'plugins:reload': () => manager.reload(),
 
     'plugins:setEnabled': async (id, enabled) => {
@@ -117,6 +138,7 @@ export function createPluginService(settings: SettingsStore) {
       }
       await manager.dispose() // stop it before deleting its files
       await uninstall(plugin.path)
+      await secrets.deletePrefix(pluginSecretKey(id, ''))
       await manager.start()
     },
 
@@ -136,5 +158,5 @@ export function createPluginService(settings: SettingsStore) {
     },
   }
 
-  return { manager, handlers }
+  return { manager, handlers, dispose: stopListening }
 }

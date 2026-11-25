@@ -12,8 +12,9 @@ const plugin = (overrides: Partial<PluginInfo>): PluginInfo => ({
   enabled: true,
   state: 'running',
   error: null,
-  contributes: { commands: [], menus: {}, settings: [] },
+  contributes: { commands: [], menus: {}, settings: [], panels: [] },
   readyCommands: [],
+  readyPanels: [],
   ...overrides,
 })
 
@@ -27,6 +28,7 @@ describe('plugin contributions', () => {
       ],
       menus: { commit: [{ command: 'r.menu' }] },
       settings: [],
+      panels: [],
     },
   })
   const stopped = plugin({
@@ -35,6 +37,7 @@ describe('plugin contributions', () => {
       commands: [{ id: 's.x', title: 'X' }],
       menus: { commit: [{ command: 's.x' }] },
       settings: [],
+      panels: [],
     },
   })
 

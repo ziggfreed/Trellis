@@ -1,0 +1,82 @@
+{
+  "name": "github",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pull requests for your repository in the sidebar, and CI results on commits in the history graph.",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "trellis": ">=0.3.0"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@trellis/plugin-api": "workspace:*",
+    "@types/node": "^22.20.5",
+    "vitest": "^5.1.1"
+  },
+  "trellis": {
+    "displayName": "GitHub",
+    "contributes": {
+      "commands": [
+        {
+          "id": "github.signIn",
+          "title": "GitHub: Sign in\u2026"
+        },
+        {
+          "id": "github.signOut",
+          "title": "GitHub: Sign out"
+        },
+        {
+          "id": "github.refresh",
+          "title": "GitHub: Refresh pull requests and CI"
+        },
+        {
+          "id": "github.createPullRequest",
+          "title": "GitHub: Create pull request for this branch"
+        },
+        {
+          "id": "github.openPullRequest",
+          "title": "Open pull request",
+          "palette": false
+        },
+        {
+          "id": "github.openCurrentPullRequest",
+          "title": "GitHub: Open this branch\u2019s pull request"
+        }
+      ],
+      "panels": [
+        {
+          "id": "github.pullRequests",
+          "title": "Pull requests"
+        }
+      ],
+      "settings": [
+        {
+          "key": "remote",
+          "type": "string",
+          "default": "origin",
+          "title": "Remote",
+          "description": "The remote that points at GitHub."
+        },
+        {
+          "key": "apiUrl",
+          "type": "string",
+          "default": "",
+          "title": "GitHub Enterprise API address",
+          "description": "Leave empty for github.com. For GitHub Enterprise Server, enter its GraphQL address, e.g. https://github.example.com/api/graphql."
+        },
+        {
+          "key": "showChecks",
+          "type": "boolean",
+          "default": true,
+          "title": "Show CI results in the history",
+          "description": "Badges on the latest commits of the current branch: passed, failed or running."
+        }
+      ]
+    }
+  }
+}

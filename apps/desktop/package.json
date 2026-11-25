@@ -1,6 +1,6 @@
 {
   "name": "@trellis/desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Trellis: a fast, extensible, open-source git client.",
   "license": "MIT",
@@ -16,6 +16,7 @@
     "package": "electron-vite build && electron-builder"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "1.8.0",
     "@parcel/watcher": "^2.6.0",
     "@trellis/git": "workspace:*",
     "@trellis/graph-layout": "workspace:*",

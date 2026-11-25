@@ -32,6 +32,36 @@ export const usePluginStore = create<PluginStore>((set) => ({
   },
 }))
 
+/**
+ * Query keys for plugin data. Kept apart from repoKeys on purpose: panel
+ * items may come from the network (e.g. GitHub), so they're only fetched
+ * again when the plugin asks (plugins:panelChanged), not on every file change.
+ */
+export const pluginKeys = {
+  panels: ['plugin-panel'] as const,
+  panel: (panel: string, repo: string) => ['plugin-panel', panel, repo] as const,
+  decorations: (repo: string) => ['plugin-decorations', repo] as const,
+}
+
+/** A panel contributed by a running plugin that has registered it. */
+export interface PluginPanel {
+  id: string
+  title: string
+  /** The plugin's id (commands from panel items belong to it). */
+  plugin: string
+}
+
+/** Panels to show in the sidebar, in plugin order. */
+export function pluginPanels(plugins: readonly PluginInfo[]): PluginPanel[] {
+  return plugins
+    .filter((p) => p.state === 'running' && p.id)
+    .flatMap((p) =>
+      p.contributes.panels
+        .filter((panel) => p.readyPanels.includes(panel.id))
+        .map((panel) => ({ ...panel, plugin: p.id! })),
+    )
+}
+
 /** A command contributed by a running plugin, with the plugin's name for display. */
 export interface PluginCommand {
   id: string

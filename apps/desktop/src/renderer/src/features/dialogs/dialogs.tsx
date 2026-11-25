@@ -90,6 +90,7 @@ function DialogForm({
               <Input
                 id="dialog-input"
                 autoFocus
+                type={textOptions.secret ? 'password' : 'text'}
                 value={value}
                 placeholder={textOptions.placeholder}
                 aria-invalid={touched && error !== null}

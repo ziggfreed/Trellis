@@ -31,6 +31,7 @@ const INITIAL: Settings = {
   disabledPlugins: [],
   pluginDevFolders: [],
   pluginSettings: {},
+  ai: { enabled: false, provider: 'anthropic', model: '', baseUrl: '' },
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({

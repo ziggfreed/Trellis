@@ -17,6 +17,9 @@ import * as git from '@trellis/git'
 import { settingValues } from '@trellis/plugin-api'
 import type {
   CommandArgs,
+  OperationEvent,
+  PanelItem,
+  PluginCommitDecoration,
   PluginInfo,
   PluginStatusItem,
   PluginUiRequest,
@@ -24,6 +27,7 @@ import type {
 } from '@shared/ipc'
 import pluginHostPath from './plugin-host?modulePath'
 import { runExclusive } from '../services/repo-queue'
+import type { SecretStore } from '../services/secret-store'
 import { discoverPlugins, type DiscoveredPlugin } from './discovery'
 import { createRpc, type Rpc } from './rpc'
 import type { HostEvents, HostMethods, Implementation, MainEvents, MainMethods } from './protocol'
@@ -44,7 +48,18 @@ export interface PluginManagerOptions {
   askUi: (request: PluginUiRequest) => Promise<unknown>
   /** Open a URL in the browser. */
   openExternal: (url: string) => Promise<void>
+  /** Where plugin secrets are kept (encrypted). */
+  secrets: SecretStore
+  /** A plugin panel asked to be refreshed. */
+  onPanelChanged: (panel: string) => void
+  /** Plugin commit badges changed for a repository. */
+  onDecorationsChanged: (repo: string) => void
 }
+
+const isWebUrl = (url: string) => /^https?:\/\//i.test(url)
+
+/** Where a plugin's secret `key` is kept in the SecretStore. */
+export const pluginSecretKey = (plugin: string, key: string) => `plugin:${plugin}:${key}`
 
 type HostRpc = Rpc<HostMethods & { stop(): void }, HostEvents>
 
@@ -57,6 +72,10 @@ export class PluginManager {
   >()
   private readyCommands = new Map<string, string[]>()
   private statusItems = new Map<string, PluginStatusItem>()
+  /** Plugin id → panels it has registered. */
+  private readyPanels = new Map<string, Set<string>>()
+  /** Repository → plugin id → that plugin's commit badges. */
+  private decorations = new Map<string, Map<string, PluginCommitDecoration[]>>()
   private host: { process: UtilityProcess; rpc: HostRpc } | null = null
   /** Serialises start/stop so a quick double "Reload" can't start two hosts. */
   private lifecycle: Promise<void> = Promise.resolve()
@@ -98,8 +117,14 @@ export class PluginManager {
         enabled,
         state: error ? 'error' : !enabled ? 'disabled' : (live?.state ?? 'starting'),
         error,
-        contributes: plugin.manifest?.contributes ?? { commands: [], menus: {}, settings: [] },
+        contributes: plugin.manifest?.contributes ?? {
+          commands: [],
+          menus: {},
+          settings: [],
+          panels: [],
+        },
         readyCommands: (id && this.readyCommands.get(id)) || [],
+        readyPanels: [...((id && this.readyPanels.get(id)) || [])],
       }
     })
   }
@@ -111,6 +136,20 @@ export class PluginManager {
   async executeCommand(command: string, args: CommandArgs): Promise<void> {
     if (!this.host) throw new Error('No plugins are running.')
     await this.host.rpc.request('executeCommand', { command, args })
+  }
+
+  async getPanelItems(panel: string, repo: string): Promise<PanelItem[]> {
+    if (!this.host) return []
+    return await this.host.rpc.request('getPanelItems', { panel, repo })
+  }
+
+  getDecorations(repo: string): PluginCommitDecoration[] {
+    return [...(this.decorations.get(repo)?.values() ?? [])].flat()
+  }
+
+  /** Tell plugins about a git operation (see operation-kind.ts). */
+  operationRan(event: OperationEvent): void {
+    this.host?.rpc.emit('operation', event)
   }
 
   /** A plugin's settings changed: send it the new values. */
@@ -177,8 +216,7 @@ export class PluginManager {
           error: 'The plugin host stopped unexpectedly. Reload plugins to try again.',
         })
       }
-      this.statusItems.clear()
-      this.options.onStatusItems([])
+      this.clearContributions()
       this.options.onChanged()
     })
     this.host = { process: child, rpc }
@@ -192,6 +230,7 @@ export class PluginManager {
           path: p.path,
           main: `${p.path}/${p.manifest.main}`,
           commands: p.manifest.contributes.commands.map((c) => c.id),
+          panels: p.manifest.contributes.panels.map((panel) => panel.id),
           settings: settingValues(
             p.manifest.contributes.settings,
             settings.pluginSettings[p.manifest.id],
@@ -216,8 +255,17 @@ export class PluginManager {
     }
     this.states.clear()
     this.readyCommands.clear()
+    this.clearContributions()
+  }
+
+  /** Forget status items, panels and badges (the host stopped). */
+  private clearContributions(): void {
     this.statusItems.clear()
     this.options.onStatusItems([])
+    this.readyPanels.clear()
+    const repos = [...this.decorations.keys()]
+    this.decorations.clear()
+    for (const repo of repos) this.options.onDecorationsChanged(repo)
   }
 
   private onHostEvent(name: keyof MainEvents, payload: unknown): void {
@@ -236,12 +284,34 @@ export class PluginManager {
     } else if (name === 'statusItemRemoved') {
       this.statusItems.delete((payload as MainEvents['statusItemRemoved']).id)
       this.options.onStatusItems(this.getStatusItems())
+    } else if (name === 'panel') {
+      const { plugin, panel, removed } = payload as MainEvents['panel']
+      const panels = this.readyPanels.get(plugin) ?? new Set()
+      if (removed) panels.delete(panel)
+      else panels.add(panel)
+      this.readyPanels.set(plugin, panels)
+      this.options.onChanged()
+    } else if (name === 'panelChanged') {
+      this.options.onPanelChanged((payload as MainEvents['panelChanged']).panel)
+    } else if (name === 'decorations') {
+      const { plugin, repo, decorations } = payload as MainEvents['decorations']
+      const byPlugin = this.decorations.get(repo) ?? new Map()
+      byPlugin.set(
+        plugin,
+        decorations.map((d) => {
+          // Only web links may be opened from a badge.
+          const { url, ...rest } = d
+          return { ...rest, plugin, ...(url && isWebUrl(url) ? { url } : {}) }
+        }),
+      )
+      this.decorations.set(repo, byPlugin)
+      this.options.onDecorationsChanged(repo)
     }
   }
 
   /** Requests the host can make on behalf of a plugin. */
   private mainMethods(): Implementation<MainMethods> {
-    const { askUi, getSettings, openExternal } = this.options
+    const { askUi, getSettings, openExternal, secrets } = this.options
     return {
       'git.run': async ({ repo, args, options }) => {
         if (typeof repo !== 'string' || !repo) throw new Error('git.run needs a repository path.')
@@ -272,13 +342,18 @@ export class PluginManager {
       },
       'ui.openExternal': async ({ url }) => {
         // Only web pages: a file: or app-specific URL could run something.
-        if (!/^https?:\/\//i.test(String(url)))
-          throw new Error('Only http and https links can be opened.')
+        if (!isWebUrl(String(url))) throw new Error('Only http and https links can be opened.')
         await openExternal(url)
       },
       'ui.setCommitMessage': async ({ repo, message }) => {
         await askUi({ kind: 'setCommitMessage', repo, message: String(message) })
       },
+      // Secrets are kept under the plugin's id, so plugins can't clash. (This
+      // is for tidiness, not security: plugins are trusted code.)
+      'secrets.get': ({ plugin, key }) => secrets.get(pluginSecretKey(plugin, key)),
+      'secrets.set': ({ plugin, key, value }) =>
+        secrets.set(pluginSecretKey(plugin, key), String(value)),
+      'secrets.delete': ({ plugin, key }) => secrets.delete(pluginSecretKey(plugin, key)),
     }
   }
 }

@@ -36,6 +36,8 @@ export interface CommandArgs {
   branch?: string
   /** From a file menu: the file's path inside the repository. */
   path?: string
+  /** From a panel item: the item's `id`. */
+  item?: string
 }
 
 export interface GitResult {
@@ -70,6 +72,72 @@ export interface StatusBarItem extends Disposable {
   command: string | undefined
 }
 
+/**
+ * A git operation that changed a repository, reported by
+ * `trellis.repos.onDidRunOperation`. Covers commands run by Trellis and by
+ * plugins, but not by other apps or a terminal.
+ */
+export interface OperationEvent {
+  /** The repository (absolute path). */
+  repo: string
+  kind:
+    | 'commit'
+    | 'checkout'
+    | 'fetch'
+    | 'pull'
+    | 'push'
+    | 'merge'
+    | 'rebase'
+    | 'reset'
+    | 'cherry-pick'
+    | 'revert'
+    | 'branch'
+    | 'tag'
+    | 'stash'
+}
+
+/** The small icons Trellis can draw next to panel items and commits. */
+export type StatusIcon = 'success' | 'failure' | 'pending' | 'neutral' | 'info' | 'warning'
+
+/** One row in a plugin panel. */
+export interface PanelItem {
+  /** Passed to `command` as `args.item`, so one command can serve many items. */
+  id?: string
+  label: string
+  /** Muted text after the label. */
+  description?: string
+  tooltip?: string
+  icon?: StatusIcon
+  /** A command of this plugin to run when the item is clicked. */
+  command?: string
+}
+
+/** Supplies a panel's items; see `trellis.ui.registerPanel`. */
+export interface PanelProvider {
+  /**
+   * The items to show for this repository (called when the panel is shown
+   * or refreshed). Return [] to hide the panel, e.g. in repositories your
+   * plugin doesn't apply to.
+   */
+  getItems(repo: string): PanelItem[] | Promise<PanelItem[]>
+}
+
+export interface Panel extends Disposable {
+  /** Ask Trellis to call getItems() again, e.g. after new data arrived. */
+  refresh(): void
+}
+
+/** A badge drawn on a commit in the history graph, e.g. a CI result. */
+export interface CommitDecoration {
+  /** The commit's full hash. */
+  sha: string
+  icon: StatusIcon
+  /** Hover text. */
+  tooltip?: string
+  /** Opened in the browser when the badge is clicked (http/https only). */
+  url?: string
+}
+
 /** The `trellis` object passed to activate(). */
 export interface TrellisApi {
   /** The running Trellis version, e.g. "0.2.0". */
@@ -92,6 +160,13 @@ export interface TrellisApi {
     onDidChangeActive(listener: (repo: string | null) => void): Disposable
     /** Called when files or refs change in an open repository. */
     onDidChange(listener: (repo: string) => void): Disposable
+    /**
+     * Called after a git command that changes a repository succeeds (commit,
+     * checkout, fetch, push...). Careful: commands your own plugin runs are
+     * reported too, so don't run a changing command from this listener
+     * without a guard.
+     */
+    onDidRunOperation(listener: (event: OperationEvent) => void): Disposable
   }
 
   git: {
@@ -113,6 +188,8 @@ export interface TrellisApi {
       prompt?: string
       value?: string
       placeholder?: string
+      /** Hide what's typed (for passwords and tokens). */
+      password?: boolean
     }): Promise<string | undefined>
     /** Ask the user to choose from a list. Resolves to undefined if cancelled. */
     showQuickPick<T extends QuickPickItem>(
@@ -128,6 +205,32 @@ export interface TrellisApi {
      * the user to review and commit.
      */
     setCommitMessage(repo: string, message: string): Promise<void>
+    /**
+     * Supply the items of a panel declared in `contributes.panels`. The panel
+     * appears in the repository sidebar once registered.
+     */
+    registerPanel(id: string, provider: PanelProvider): Panel
+  }
+
+  graph: {
+    /**
+     * Show badges on commits in a repository's history graph. Each call
+     * replaces this plugin's previous badges for that repository; pass []
+     * to clear them.
+     */
+    setDecorations(repo: string, decorations: CommitDecoration[]): void
+  }
+
+  /**
+   * Encrypted storage for tokens and passwords, using the operating
+   * system's keychain (Keychain on macOS, DPAPI on Windows, the secret
+   * service on Linux). Each plugin sees only its own secrets. Rejects if
+   * the system has no secure storage (some Linux setups).
+   */
+  secrets: {
+    get(key: string): Promise<string | undefined>
+    set(key: string, value: string): Promise<void>
+    delete(key: string): Promise<void>
   }
 
   settings: {

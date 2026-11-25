@@ -28,6 +28,8 @@ import { openInteractiveRebase } from '@/features/rebase/rebase-store'
 import { openCompareDialog } from '@/features/compare/compare-dialog'
 import { PluginMenuItems } from '@/features/plugins/plugin-menu-items'
 import { useRepoViewStore } from '@/features/repo-view/repo-view-store'
+import { useAiEnabled } from '@/features/ai/ai-client'
+import { explainCommitWithAi } from '@/features/ai/ai-dialog'
 
 interface MenuProps {
   repo: string
@@ -235,6 +237,7 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
   const short = shortSha(commit.sha)
   // The commit selected in the history list, offered as the other side of a comparison.
   const selectedSha = useRepoViewStore((s) => s.byRepo[repo]?.selectedSha ?? null)
+  const aiEnabled = useAiEnabled()
   return (
     <Menu
       items={
@@ -263,6 +266,11 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
           <ContextMenuItem onSelect={() => openCompareDialog(repo, commit.sha)}>
             Compare with…
           </ContextMenuItem>
+          {aiEnabled && (
+            <ContextMenuItem onSelect={() => explainCommitWithAi(repo, commit.sha, commit.subject)}>
+              Explain with AI
+            </ContextMenuItem>
+          )}
           <ContextMenuSeparator />
           <ContextMenuItem onSelect={() => void openInteractiveRebase(repo, commit)}>
             Interactive rebase from here…

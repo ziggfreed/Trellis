@@ -52,8 +52,30 @@ describe('parseManifest', () => {
     const result = parseManifest(withTrellis({}))
     expect(result.ok && result.manifest).toMatchObject({
       displayName: 'open-on-remote',
-      contributes: { commands: [], menus: {}, settings: [] },
+      contributes: { commands: [], menus: {}, settings: [], panels: [] },
     })
+  })
+
+  it('reads panels', () => {
+    const result = parseManifest(
+      withTrellis({ contributes: { panels: [{ id: 'github.pulls', title: 'Pull requests' }] } }),
+    )
+    expect(result.ok && result.manifest.contributes.panels).toEqual([
+      { id: 'github.pulls', title: 'Pull requests' },
+    ])
+    expect(errorOf(withTrellis({ contributes: { panels: [{ id: 'x' }] } }))).toMatch(/title/)
+    expect(
+      errorOf(
+        withTrellis({
+          contributes: {
+            panels: [
+              { id: 'x', title: 'X' },
+              { id: 'x', title: 'Y' },
+            ],
+          },
+        }),
+      ),
+    ).toMatch(/listed twice/)
   })
 
   it('explains what is wrong', () => {

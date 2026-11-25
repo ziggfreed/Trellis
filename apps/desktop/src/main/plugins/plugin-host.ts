@@ -19,7 +19,10 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import type {
   CommandArgs,
+  CommitDecoration,
   Disposable,
+  OperationEvent,
+  PanelProvider,
   PluginContext,
   PluginModule,
   StatusBarItem,
@@ -43,18 +46,23 @@ interface Running {
   settings: Record<string, unknown>
   activeRepoListeners: Set<(repo: string | null) => void>
   repoChangeListeners: Set<(repo: string) => void>
+  operationListeners: Set<(event: OperationEvent) => void>
   settingsListeners: Set<() => void>
 }
 
 const running = new Map<string, Running>()
 /** Registered command id → the plugin and code that runs it. */
 const commands = new Map<string, { plugin: string; run: (args: CommandArgs) => unknown }>()
+/** Registered panel id → its provider. */
+const panels = new Map<string, PanelProvider>()
 let appVersion = '0.0.0'
 let storageDir = ''
 
 const rpc = createRpc<MainMethods, MainEvents>(
   (message) => process.parentPort.postMessage(message),
-  { start, executeCommand, stop } satisfies Implementation<HostMethods & { stop(): void }>,
+  { start, executeCommand, getPanelItems, stop } satisfies Implementation<
+    HostMethods & { stop(): void }
+  >,
   (name, payload) => onEvent(name as keyof HostEvents, payload),
 )
 process.parentPort.on('message', (event: { data: unknown }) => rpc.receive(event.data))
@@ -100,6 +108,21 @@ async function executeCommand({ command, args }: Parameters<HostMethods['execute
   return await registered.run(args)
 }
 
+async function getPanelItems({ panel, repo }: Parameters<HostMethods['getPanelItems']>[0]) {
+  const provider = panels.get(panel)
+  if (!provider) return []
+  const items = await provider.getItems(repo)
+  // Only plain fields cross to the UI.
+  return (Array.isArray(items) ? items : []).map((item) => ({
+    label: String(item.label),
+    ...(item.id !== undefined ? { id: String(item.id) } : {}),
+    ...(item.description ? { description: String(item.description) } : {}),
+    ...(item.tooltip ? { tooltip: String(item.tooltip) } : {}),
+    ...(item.icon ? { icon: item.icon } : {}),
+    ...(item.command ? { command: String(item.command) } : {}),
+  }))
+}
+
 /** Let every plugin clean up (main calls this before ending the process). */
 async function stop() {
   for (const entry of running.values()) {
@@ -123,6 +146,11 @@ function onEvent(name: keyof HostEvents, payload: unknown) {
     for (const entry of running.values()) {
       for (const listener of entry.repoChangeListeners) safely(listener, repo)
     }
+  } else if (name === 'operation') {
+    const event = payload as HostEvents['operation']
+    for (const entry of running.values()) {
+      for (const listener of entry.operationListeners) safely(listener, event)
+    }
   } else if (name === 'settings') {
     const { plugin, values } = payload as HostEvents['settings']
     const entry = running.get(plugin)
@@ -144,6 +172,7 @@ async function activate(plugin: HostPlugin) {
     settings: plugin.settings,
     activeRepoListeners: new Set(),
     repoChangeListeners: new Set(),
+    operationListeners: new Set(),
     settingsListeners: new Set(),
   }
   running.set(plugin.id, entry)
@@ -244,6 +273,7 @@ function createApi(entry: Running): TrellisApi {
       open: () => rpc.request('repos.open'),
       onDidChangeActive: (listener) => addTo(entry.activeRepoListeners, listener),
       onDidChange: (listener) => addTo(entry.repoChangeListeners, listener),
+      onDidRunOperation: (listener) => addTo(entry.operationListeners, listener),
     },
 
     git: {
@@ -269,12 +299,58 @@ function createApi(entry: Running): TrellisApi {
       openExternal: (url) => rpc.request('ui.openExternal', { url }),
       setCommitMessage: (repo, message) => rpc.request('ui.setCommitMessage', { repo, message }),
       createStatusBarItem: () => createStatusItem(pluginId),
+      registerPanel(id, provider) {
+        if (!entry.plugin.panels.includes(id)) {
+          throw new Error(
+            `Add “${id}” to "contributes.panels" in package.json before registering it.`,
+          )
+        }
+        panels.set(id, provider)
+        rpc.emit('panel', { plugin: pluginId, panel: id })
+        return {
+          refresh: () => {
+            if (panels.get(id) === provider) rpc.emit('panelChanged', { panel: id })
+          },
+          dispose: () => {
+            if (panels.get(id) !== provider) return
+            panels.delete(id)
+            rpc.emit('panel', { plugin: pluginId, panel: id, removed: true })
+          },
+        }
+      },
+    },
+
+    graph: {
+      setDecorations(repo, decorations) {
+        rpc.emit('decorations', {
+          plugin: pluginId,
+          repo: String(repo),
+          decorations: (Array.isArray(decorations) ? decorations : []).map(cleanDecoration),
+        })
+      },
+    },
+
+    secrets: {
+      get: (key) => rpc.request('secrets.get', { plugin: pluginId, key: String(key) }),
+      set: (key, value) =>
+        rpc.request('secrets.set', { plugin: pluginId, key: String(key), value: String(value) }),
+      delete: (key) => rpc.request('secrets.delete', { plugin: pluginId, key: String(key) }),
     },
 
     settings: {
       get: <T>(key: string) => entry.settings[key] as T,
       onDidChange: (listener) => addTo(entry.settingsListeners, listener),
     },
+  }
+}
+
+/** Copy only the known fields of a decoration (they're sent to the UI). */
+function cleanDecoration(d: CommitDecoration): CommitDecoration {
+  return {
+    sha: String(d.sha),
+    icon: d.icon,
+    ...(d.tooltip ? { tooltip: String(d.tooltip) } : {}),
+    ...(d.url ? { url: String(d.url) } : {}),
   }
 }
 

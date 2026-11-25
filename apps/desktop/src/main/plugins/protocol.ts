@@ -8,7 +8,15 @@
  * Main → host events:     see HostEvents
  * Host → main events:     see MainEvents
  */
-import type { CommandArgs, GitResult, GitRunOptions, QuickPickItem } from '@trellis/plugin-api'
+import type {
+  CommandArgs,
+  CommitDecoration,
+  GitResult,
+  GitRunOptions,
+  OperationEvent,
+  PanelItem,
+  QuickPickItem,
+} from '@trellis/plugin-api'
 
 /** What the host needs to load one plugin. */
 export interface HostPlugin {
@@ -21,6 +29,8 @@ export interface HostPlugin {
   settings: Record<string, unknown>
   /** Command ids declared in its manifest (the only ones it may register). */
   commands: string[]
+  /** Panel ids declared in its manifest (the only ones it may register). */
+  panels: string[]
 }
 
 /** Methods the host implements (main calls them). */
@@ -29,6 +39,8 @@ export type HostMethods = {
   start(params: { appVersion: string; storageDir: string; plugins: HostPlugin[] }): void
   /** Run a command a plugin registered. */
   executeCommand(params: { command: string; args: CommandArgs }): unknown
+  /** Ask a plugin panel for its items. */
+  getPanelItems(params: { panel: string; repo: string }): PanelItem[]
 }
 
 /** Methods main implements (the host calls them on behalf of a plugin). */
@@ -51,10 +63,14 @@ export type MainMethods = {
     prompt?: string
     value?: string
     placeholder?: string
+    password?: boolean
   }): string | undefined
   'ui.showQuickPick'(params: { items: QuickPickItem[]; placeholder?: string }): number | undefined
   'ui.openExternal'(params: { url: string }): void
   'ui.setCommitMessage'(params: { repo: string; message: string }): void
+  'secrets.get'(params: { plugin: string; key: string }): string | undefined
+  'secrets.set'(params: { plugin: string; key: string; value: string }): void
+  'secrets.delete'(params: { plugin: string; key: string }): void
 }
 
 /** A status bar item as the UI shows it. */
@@ -72,6 +88,7 @@ export type HostEvents = {
   activeRepo: { repo: string | null }
   repoChanged: { repo: string }
   settings: { plugin: string; values: Record<string, unknown> }
+  operation: OperationEvent
 }
 
 /** Events the host sends to main. */
@@ -82,6 +99,12 @@ export type MainEvents = {
   commands: { plugin: string; commands: string[] }
   statusItem: StatusItem
   statusItemRemoved: { id: string }
+  /** A plugin registered (or, with removed, unregistered) a panel. */
+  panel: { plugin: string; panel: string; removed?: boolean }
+  /** A panel asked to be refreshed. */
+  panelChanged: { panel: string }
+  /** A plugin's commit badges for one repository (replacing its previous ones). */
+  decorations: { plugin: string; repo: string; decorations: CommitDecoration[] }
 }
 
 /**

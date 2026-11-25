@@ -14,7 +14,8 @@
  *       "contributes": {
  *         "commands": [{ "id": "openOnRemote.commit", "title": "Open commit on remote" }],
  *         "menus": { "commit": [{ "command": "openOnRemote.commit" }] },
- *         "settings": [{ "key": "remote", "type": "string", "default": "origin", "title": "Remote" }]
+ *         "settings": [{ "key": "remote", "type": "string", "default": "origin", "title": "Remote" }],
+ *         "panels": [{ "id": "openOnRemote.links", "title": "Links" }]
  *       }
  *     }
  *   }
@@ -58,10 +59,22 @@ export type SettingContribution = {
   | { type: 'enum'; default: string; options: string[] }
 )
 
+/**
+ * A panel in the repository sidebar: a titled, collapsible list whose items
+ * the plugin supplies (see `trellis.ui.registerPanel`).
+ */
+export interface PanelContribution {
+  /** Unique id. Start it with your plugin's name, e.g. "github.pullRequests". */
+  id: string
+  /** The panel's heading. */
+  title: string
+}
+
 export interface Contributions {
   commands: CommandContribution[]
   menus: Partial<Record<MenuLocation, MenuContribution[]>>
   settings: SettingContribution[]
+  panels: PanelContribution[]
 }
 
 /** A checked, normalised manifest. */
@@ -170,6 +183,20 @@ export function parseManifest(json: unknown): ManifestResult {
     settings.push(parsed)
   }
 
+  // Panels
+  const panels: PanelContribution[] = []
+  const rawPanels = contributes.panels ?? []
+  if (!Array.isArray(rawPanels)) return fail('"contributes.panels" must be a list.')
+  for (const panel of rawPanels) {
+    if (!isObject(panel) || !isString(panel.id) || !isString(panel.title)) {
+      return fail('Each panel needs an "id" and a "title".')
+    }
+    if (panels.some((p) => p.id === panel.id)) {
+      return fail(`The panel "${panel.id}" is listed twice.`)
+    }
+    panels.push({ id: panel.id, title: panel.title })
+  }
+
   return {
     ok: true,
     manifest: {
@@ -179,7 +206,7 @@ export function parseManifest(json: unknown): ManifestResult {
       description: typeof description === 'string' ? description : '',
       main,
       engine,
-      contributes: { commands, menus, settings },
+      contributes: { commands, menus, settings, panels },
     },
   }
 }

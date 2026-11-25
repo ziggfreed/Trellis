@@ -6,19 +6,8 @@
  * name for the session. Right-click any item for actions (check out, merge,
  * delete...); double-click a branch to check it out.
  */
-import { useState } from 'react'
-import {
-  Archive,
-  ChevronRight,
-  Cloud,
-  FolderTree,
-  GitBranch,
-  Plus,
-  Tag,
-  type LucideIcon,
-} from 'lucide-react'
+import { Archive, Cloud, FolderTree, GitBranch, Tag } from 'lucide-react'
 import type { Ref } from '@shared/ipc'
-import { cn } from '@/lib/utils'
 import { useRefs, useRemotes, useStashes, useWorktrees } from '@/features/repos/use-repo-data'
 import { openRepoAtPath } from '@/features/repos/use-repos'
 import { toast } from 'sonner'
@@ -32,6 +21,8 @@ import {
 } from '@/features/repo-actions/menus'
 import { addWorktree, checkoutBranch } from '@/features/repo-actions/actions'
 import { draggableRef } from '@/features/drag-drop/drop-menu'
+import { PluginPanels } from '@/features/plugins/plugin-panels'
+import { Item, Section } from './sidebar-parts'
 import { groupRemoteBranches, localBranches, remoteBranchShortName, sortedTags } from './group-refs'
 
 export function RepoSidebar({ repoPath }: { repoPath: string }) {
@@ -141,97 +132,9 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
           </StashMenu>
         ))}
       </Section>
+
+      <PluginPanels repoPath={repoPath} />
     </nav>
-  )
-}
-
-function Section(props: {
-  title: string
-  icon?: LucideIcon
-  count: number
-  nested?: boolean
-  defaultOpen?: boolean
-  /** A small "+" button in the header. */
-  action?: { label: string; onClick: () => void }
-  children: React.ReactNode
-}) {
-  const [open, setOpen] = useState(props.defaultOpen ?? true)
-  const Icon = props.icon
-  return (
-    <div className={cn('group/section relative', !props.nested && 'mb-2')}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        className={cn(
-          'flex w-full items-center gap-1.5 px-2 py-1 text-left hover:bg-sidebar-accent',
-          props.nested
-            ? 'pl-5 text-sm'
-            : 'text-xs font-medium tracking-wide text-muted-foreground uppercase',
-        )}
-      >
-        <ChevronRight
-          className={cn('size-3.5 shrink-0 transition-transform', open && 'rotate-90')}
-        />
-        {Icon && <Icon className="size-3.5 shrink-0" />}
-        <span className="truncate">{props.title}</span>
-        <span className="ml-auto text-xs font-normal text-muted-foreground">{props.count}</span>
-      </button>
-      {props.action && (
-        <button
-          type="button"
-          aria-label={props.action.label}
-          title={props.action.label}
-          onClick={props.action.onClick}
-          className="absolute top-1 right-8 rounded p-0.5 text-muted-foreground opacity-0 group-hover/section:opacity-100 hover:text-foreground focus:opacity-100"
-        >
-          <Plus className="size-3.5" />
-        </button>
-      )}
-      {open && (
-        <div>
-          {props.count === 0 && !props.nested ? (
-            <p className="px-8 py-0.5 text-xs text-muted-foreground/70 italic">None</p>
-          ) : (
-            props.children
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-interface ItemProps extends React.ComponentProps<'button'> {
-  label: string
-  selected: boolean
-  strong?: boolean
-  indent?: boolean
-  trailing?: React.ReactNode
-}
-
-/**
- * One row in the sidebar. Extra props (event handlers, ref) are passed to the
- * button, which lets context menus wrap it.
- */
-function Item({ label, selected, strong, indent, trailing, title, className, ...rest }: ItemProps) {
-  return (
-    <button
-      type="button"
-      title={title ?? label}
-      {...rest}
-      className={cn(
-        'flex w-full items-center gap-2 py-1 pr-2 text-left hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent',
-        indent ? 'pl-12' : 'pl-8',
-        selected && 'bg-sidebar-accent',
-        className,
-      )}
-    >
-      {strong && (
-        <span className="size-1.5 shrink-0 rounded-full bg-brand" aria-label="Current branch" />
-      )}
-      <span className={cn('truncate', strong && 'font-semibold')}>{label}</span>
-      {trailing}
-    </button>
   )
 }
 

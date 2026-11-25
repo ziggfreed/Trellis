@@ -67,6 +67,13 @@ export function builtInCommands(context: CommandContext): Command[] {
       run: () => openSettings(),
     },
     {
+      id: 'ai.settings',
+      title: 'AI settings…',
+      group: 'AI',
+      keywords: ['claude', 'openai', 'api key', 'model'],
+      run: () => openSettings('ai'),
+    },
+    {
       id: 'plugins.manage',
       title: 'Manage plugins…',
       group: 'Plugins',

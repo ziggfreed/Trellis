@@ -1,6 +1,6 @@
 {
   "name": "@trellis/plugin-api",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Types and helpers for writing Trellis plugins: the plugin manifest and the API passed to activate().",
   "license": "MIT",

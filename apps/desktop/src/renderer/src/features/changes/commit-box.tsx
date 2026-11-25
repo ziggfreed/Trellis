@@ -4,17 +4,23 @@
  * - Summary (first line) and an optional description.
  * - "Amend" replaces the last commit; ticking it fills in that commit's message.
  * - Ctrl/Cmd+Enter commits.
+ * - With AI turned on (Settings > AI), "Suggest" writes a message from the
+ *   staged changes, streaming it into the boxes.
  * The draft is kept per repository while you switch tabs.
  */
+import { useState } from 'react'
 import { toast } from 'sonner'
+import { Sparkles } from 'lucide-react'
 import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { shortSha } from '@/lib/format'
 import { runAction } from '@/lib/run-action'
+import { errorMessage } from '@/lib/errors'
 import { Button } from '@/components/ui/button'
 import { useStatus } from '@/features/repos/use-repo-data'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { modKey } from '@/hooks/use-keyboard-shortcuts'
+import { startAiTask, useAiEnabled, type RunningAiTask } from '@/features/ai/ai-client'
 import {
   buildCommitMessage,
   splitCommitMessage,
@@ -33,6 +39,35 @@ export function CommitBox({ repoPath }: { repoPath: string }) {
     view.commitSummary.trim() !== '' &&
     (stagedCount > 0 || view.amend || status?.operation === 'merge')
   const length = summaryLength(view.commitSummary)
+  const aiEnabled = useAiEnabled()
+  const [suggestion, setSuggestion] = useState<RunningAiTask | null>(null)
+
+  /** Ask the AI for a message, showing it in the boxes as it arrives. */
+  const suggest = async () => {
+    let text = ''
+    const show = (message: string) => {
+      const { summary, description } = splitCommitMessage(message)
+      setView({ commitSummary: summary, commitDescription: description })
+    }
+    const task = startAiTask({ kind: 'commitMessage', repo: repoPath }, (piece) => {
+      text += piece
+      show(text)
+    })
+    setSuggestion(task)
+    try {
+      const result = await task.result
+      show(result.text) // cleaned up (fences, quotes) by main
+      if (result.truncated) {
+        toast.info('The staged changes were too large to send in full.', {
+          description: 'The message is based on the first part only; check it.',
+        })
+      }
+    } catch (error) {
+      toast.error(errorMessage(error))
+    } finally {
+      setSuggestion(null)
+    }
+  }
 
   const toggleAmend = async (amend: boolean) => {
     setView({ amend })
@@ -114,6 +149,22 @@ export function CommitBox({ repoPath }: { repoPath: string }) {
           />
           Amend
         </label>
+        {aiEnabled && (
+          <Button
+            size="xs"
+            variant="ghost"
+            disabled={!suggestion && stagedCount === 0}
+            onClick={() => (suggestion ? suggestion.cancel() : void suggest())}
+            title={
+              suggestion
+                ? 'Stop writing the message'
+                : 'Write a commit message from the staged changes with AI'
+            }
+          >
+            <Sparkles className={cn(suggestion && 'animate-pulse')} />
+            {suggestion ? 'Stop' : 'Suggest'}
+          </Button>
+        )}
         <Button
           size="sm"
           className="ml-auto min-w-0"

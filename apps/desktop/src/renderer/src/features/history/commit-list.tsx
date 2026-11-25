@@ -21,6 +21,7 @@ import { useLog, useRefs, useStatus } from '@/features/repos/use-repo-data'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { refsBySha } from '@/features/sidebar/group-refs'
 import { RefBadge } from './ref-badge'
+import { CommitDecorations, useCommitDecorations } from '@/features/plugins/commit-decorations'
 import { CommitMenu } from '@/features/repo-actions/menus'
 import { openCompare } from '@/features/repo-actions/actions'
 import { firstParentLine, firstParentMap } from './branch-highlight'
@@ -71,6 +72,7 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
     [incremental, pages, headSha],
   )
   const refMap = useMemo(() => refsBySha(refs ?? []), [refs])
+  const decorations = useCommitDecorations(repoPath)
   const firstParents = useMemo(() => firstParentMap(commits), [commits])
   const highlighted = useMemo(
     () => (hoveredTip ? firstParentLine(firstParents, hoveredTip) : null),
@@ -225,6 +227,9 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
                     />
                   ))}
                   <span className="truncate">{commit.subject}</span>
+                  {decorations.has(commit.sha) && (
+                    <CommitDecorations decorations={decorations.get(commit.sha)!} />
+                  )}
                 </div>
                 <span
                   className={cn(

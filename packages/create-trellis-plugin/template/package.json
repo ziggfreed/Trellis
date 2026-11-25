@@ -9,7 +9,7 @@
     "trellis-plugin"
   ],
   "engines": {
-    "trellis": ">=0.2.0"
+    "trellis": ">=0.3.0"
   },
   "trellis": {
     "displayName": "{{displayName}}",

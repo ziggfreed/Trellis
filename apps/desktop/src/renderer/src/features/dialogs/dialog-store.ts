@@ -31,6 +31,8 @@ export interface TextOptions {
   multiline?: boolean
   /** Allow submitting an empty value. */
   optional?: boolean
+  /** Hide what's typed (passwords, tokens). */
+  secret?: boolean
   /** Return an error message to show, or null if the value is OK. */
   validate?: (value: string) => string | null
   checkbox?: { label: string; defaultChecked?: boolean }

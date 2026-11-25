@@ -19,6 +19,7 @@ import { useRepos } from '@/features/repos/use-repos'
 import { useRepoSync } from '@/features/repos/use-repo-sync'
 import { usePluginSync } from '@/features/plugins/use-plugin-sync'
 import { QuickPickDialog } from '@/features/plugins/quick-pick-dialog'
+import { AiDialog } from '@/features/ai/ai-dialog'
 import { HomeScreen } from '@/features/home/home-screen'
 import { RepoView } from '@/features/repo-view/repo-view'
 import { GitMissingScreen } from '@/features/git-check/git-missing-screen'
@@ -88,6 +89,7 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
       <CloneDialog />
       <CompareDialog />
       <QuickPickDialog />
+      <AiDialog />
       <ScanDialog />
       <Dialogs />
       <AuthPrompt />
