@@ -6,6 +6,8 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-25
+
 ### Added
 
 - **Undo and redo** (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, or the toolbar) for commits, staging, discards, checkouts, merges, rebases, resets, branch and tag changes and pulls. Undo never moves a branch that was changed elsewhere since.
