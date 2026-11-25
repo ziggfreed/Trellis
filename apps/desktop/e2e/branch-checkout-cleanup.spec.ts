@@ -64,9 +64,14 @@ test('double-clicking a commit in the history checks out its branch', async () =
   // A commit with no branch asks before leaving you on no branch.
   repo.write('g.txt', 'g\n')
   repo.commit('second feature commit')
-  // Wait for the history to see it, so "feature" no longer points at the first commit.
+  // Wait for the history to see it AND for the "feature" label to move onto
+  // it (refs refresh separately from the commit list), so "feature" no
+  // longer points at the first commit.
   await expect(
-    window.getByTestId('commit-row').filter({ hasText: 'second feature commit' }),
+    window
+      .getByTestId('commit-row')
+      .filter({ hasText: 'second feature commit' })
+      .locator('[data-ref="refs/heads/feature"]'),
   ).toBeVisible()
   const first = window.getByTestId('commit-row').filter({ hasText: 'feature work' })
   await first.dblclick()

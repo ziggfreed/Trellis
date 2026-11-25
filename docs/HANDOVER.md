@@ -6,13 +6,13 @@ A snapshot for whoever (human or AI assistant) picks up the work next. Last upda
 
 Trellis is an open-source (MIT) desktop git client: Electron + React + TypeScript + Tailwind v4 + shadcn/ui, in a pnpm monorepo. Windows is the main platform; macOS and Linux are supported too. The owner wants code that contributors can follow: header comments on new files, comments explaining _why_ on anything complex, and doc comments on exported functions (see `CLAUDE.md`).
 
-- Repository: `ziggfreed/Trellis` on GitHub (**private**). Main branch: `main`.
+- Repository: `ziggfreed/Trellis` on GitHub (**public**). Main branch: `main`.
 - App version: **0.3.0** (`apps/desktop/package.json`; not released yet; the last release was v0.2.0). `CHANGELOG.md`'s `## [Unreleased]` section lists everything since.
 
 ## State right now
 
 - **All work up to PR #14 is merged into `main`.**
-- **CI is turned off on purpose**: the "CI" GitHub Actions workflow (`.github/workflows/ci.yml`) was disabled by the owner because the account's Actions minutes are nearly used up (the repo is private, and macOS minutes count 10×, Windows 2×). Don't re-enable it without asking. Verify changes locally instead (commands below). The "Release" workflow is still enabled, but builds **Windows only** for now (same reason); restore the full `os` matrix in `.github/workflows/release.yml` when the repo goes public.
+- **CI is turned off on purpose**: the "CI" GitHub Actions workflow (`.github/workflows/ci.yml`) was disabled by the owner because the account's Actions minutes are nearly used up (the repo was private then, and macOS minutes count 10×, Windows 2×). Don't re-enable it without asking. Verify changes locally instead (commands below). The repository is now **public** (Actions minutes are free), so CI could be turned back on; ask the owner first. The "Release" workflow builds Windows, macOS and Linux.
 - **Owner's working preferences**:
   - Open a pull request (via `gh api repos/ziggfreed/trellis/pulls`) as soon as a substantial piece of work is finished, without waiting to be asked. Work on a new branch from the latest `main`.
   - Use Conventional Commit messages.

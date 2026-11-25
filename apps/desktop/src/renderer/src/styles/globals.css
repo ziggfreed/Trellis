@@ -193,6 +193,19 @@
   scrollbar-color: color-mix(in oklch, var(--muted-foreground) 45%, transparent) transparent;
 }
 
+/*
+ * Toasts: a long message (such as git's error output) scrolls inside the
+ * toast instead of growing it past the top of the screen, where its close
+ * button would be out of reach.
+ */
+[data-sonner-toast] [data-title],
+[data-sonner-toast] [data-description] {
+  max-height: 40vh;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 /* Hide a scrollbar but keep the element scrollable (used by the tab bar). */
 @utility scrollbar-none {
   scrollbar-width: none;
