@@ -6,7 +6,7 @@
  *   - the index (staged): `git cat-file blob :<path>`
  *   - the working tree:  read straight from disk
  */
-import { readFile, stat } from 'node:fs/promises'
+import { readFile, stat, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { runGit, runGitBuffer } from './run-git'
 import type { DiffTarget, FileContent, FileDiffContents } from './types'
@@ -98,4 +98,13 @@ export async function getFileDiffContents(
       return { old, new: current }
     }
   }
+}
+
+/** Overwrite a file in the working tree (editing a file from the diff view). */
+export async function writeWorkingFile(
+  repoPath: string,
+  path: string,
+  content: string,
+): Promise<void> {
+  await writeFile(join(repoPath, path), content)
 }

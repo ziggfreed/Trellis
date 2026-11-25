@@ -8,6 +8,10 @@
  *
  * Partial changes are applied by building a smaller patch in the UI
  * (buildPartialPatch from @trellis/git/patch) and applying it with git.
+ *
+ * The header's view switch also offers Edit (change a working-tree file in
+ * place) and, for Markdown and JSON files, Rendered / Data views; those live
+ * in file-alternate-view.tsx.
  */
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -32,6 +36,9 @@ import { selectRange, toggleLine } from './line-selection'
 import { ConflictEditor } from '@/features/conflicts/conflict-editor'
 import { highlightLines, type Segment } from '@/features/diff/highlight-lines'
 import { useLanguageParser } from '@/features/diff/load-language'
+import { specialViews } from '@/features/diff/structured-diff'
+import { ViewSwitch, type DiffMode } from '@/features/diff/view-switch'
+import { FileAlternateView } from './file-alternate-view'
 
 /** Stop rendering lines after this many, to keep huge diffs responsive. */
 const MAX_LINES = 5000
@@ -49,6 +56,25 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
   const untracked = area === 'unstaged' && entry?.unstaged === 'untracked'
   const conflicted = entry?.unstaged === 'conflicted'
   const patchArea = untracked ? 'untracked' : area
+  // Only files on disk can be edited (not staged snapshots or deleted files).
+  const editable = area === 'unstaged' && !conflicted && entry?.unstaged !== 'deleted'
+  const modes: DiffMode[] = ['diff', ...specialViews(file), ...(editable ? ['edit' as const] : [])]
+  const [chosenMode, setChosenMode] = useState<DiffMode>('diff')
+  const mode = modes.includes(chosenMode) ? chosenMode : 'diff'
+  const [dirty, setDirty] = useState(false)
+  const changeMode = async (next: DiffMode) => {
+    if (dirty) {
+      const ok = await confirmDialog({
+        title: 'Discard your unsaved edits?',
+        description: 'Switching views loses the edits you haven’t saved.',
+        confirmLabel: 'Discard edits',
+        destructive: true,
+      })
+      if (!ok) return
+      setDirty(false)
+    }
+    setChosenMode(next)
+  }
 
   const {
     data: patch,
@@ -100,8 +126,33 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
       <span className="text-xs text-muted-foreground">
         {area === 'staged' ? 'Staged' : untracked ? 'Untracked' : 'Unstaged'}
       </span>
+      <div className="ml-auto">
+        <ViewSwitch
+          modes={modes}
+          mode={mode}
+          diffLabel="Hunks"
+          onChange={(next) => void changeMode(next)}
+        />
+      </div>
     </div>
   )
+
+  if (mode !== 'diff') {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        {header}
+        <div className="min-h-0 flex-1">
+          <FileAlternateView
+            repoPath={repoPath}
+            file={file}
+            area={area}
+            mode={mode}
+            onDirtyChange={setDirty}
+          />
+        </div>
+      </div>
+    )
+  }
 
   if (conflicted) {
     return (

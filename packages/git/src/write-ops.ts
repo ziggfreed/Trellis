@@ -250,7 +250,8 @@ export interface RemoteOptions {
   env?: Record<string, string>
 }
 
-function remoteRunOptions(repoPath: string, options: RemoteOptions): RunGitOptions {
+/** runGit options for a network command: cancellation and progress parsing. */
+export function remoteRunOptions(repoPath: string, options: RemoteOptions): RunGitOptions {
   return {
     cwd: repoPath,
     signal: options.signal,

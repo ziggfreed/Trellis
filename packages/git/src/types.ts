@@ -397,3 +397,36 @@ export interface ReflogEntry {
   /** The commit's subject line. */
   subject: string
 }
+
+/** A submodule (see submodules.ts). */
+export interface Submodule {
+  /** Its name in .gitmodules (usually the same as the path). */
+  name: string
+  /** Folder inside the repository. */
+  path: string
+  url: string
+  /** The commit checked out (or recorded, if not initialised). */
+  sha: string
+  /**
+   * uninitialized: the folder is empty (run "update").
+   * changed: checked out at a different commit than the one recorded.
+   * conflict: the recorded commit conflicts in a merge.
+   * ok: checked out at the recorded commit.
+   */
+  state: 'uninitialized' | 'changed' | 'conflict' | 'ok'
+}
+
+/** A file locked on the Git LFS server. */
+export interface LfsLock {
+  id: string
+  path: string
+  owner: string
+  /** ms since the epoch (0 if unknown). */
+  lockedAt: number
+}
+
+/** What a Git LFS pointer file says about the real file. */
+export interface LfsPointer {
+  oid: string
+  size: number
+}

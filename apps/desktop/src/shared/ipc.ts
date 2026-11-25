@@ -36,6 +36,8 @@ import type {
   UndoState,
   CommitSignature,
   GitIdentity,
+  LfsLock,
+  Submodule,
   ReflogEntry,
   SigningConfig,
   RepoStatus,
@@ -454,6 +456,35 @@ export interface IpcContract {
   /** Stop tracking files, keeping them on disk (git rm --cached). */
   'repo:untrack': { args: [path: string, files: string[]]; result: void }
 
+  // --- Submodules ---------------------------------------------------------------
+  'repo:getSubmodules': { args: [path: string]; result: Submodule[] }
+  /** Initialise and update submodules (all, or `paths`), with progress. */
+  'repo:updateSubmodules': {
+    args: [operationId: string, path: string, paths: string[]]
+    result: void
+  }
+  /** Add a repository as a submodule in `folder`, with progress. */
+  'repo:addSubmodule': {
+    args: [operationId: string, path: string, url: string, folder: string]
+    result: void
+  }
+  /** Copy submodule URLs from .gitmodules into the local config. */
+  'repo:syncSubmodules': { args: [path: string]; result: void }
+
+  // --- Git LFS --------------------------------------------------------------------
+  /** Whether git-lfs is installed (its version) and the repository's LFS patterns. */
+  'repo:getLfs': { args: [path: string]; result: { version: string | null; patterns: string[] } }
+  'repo:lfsTrack': { args: [path: string, pattern: string]; result: void }
+  'repo:lfsUntrack': { args: [path: string, pattern: string]; result: void }
+  /** Locked files (rejects if the LFS server doesn't support locking). */
+  'repo:getLfsLocks': { args: [path: string]; result: LfsLock[] }
+  'repo:lfsLock': { args: [path: string, file: string]; result: void }
+  'repo:lfsUnlock': { args: [path: string, file: string, force: boolean]; result: void }
+
+  // --- Editing ---------------------------------------------------------------------
+  /** Save a working-tree file (editing in the diff view). */
+  'repo:writeWorkingFile': { args: [path: string, file: string, content: string]; result: void }
+
   // --- Cleaning up merged branches ----------------------------------------------
   /** The main branch (origin's default, or main/master), or null. */
   'repo:getDefaultBranch': { args: [path: string]; result: string | null }
@@ -693,6 +724,17 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:ignore': true,
   'repo:untrack': true,
   'repo:getDefaultBranch': true,
+  'repo:getSubmodules': true,
+  'repo:updateSubmodules': true,
+  'repo:addSubmodule': true,
+  'repo:syncSubmodules': true,
+  'repo:getLfs': true,
+  'repo:lfsTrack': true,
+  'repo:lfsUntrack': true,
+  'repo:getLfsLocks': true,
+  'repo:lfsLock': true,
+  'repo:lfsUnlock': true,
+  'repo:writeWorkingFile': true,
   'repo:getMergedBranches': true,
   'repo:deleteBranches': true,
   'repo:fetch': true,

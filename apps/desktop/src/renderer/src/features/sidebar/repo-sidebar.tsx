@@ -23,6 +23,8 @@ import {
 import { addWorktree, checkoutBranch } from '@/features/repo-actions/actions'
 import { draggableRef } from '@/features/drag-drop/drop-menu'
 import { PluginPanels } from '@/features/plugins/plugin-panels'
+import { SubmodulesSection } from '@/features/submodules/submodules'
+import { LfsSection } from '@/features/lfs/lfs'
 import { addRemote } from '@/features/repo-tools/remote-actions'
 import { Item, Section } from './sidebar-parts'
 import { groupRemoteBranches, localBranches, remoteBranchShortName, sortedTags } from './group-refs'
@@ -162,6 +164,8 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
         ))}
       </Section>
 
+      <SubmodulesSection repoPath={repoPath} />
+      <LfsSection repoPath={repoPath} />
       <PluginPanels repoPath={repoPath} />
     </nav>
   )
