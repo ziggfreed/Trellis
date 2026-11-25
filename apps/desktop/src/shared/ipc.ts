@@ -38,11 +38,19 @@ import type {
   Stash,
 } from '@trellis/git/types'
 import type { FilePatch } from '@trellis/git/patch'
+import type { CommandArgs, Contributions } from '@trellis/plugin-api'
 
 // Re-export the git types the UI uses, so it can import everything from here.
 export type * from '@trellis/git/types'
 
 export type { FilePatch, Hunk, PatchLine, LineId } from '@trellis/git/patch'
+export type {
+  CommandArgs,
+  CommandContribution,
+  Contributions,
+  MenuLocation,
+  SettingContribution,
+} from '@trellis/plugin-api'
 
 export type ThemePreference = 'light' | 'dark' | 'system'
 
@@ -77,6 +85,12 @@ export interface Settings {
   keybindings: Record<string, string>
   /** Command that starts the user's code editor, e.g. "code" (empty = VS Code). */
   editorCommand: string
+  /** Ids of plugins the user turned off. */
+  disabledPlugins: string[]
+  /** Plugin folders loaded in place for development (Settings > Plugins). */
+  pluginDevFolders: string[]
+  /** Values of plugins' own settings: plugin id -> setting key -> value. */
+  pluginSettings: Record<string, Record<string, unknown>>
 }
 
 /** A named group of repositories, e.g. "Work" or "Side projects". */
@@ -95,6 +109,50 @@ export interface AppInfo {
 /** Result of asking to open a folder as a repository. */
 export type OpenRepoResult =
   { ok: true; repo: RepoTab } | { ok: false; reason: 'not-a-repo' | 'not-found'; path: string }
+
+// ---------------------------------------------------------------------------
+// Plugins (see src/main/plugins and packages/plugin-api)
+// ---------------------------------------------------------------------------
+
+/** Where a plugin was loaded from. */
+export type PluginSource = 'builtin' | 'installed' | 'dev'
+
+/** A plugin as the plugin manager lists it. */
+export interface PluginInfo {
+  /** Package name; null when package.json couldn't be read. */
+  id: string | null
+  displayName: string
+  version: string
+  description: string
+  path: string
+  source: PluginSource
+  enabled: boolean
+  /**
+   * running: activated; starting: being loaded; disabled: turned off;
+   * error: can't run (see `error`).
+   */
+  state: 'running' | 'starting' | 'disabled' | 'error'
+  error: string | null
+  contributes: Contributions
+  /** Commands whose code the plugin has registered (others can't run yet). */
+  readyCommands: string[]
+}
+
+/** A plugin's status bar item. */
+export interface PluginStatusItem {
+  id: string
+  plugin: string
+  text: string
+  tooltip: string
+  command: string | undefined
+}
+
+/** Something a plugin asked the UI to do; the UI answers with plugins:uiResponse. */
+export type PluginUiRequest =
+  | { kind: 'message'; plugin: string; message: string; level: 'info' | 'warning' | 'error' }
+  | { kind: 'input'; title: string; prompt?: string; value?: string; placeholder?: string }
+  | { kind: 'quickPick'; items: { label: string; detail?: string }[]; placeholder?: string }
+  | { kind: 'setCommitMessage'; repo: string; message: string }
 
 /** Repositories found by scanning a folder. */
 export interface ScanResult {
@@ -335,6 +393,28 @@ export interface IpcContract {
   'git:getCommandLog': { args: []; result: GitCommandEntry[] }
   /** Answer an `auth:prompt` event; null means the user cancelled. */
   'auth:respond': { args: [id: string, answer: string | null]; result: void }
+
+  // --- Plugins (see src/main/plugins) ------------------------------------------
+  'plugins:list': { args: []; result: PluginInfo[] }
+  'plugins:setEnabled': { args: [id: string, enabled: boolean]; result: void }
+  /** Stop every plugin and load them again (picks up changed plugin code). */
+  'plugins:reload': { args: []; result: void }
+  /** Run a plugin command; `args` says where it was run from. */
+  'plugins:executeCommand': { args: [command: string, args: CommandArgs]; result: void }
+  'plugins:statusItems': { args: []; result: PluginStatusItem[] }
+  /** Answer a `plugins:ui` request (undefined = cancelled / nothing). */
+  'plugins:uiResponse': { args: [requestId: number, value: unknown]; result: void }
+  /** Copy a plugin folder into the plugins folder. Returns the plugin id. */
+  'plugins:installFromFolder': { args: [folder: string]; result: string }
+  /** Download a plugin from the npm registry. Returns the plugin id. */
+  'plugins:installFromNpm': { args: [name: string]; result: string }
+  /** Delete an installed plugin (built-in plugins can only be disabled). */
+  'plugins:uninstall': { args: [id: string]; result: void }
+  /** Load a folder in place, for developing a plugin. */
+  'plugins:addDevFolder': { args: [folder: string]; result: void }
+  'plugins:removeDevFolder': { args: [folder: string]; result: void }
+  /** Change one of a plugin's own settings. */
+  'plugins:setSetting': { args: [id: string, key: string, value: unknown]; result: void }
 }
 
 /** Events pushed from the main process to the UI. */
@@ -354,6 +434,12 @@ export interface IpcEvents {
    * or to confirm an SSH host key). Reply with 'auth:respond'.
    */
   'auth:prompt': { id: string; prompt: string; secret: boolean }
+  /** The plugin list or a plugin's state changed; fetch plugins:list again. */
+  'plugins:changed': Record<string, never>
+  /** The full list of plugin status bar items. */
+  'plugins:statusItems': PluginStatusItem[]
+  /** A plugin wants the UI to do something; reply with plugins:uiResponse. */
+  'plugins:ui': { requestId: number; request: PluginUiRequest }
 }
 
 export type IpcChannel = keyof IpcContract
@@ -444,6 +530,18 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:redo': true,
   'git:getCommandLog': true,
   'auth:respond': true,
+  'plugins:list': true,
+  'plugins:setEnabled': true,
+  'plugins:reload': true,
+  'plugins:executeCommand': true,
+  'plugins:statusItems': true,
+  'plugins:uiResponse': true,
+  'plugins:installFromFolder': true,
+  'plugins:installFromNpm': true,
+  'plugins:uninstall': true,
+  'plugins:addDevFolder': true,
+  'plugins:removeDevFolder': true,
+  'plugins:setSetting': true,
 }
 export const IPC_CHANNELS = Object.keys(channelMap) as IpcChannel[]
 
@@ -452,5 +550,8 @@ const eventMap: Record<IpcEvent, true> = {
   'operation:progress': true,
   'git:command': true,
   'auth:prompt': true,
+  'plugins:changed': true,
+  'plugins:statusItems': true,
+  'plugins:ui': true,
 }
 export const IPC_EVENTS = Object.keys(eventMap) as IpcEvent[]

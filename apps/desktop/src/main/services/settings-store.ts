@@ -19,6 +19,9 @@ export const DEFAULT_SETTINGS: Settings = {
   workspaces: [],
   keybindings: {},
   editorCommand: '',
+  disabledPlugins: [],
+  pluginDevFolders: [],
+  pluginSettings: {},
 }
 
 export class SettingsStore {

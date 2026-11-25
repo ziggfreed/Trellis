@@ -28,6 +28,9 @@ const INITIAL: Settings = {
   workspaces: [],
   keybindings: {},
   editorCommand: '',
+  disabledPlugins: [],
+  pluginDevFolders: [],
+  pluginSettings: {},
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({

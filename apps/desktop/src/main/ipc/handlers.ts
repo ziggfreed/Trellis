@@ -30,6 +30,7 @@ import { openEditor, openTerminal } from '../services/external-apps'
 import { AskpassServer } from '../services/askpass'
 import { askUser, cancelAllPrompts } from '../services/auth-prompts'
 import { createWriteHandlers } from './write-handlers'
+import { createPluginService } from '../plugins/plugin-ipc'
 import { scanForRepos } from '../services/scan-repos'
 import {
   assertDiffTarget,
@@ -69,8 +70,10 @@ export function createHandlers(
   watcher: RepoWatcher,
   commandLog: CommandLog,
   autoFetcher: AutoFetcher,
+  plugins: ReturnType<typeof createPluginService>,
 ): IpcHandlers {
   return {
+    ...plugins.handlers,
     ...createWriteHandlers(commandLog, (operationId, phase, percent) =>
       sendToAllWindows('operation:progress', { operationId, phase, percent }),
     ),
@@ -84,8 +87,11 @@ export function createHandlers(
       if (typeof patch !== 'object' || patch === null) {
         throw new TypeError('patch must be an object')
       }
+      const before = settings.get().activeTab
       const updated = settings.update(patch)
       if ('autoFetchMinutes' in patch) autoFetcher.configure(updated.autoFetchMinutes)
+      // Plugins can follow which repository is open.
+      if (updated.activeTab !== before) plugins.manager.activeRepoChanged(updated.activeTab)
       return updated
     },
 
@@ -248,9 +254,11 @@ export interface IpcServices {
  * lets git ask the user for passwords. Call once at start-up.
  */
 export async function registerIpcHandlers(settings: SettingsStore): Promise<IpcServices> {
-  const watcher = new RepoWatcher((path, scope) =>
-    sendToAllWindows('repo:changed', { path, scope }),
-  )
+  const plugins = createPluginService(settings)
+  const watcher = new RepoWatcher((path, scope) => {
+    sendToAllWindows('repo:changed', { path, scope })
+    plugins.manager.repoChanged(path)
+  })
   const commandLog = new CommandLog((entry) => sendToAllWindows('git:command', entry))
 
   // The helper scripts must be real files git can run, so they live in the
@@ -275,15 +283,19 @@ export async function registerIpcHandlers(settings: SettingsStore): Promise<IpcS
   )
   autoFetcher.configure(settings.get().autoFetchMinutes)
 
-  const handlers = createHandlers(settings, watcher, commandLog, autoFetcher)
+  const handlers = createHandlers(settings, watcher, commandLog, autoFetcher, plugins)
   for (const channel of IPC_CHANNELS) {
     const handler = handlers[channel] as (...args: unknown[]) => unknown
     ipcMain.handle(channel, (_event, ...args: unknown[]) => handler(...args))
   }
 
+  // Load plugins in the background; the UI asks for their state when it's ready.
+  void plugins.manager.start().catch((error) => console.error('Could not start plugins:', error))
+
   return {
     watcher,
     dispose: () => {
+      void plugins.manager.dispose()
       watcher.dispose()
       autoFetcher.dispose()
       commandLog.dispose()

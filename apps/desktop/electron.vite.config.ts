@@ -12,7 +12,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // Workspace packages are TypeScript source, so they must be bundled into the
 // output rather than loaded from node_modules at runtime.
-const bundledWorkspacePackages = ['@trellis/git']
+const bundledWorkspacePackages = ['@trellis/git', '@trellis/plugin-api']
 
 const shared = { '@shared': resolve(import.meta.dirname, 'src/shared') }
 
