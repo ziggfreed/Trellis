@@ -490,3 +490,20 @@ export interface CleanupBranch {
   /** True when the upstream branch was deleted on the remote. */
   upstreamGone: boolean
 }
+
+/** How much a commit changed (compared with its first parent, for merges). */
+export interface CommitStats {
+  files: number
+  insertions: number
+  deletions: number
+}
+
+/** A remote branch whose work is already on a target branch (see getRemoteBranchCleanup). */
+export interface RemoteCleanupBranch {
+  /** e.g. "origin/feature/x" */
+  name: string
+  remote: string
+  /** The branch's name on the remote, e.g. "feature/x". */
+  branch: string
+  merged: Exclude<BranchMergeState, 'unmerged'>
+}

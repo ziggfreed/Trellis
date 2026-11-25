@@ -29,6 +29,8 @@ import type {
   Remote,
   MergeResult,
   CleanupBranch,
+  RemoteCleanupBranch,
+  CommitStats,
   Worktree,
   BlameResult,
   Comparison,
@@ -110,7 +112,19 @@ export interface Settings {
   ai: AiSettings
   /** Look for new versions of Trellis in the background (see main/services/updater.ts). */
   checkForUpdates: boolean
+  /**
+   * Sizes of resizable panels, kept between launches: panel group id ->
+   * panel id -> size in percent (see renderer features/layout/panel-layout.ts).
+   */
+  panelLayouts: Record<string, Record<string, number>>
+  /** Push straight after committing (the "Push" box next to "Amend"). */
+  pushAfterCommit: boolean
+  /** Optional columns shown in the history list, in display order. */
+  historyColumns: HistoryColumn[]
 }
+
+/** An optional column of the history list (the graph and message are always shown). */
+export type HistoryColumn = 'changes' | 'author' | 'date' | 'committer' | 'commitDate' | 'sha'
 
 /** A named group of repositories, e.g. "Work" or "Side projects". */
 export interface Workspace {
@@ -351,6 +365,11 @@ export interface IpcContract {
   'repo:getRemotes': { args: [path: string]; result: Remote[] }
   'repo:getStashes': { args: [path: string]; result: Stash[] }
   'repo:getCommit': { args: [path: string, sha: string]; result: CommitDetails }
+  /** Files and lines changed by each commit (for the history's Changes column), by hash. */
+  'repo:getCommitStats': {
+    args: [path: string, shas: string[]]
+    result: Record<string, CommitStats>
+  }
   'repo:getFileDiff': { args: [path: string, target: DiffTarget]; result: FileDiffContents }
 
   /**
@@ -525,6 +544,11 @@ export interface IpcContract {
    * `target` (normally, or by squash/rebase) and whether its remote branch exists.
    */
   'repo:getBranchCleanup': { args: [path: string, target: string]; result: CleanupBranch[] }
+  /** Remote branches whose work is already on `target` (normally, or by squash/rebase). */
+  'repo:getRemoteBranchCleanup': {
+    args: [path: string, target: string]
+    result: RemoteCleanupBranch[]
+  }
   /**
    * Delete several branches as one undoable operation. Names listed in
    * `force` are deleted even if git thinks they're unmerged (squash-merged ones).
@@ -543,6 +567,11 @@ export interface IpcContract {
   'repo:push': { args: [operationId: string, path: string, request: PushRequest]; result: void }
   'repo:deleteRemoteBranch': {
     args: [operationId: string, path: string, remote: string, branch: string]
+    result: void
+  }
+  /** Delete several branches on one remote with a single push (can't be undone). */
+  'repo:deleteRemoteBranches': {
+    args: [operationId: string, path: string, remote: string, branches: string[]]
     result: void
   }
   'repo:pushTag': {
@@ -724,6 +753,7 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:getRemotes': true,
   'repo:getStashes': true,
   'repo:getCommit': true,
+  'repo:getCommitStats': true,
   'repo:getFileDiff': true,
   'repo:clone': true,
   'repo:init': true,
@@ -782,11 +812,13 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:rebaseStack': true,
   'repo:pushStack': true,
   'repo:getBranchCleanup': true,
+  'repo:getRemoteBranchCleanup': true,
   'repo:deleteBranches': true,
   'repo:fetch': true,
   'repo:pull': true,
   'repo:push': true,
   'repo:deleteRemoteBranch': true,
+  'repo:deleteRemoteBranches': true,
   'repo:pushTag': true,
   'repo:getFileHistory': true,
   'repo:getBlame': true,

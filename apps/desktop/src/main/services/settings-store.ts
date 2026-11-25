@@ -24,6 +24,9 @@ export const DEFAULT_SETTINGS: Settings = {
   pluginSettings: {},
   ai: { enabled: false, provider: 'anthropic', model: '', baseUrl: '' },
   checkForUpdates: true,
+  panelLayouts: {},
+  pushAfterCommit: false,
+  historyColumns: ['author', 'date', 'sha'],
 }
 
 export class SettingsStore {

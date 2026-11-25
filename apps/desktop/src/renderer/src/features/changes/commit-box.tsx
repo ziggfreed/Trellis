@@ -3,6 +3,7 @@
  *
  * - Summary (first line) and an optional description.
  * - "Amend" replaces the last commit; ticking it fills in that commit's message.
+ * - "Push" pushes straight after committing. It's remembered between runs.
  * - Ctrl/Cmd+Enter commits.
  * - With AI turned on (Settings > AI), "Suggest" writes a message from the
  *   staged changes, streaming it into the boxes.
@@ -18,6 +19,8 @@ import { runAction } from '@/lib/run-action'
 import { errorMessage } from '@/lib/errors'
 import { Button } from '@/components/ui/button'
 import { useStatus } from '@/features/repos/use-repo-data'
+import { useSettingsStore } from '@/features/settings/settings-store'
+import { pushAfterCommit } from '@/features/repo-actions/actions'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { modKey } from '@/hooks/use-keyboard-shortcuts'
 import { startAiTask, useAiEnabled, type RunningAiTask } from '@/features/ai/ai-client'
@@ -43,6 +46,8 @@ export function CommitBox({ repoPath }: { repoPath: string }) {
   const aiEnabled = useAiEnabled()
   const identity = useGitIdentity(repoPath)
   const [suggestion, setSuggestion] = useState<RunningAiTask | null>(null)
+  const pushToo = useSettingsStore((s) => s.settings.pushAfterCommit)
+  const updateSettings = useSettingsStore((s) => s.update)
 
   /** Ask the AI for a message, showing it in the boxes as it arrives. */
   const suggest = async () => {
@@ -90,8 +95,10 @@ export function CommitBox({ repoPath }: { repoPath: string }) {
       api.invoke('repo:commit', repoPath, message, { amend: view.amend }),
     )
     if (sha) {
-      toast.success(`${view.amend ? 'Amended' : 'Committed'} ${shortSha(sha)}`)
+      const amended = view.amend
+      toast.success(`${amended ? 'Amended' : 'Committed'} ${shortSha(sha)}`)
       setView({ commitSummary: '', commitDescription: '', amend: false })
+      if (pushToo) await pushAfterCommit(repoPath, amended)
     }
   }
 
@@ -103,10 +110,12 @@ export function CommitBox({ repoPath }: { repoPath: string }) {
   }
 
   const label = view.amend
-    ? 'Amend last commit'
+    ? pushToo
+      ? 'Amend last commit and push'
+      : 'Amend last commit'
     : stagedCount === 0
       ? 'Stage files to commit'
-      : `Commit ${stagedCount} ${stagedCount === 1 ? 'file' : 'files'} to ${branch}`
+      : `Commit ${stagedCount} ${stagedCount === 1 ? 'file' : 'files'} to ${branch}${pushToo ? ' and push' : ''}`
 
   return (
     <div className="space-y-2 border-t p-3" onKeyDown={onKeyDown}>
@@ -158,6 +167,17 @@ export function CommitBox({ repoPath }: { repoPath: string }) {
             onChange={(e) => void toggleAmend(e.target.checked)}
           />
           Amend
+        </label>
+        <label
+          className="flex items-center gap-1.5 text-xs text-muted-foreground"
+          title="Push to the remote straight after committing"
+        >
+          <input
+            type="checkbox"
+            checked={pushToo}
+            onChange={(e) => updateSettings({ pushAfterCommit: e.target.checked })}
+          />
+          Push
         </label>
         {aiEnabled && (
           <Button

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CleanupBranch, Ref } from '@shared/ipc'
-import { groupCleanup, namesToForce, suggestedNames } from './branch-cleanup'
+import { byRemote, groupCleanup, namesToForce, suggestedNames } from './branch-cleanup'
 
 function branch(partial: Partial<CleanupBranch> & Pick<CleanupBranch, 'name'>): CleanupBranch {
   return { merged: 'unmerged', aheadOfTarget: 1, upstream: null, upstreamGone: false, ...partial }
@@ -57,6 +57,21 @@ describe('groupCleanup', () => {
     expect(namesToForce(['done', 'squashed', 'abandoned'], candidates)).toEqual([
       'squashed',
       'abandoned',
+    ])
+  })
+})
+
+describe('byRemote', () => {
+  it('groups remote branches by remote', () => {
+    expect(
+      byRemote([
+        { remote: 'origin', branch: 'a' },
+        { remote: 'fork', branch: 'b' },
+        { remote: 'origin', branch: 'c' },
+      ]),
+    ).toEqual([
+      { remote: 'origin', branches: ['a', 'c'] },
+      { remote: 'fork', branches: ['b'] },
     ])
   })
 })

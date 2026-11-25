@@ -89,3 +89,12 @@ export function namesToForce(chosen: string[], candidates: CleanupBranch[]): str
   const merged = new Set(candidates.filter((b) => b.merged === 'merged').map((b) => b.name))
   return chosen.filter((name) => !merged.has(name))
 }
+
+/** Remote branches to delete, grouped by remote (one push per remote). */
+export function byRemote(
+  chosen: { remote: string; branch: string }[],
+): { remote: string; branches: string[] }[] {
+  const map = new Map<string, string[]>()
+  for (const { remote, branch } of chosen) map.set(remote, [...(map.get(remote) ?? []), branch])
+  return [...map.entries()].map(([remote, branches]) => ({ remote, branches }))
+}

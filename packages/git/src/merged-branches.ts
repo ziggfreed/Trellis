@@ -12,7 +12,7 @@
  * (what each commit changes) instead of commit hashes.
  */
 import { runGit } from './run-git'
-import type { BranchMergeState, CleanupBranch } from './types'
+import type { BranchMergeState, CleanupBranch, RemoteCleanupBranch } from './types'
 
 /** Branch names never offered for deletion, whatever they're merged into. */
 export const PROTECTED_BRANCHES = ['main', 'master', 'develop', 'development', 'dev', 'trunk']
@@ -112,6 +112,85 @@ export async function getBranchCleanup(repoPath: string, target: string): Promis
     }
   })
   return results.sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/**
+ * At most this many unmerged remote branches are checked for squash merges
+ * (the most recently updated first). Busy shared repositories can have
+ * thousands of remote branches, and each check runs several git commands.
+ */
+const REMOTE_SQUASH_CHECK_LIMIT = 200
+
+/**
+ * Remote branches whose work is already on `target` (merged normally, or
+ * by squash/rebase), so they can be deleted from the server. Never offered:
+ * a remote's HEAD pointer, branches with a protected name (main, develop...),
+ * the target's own upstream, and the upstreams of branches checked out
+ * here or in another worktree.
+ */
+export async function getRemoteBranchCleanup(
+  repoPath: string,
+  target: string,
+): Promise<RemoteCleanupBranch[]> {
+  const [remotes, merged, inUse] = await Promise.all([
+    runGit(['remote'], { cwd: repoPath }),
+    runGit(['for-each-ref', '--format=%(refname:short)', `--merged=${target}`, 'refs/remotes'], {
+      cwd: repoPath,
+    }),
+    // Upstreams of the target and of checked-out branches: deleting those
+    // would pull the rug out from under work in progress.
+    runGit(
+      [
+        'for-each-ref',
+        '--format=%(refname:short)%00%(HEAD)%00%(worktreepath)%00%(upstream:short)',
+        'refs/heads',
+      ],
+      { cwd: repoPath },
+    ),
+  ])
+  const remoteNames = remotes.stdout.split('\n').filter(Boolean)
+  const keep = new Set(
+    inUse.stdout
+      .split('\n')
+      .map((line) => line.split('\0'))
+      .filter(([name, head, worktree]) => name === target || head === '*' || worktree)
+      .map(([, , , upstream]) => upstream)
+      .filter(Boolean),
+  )
+  const describe = (name: string) => {
+    // Remote names may contain "/" too, so match the longest known remote.
+    const remote = remoteNames
+      .filter((r) => name.startsWith(`${r}/`))
+      .sort((a, b) => b.length - a.length)[0]
+    if (!remote) return null
+    const branch = name.slice(remote.length + 1)
+    if (branch === 'HEAD' || PROTECTED_BRANCHES.includes(branch) || keep.has(name)) return null
+    return { name, remote, branch }
+  }
+  // origin/HEAD's short name is just "origin", which describe() skips.
+  const parse = (out: string) =>
+    out
+      .split('\n')
+      .filter(Boolean)
+      .map(describe)
+      .filter((b): b is NonNullable<typeof b> => b !== null)
+
+  const mergedBranches = parse(merged.stdout)
+  const mergedNames = new Set(mergedBranches.map((b) => b.name))
+  const all = await runGit(
+    ['for-each-ref', '--sort=-committerdate', '--format=%(refname:short)', 'refs/remotes'],
+    { cwd: repoPath },
+  )
+  const others = parse(all.stdout)
+    .filter((b) => !mergedNames.has(b.name))
+    .slice(0, REMOTE_SQUASH_CHECK_LIMIT)
+  const squashed = await mapLimit(others, CONCURRENCY, async (b) =>
+    (await squashMergeState(repoPath, target, b.name)) === 'squashed' ? b : null,
+  )
+  return [
+    ...mergedBranches.map((b) => ({ ...b, merged: 'merged' as const })),
+    ...squashed.filter((b) => b !== null).map((b) => ({ ...b, merged: 'squashed' as const })),
+  ].sort((a, b) => a.name.localeCompare(b.name))
 }
 
 /**

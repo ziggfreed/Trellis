@@ -230,6 +230,13 @@ export function createHandlers(
       return git.getCommitDetails(path, sha)
     },
 
+    'repo:getCommitStats': (path, shas) => {
+      assertString(path, 'path')
+      assertStringArray(shas, 'shas')
+      for (const sha of shas) assertSha(sha, 'sha')
+      return git.getCommitStats(path, shas)
+    },
+
     'repo:getFileDiff': (path, target) => {
       assertString(path, 'path')
       assertDiffTarget(target)

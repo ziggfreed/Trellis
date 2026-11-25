@@ -23,19 +23,20 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 2. Commit graph & history
 
-| Pri | Feature                                                                     | Status                                  |
-| --- | --------------------------------------------------------------------------- | --------------------------------------- |
-| P0  | **Commit graph** with coloured lanes, merges, branch/tag/HEAD/remote badges | ✅                                      |
-| P0  | Virtualised list that stays smooth at 100k+ commits (lazy loading)          | ✅ 60 fps at 100k commits               |
-| P0  | Commit details panel: message, author, date, parents, changed files, diff   | ✅                                      |
-| P1  | Filter graph: by branch, author, path, date range; "current branch only"    | ✅                                      |
-| P1  | Search: message, SHA, author, **pickaxe (`-S`/`-G`) content search**        | ✅ (`-S`; regex `-G` to do)             |
-| P1  | Collapse/expand merged branches, hide remote branches                       | 🟨 hide remotes ("Local branches") done |
-| P1  | Compare any two commits/branches                                            | ✅ Compare dialog, Ctrl/Cmd+click       |
-| P2  | Minimap / timeline scrubber for long histories                              | ⬜                                      |
-| P2  | Keep the checked-out branch in the leftmost graph lane                      | ✅                                      |
-| P2  | Highlight a branch's commits when hovering its badge                        | ✅                                      |
-| 💡  | Alternative "branch timeline" view (horizontal, GitKraken/Gource-style)     | ⬜                                      |
+| Pri | Feature                                                                      | Status                                  |
+| --- | ---------------------------------------------------------------------------- | --------------------------------------- |
+| P0  | **Commit graph** with coloured lanes, merges, branch/tag/HEAD/remote badges  | ✅                                      |
+| P0  | Virtualised list that stays smooth at 100k+ commits (lazy loading)           | ✅ 60 fps at 100k commits               |
+| P0  | Commit details panel: message, author, date, parents, changed files, diff    | ✅                                      |
+| P1  | Choose history columns (changes, author, dates, committer, hash), remembered | ✅                                      |
+| P1  | Filter graph: by branch, author, path, date range; "current branch only"     | ✅                                      |
+| P1  | Search: message, SHA, author, **pickaxe (`-S`/`-G`) content search**         | ✅ (`-S`; regex `-G` to do)             |
+| P1  | Collapse/expand merged branches, hide remote branches                        | 🟨 hide remotes ("Local branches") done |
+| P1  | Compare any two commits/branches                                             | ✅ Compare dialog, Ctrl/Cmd+click       |
+| P2  | Minimap / timeline scrubber for long histories                               | ⬜                                      |
+| P2  | Keep the checked-out branch in the leftmost graph lane                       | ✅                                      |
+| P2  | Highlight a branch's commits when hovering its badge                         | ✅                                      |
+| 💡  | Alternative "branch timeline" view (horizontal, GitKraken/Gource-style)      | ⬜                                      |
 
 ## 3. Working copy, staging & committing
 
@@ -45,6 +46,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | P0  | Stage/unstage/discard file                                                       | ✅                                                                               |
 | P0  | **Hunk-level and line-level staging** from the diff view                         | ✅                                                                               |
 | P0  | Commit, amend, commit message editor with subject-length guide                   | ✅                                                                               |
+| P1  | Commit and push in one go (“Push” option, remembered)                            | ✅                                                                               |
 | P1  | Live auto-refresh via file watcher                                               | ✅                                                                               |
 | P1  | Commit templates, co-author picker, Conventional Commits helper                  | 🟨 Conventional Commits helper (built-in plugin); templates and co-authors to do |
 | P1  | GPG/SSH commit signing, with verified badges in the graph                        | 🟨 signature shown in commit details; signing setting; graph badges to do        |
@@ -56,7 +58,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 | Pri | Feature                                                                        | Status                               |
 | --- | ------------------------------------------------------------------------------ | ------------------------------------ |
-| P0  | Unified and side-by-side, syntax highlighting                                  | ✅                                   |
+| P0  | Unified and side-by-side, syntax highlighting                                  | ✅ incl. the Changes view’s hunks    |
 | P1  | Word-level (intra-line) highlighting, whitespace toggle, context-lines control | 🟨 intra-line done                   |
 | P1  | Image diff (side by side, swipe, onion skin)                                   | ✅                                   |
 | P2  | Rendered Markdown diff, JSON-aware diff                                        | ✅                                   |
@@ -77,7 +79,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | P1  | Tags: create (annotated/lightweight), push, delete                                              | ✅                                        |
 | P1  | Manage remotes (add/edit/remove)                                                                | ✅                                        |
 | P1  | Force push with `--force-with-lease` safety by default                                          | ✅                                        |
-| P2  | Prune stale branches helper ("delete all branches merged into main")                            | ✅ incl. squash/rebase merges and gone    |
+| P2  | Prune stale branches helper ("delete all branches merged into main")                            | ✅ incl. squash/rebase merges, remotes    |
 | P2  | Mark branches that aren't on a remote (never pushed / remote deleted)                           | ✅ "local", "gone", "not tracking"        |
 | P2  | Git-flow / trunk-based helpers                                                                  | ⬜                                        |
 
@@ -102,6 +104,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | --- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | P0  | **Command palette** (Ctrl/Cmd+K / Ctrl+Shift+P) for every action                       | ✅                                                         |
 | P0  | Dark/light/system themes (shadcn tokens)                                               | ✅                                                         |
+| P1  | Remember panel sizes between launches; themed (dark) scrollbars                        | ✅                                                         |
 | P1  | **Undo / redo** for git operations (backed by reflog and operation log snapshots)      | ✅                                                         |
 | P1  | **"Show git command"**: every action logs the exact command it ran, in a console panel | ✅                                                         |
 | P1  | Built-in terminal panel (xterm.js) opened at the repo root                             | 🟨 open external terminal done; embedded terminal deferred |

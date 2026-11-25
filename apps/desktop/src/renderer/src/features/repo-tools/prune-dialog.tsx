@@ -8,6 +8,10 @@
  * The ticked ones are deleted in one go, and a single Ctrl/Cmd+Z brings them
  * back. The grouping rules live in branch-cleanup.ts.
  *
+ * Below those, remote branches merged into the target can be deleted from
+ * the server too. They start unticked and Trellis asks first, because that
+ * affects everyone using the remote and undo can't bring them back.
+ *
  * Open with openPruneDialog(repo, target?) (command palette, the broom
  * button on the sidebar's Branches header, or a branch's right-click menu).
  * Long-lived branches (main, develop...) and checked-out ones are never offered.
@@ -16,7 +20,7 @@ import { useMemo, useState } from 'react'
 import { create } from 'zustand'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import type { CleanupBranch } from '@shared/ipc'
+import type { CleanupBranch, RemoteCleanupBranch } from '@shared/ipc'
 import { api } from '@/lib/api'
 import { errorMessage } from '@/lib/errors'
 import { runAction } from '@/lib/run-action'
@@ -32,7 +36,10 @@ import {
 import { useRefs, useStatus } from '@/features/repos/use-repo-data'
 import { localBranches } from '@/features/sidebar/group-refs'
 import { REMOTE_STATE_TEXT, branchRemoteState } from '@/features/sidebar/branch-remote-state'
-import { groupCleanup, namesToForce, suggestedNames } from './branch-cleanup'
+import { byRemote, groupCleanup, namesToForce, suggestedNames } from './branch-cleanup'
+import { confirmDialog } from '@/features/dialogs/dialog-store'
+import { trackOperation } from '@/features/repo-actions/operations-store'
+import { queryClient, repoKeys } from '@/lib/query-client'
 
 const usePruneDialog = create<{ repo: string | null; target: string | null }>(() => ({
   repo: null,
@@ -72,6 +79,22 @@ function PruneContent({ repo }: { repo: string }) {
     queryFn: () => api.invoke('repo:getBranchCleanup', repo, target!),
     enabled: target !== null,
   })
+  const remoteScan = useQuery({
+    queryKey: ['repo', repo, 'remote-branch-cleanup', target],
+    queryFn: () => api.invoke('repo:getRemoteBranchCleanup', repo, target!),
+    enabled: target !== null,
+  })
+  const remoteCandidates = remoteScan.data ?? []
+  // Remote branches start unticked: deleting them can't be undone.
+  const [remoteTicked, setRemoteTicked] = useState(new Set<string>())
+  const chosenRemote = remoteCandidates.filter((b) => remoteTicked.has(b.name))
+  const toggleRemote = (name: string) =>
+    setRemoteTicked((set) => {
+      const next = new Set(set)
+      if (next.has(name)) next.delete(name)
+      else next.add(name)
+      return next
+    })
   const candidates = useMemo(() => scan.data ?? [], [scan.data])
   const { groups, inProgress } = useMemo(
     () => groupCleanup(candidates, refs ?? [], target ?? ''),
@@ -95,7 +118,34 @@ function PruneContent({ repo }: { repo: string }) {
     })
 
   const remove = async () => {
+    if (chosenRemote.length > 0) {
+      const ok = await confirmDialog({
+        title: `Delete ${chosenRemote.length} ${chosenRemote.length === 1 ? 'branch' : 'branches'} on the remote?`,
+        description: `${chosenRemote.map((b) => b.name).join(', ')} will be removed from the server for everyone. Undo can’t bring remote branches back.`,
+        confirmLabel: 'Delete',
+        destructive: true,
+      })
+      if (!ok) return
+    }
     close()
+    if (chosen.length > 0) await deleteLocal()
+    for (const { remote, branches } of byRemote(chosenRemote)) {
+      const label = `${branches.length} ${branches.length === 1 ? 'branch' : 'branches'} on ${remote}`
+      await runAction(
+        repo,
+        () =>
+          trackOperation(repo, `Deleting ${label}`, (id) =>
+            api.invoke('repo:deleteRemoteBranches', id, repo, remote, branches),
+          ),
+        { success: `Deleted ${label}` },
+      )
+    }
+    if (chosenRemote.length > 0) {
+      await queryClient.invalidateQueries({ queryKey: repoKeys.all(repo) })
+    }
+  }
+
+  const deleteLocal = async () => {
     const force = namesToForce(chosen, candidates)
     const result = await runAction(repo, () =>
       api.invoke('repo:deleteBranches', repo, chosen, { force }),
@@ -128,6 +178,7 @@ function PruneContent({ repo }: { repo: string }) {
           onChange={(e) => {
             setTarget(e.target.value)
             setFlipped(new Set())
+            setRemoteTicked(new Set())
           }}
           className="h-8 rounded-md border border-input bg-background px-2 text-sm"
         >
@@ -177,6 +228,17 @@ function PruneContent({ repo }: { repo: string }) {
             listed.
           </p>
         )}
+        <RemoteSection
+          target={target ?? ''}
+          loading={!remoteScan.data && !remoteScan.error}
+          error={remoteScan.error}
+          branches={remoteCandidates}
+          ticked={remoteTicked}
+          onToggle={toggleRemote}
+          onTickAll={(all) =>
+            setRemoteTicked(all ? new Set(remoteCandidates.map((b) => b.name)) : new Set())
+          }
+        />
       </div>
       {risky.length > 0 && (
         <p className="text-xs text-destructive">
@@ -188,11 +250,80 @@ function PruneContent({ repo }: { repo: string }) {
         <Button variant="outline" onClick={close}>
           Cancel
         </Button>
-        <Button variant="destructive" disabled={chosen.length === 0} onClick={() => void remove()}>
-          Delete {chosen.length} {chosen.length === 1 ? 'branch' : 'branches'}
+        <Button
+          variant="destructive"
+          disabled={chosen.length + chosenRemote.length === 0}
+          onClick={() => void remove()}
+        >
+          {deleteLabel(chosen.length, chosenRemote.length)}
         </Button>
       </DialogFooter>
     </DialogContent>
+  )
+}
+
+/** "Delete 2 branches", or "Delete 2 local + 1 remote" when remote ones are ticked. */
+function deleteLabel(local: number, remote: number) {
+  if (remote === 0) return `Delete ${local} ${local === 1 ? 'branch' : 'branches'}`
+  if (local === 0) return `Delete ${remote} remote ${remote === 1 ? 'branch' : 'branches'}`
+  return `Delete ${local} local + ${remote} remote`
+}
+
+/** The "Remote branches merged into …" part of the list. */
+function RemoteSection(props: {
+  target: string
+  loading: boolean
+  error: unknown
+  branches: RemoteCleanupBranch[]
+  ticked: Set<string>
+  onToggle: (name: string) => void
+  onTickAll: (all: boolean) => void
+}) {
+  const allTicked = props.branches.length > 0 && props.ticked.size === props.branches.length
+  return (
+    <section aria-label="Remote branches" data-group="remote" className="border-t pt-2">
+      <div className="flex items-center gap-2">
+        <h3 className="text-sm font-medium">Remote branches merged into {props.target}</h3>
+        {props.branches.length > 1 && (
+          <button
+            type="button"
+            className="ml-auto text-xs text-muted-foreground underline hover:text-foreground"
+            onClick={() => props.onTickAll(!allTicked)}
+          >
+            {allTicked ? 'Untick all' : 'Tick all'}
+          </button>
+        )}
+      </div>
+      <p className="mb-1 text-xs text-muted-foreground">
+        Deleted from the server for everyone, and undo can’t bring them back. Fetch first so this
+        list is up to date.
+      </p>
+      {props.error ? (
+        <p className="text-sm text-destructive">{errorMessage(props.error)}</p>
+      ) : props.loading ? (
+        <p className="text-sm text-muted-foreground">Checking remote branches…</p>
+      ) : props.branches.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">None</p>
+      ) : (
+        <ul className="space-y-1">
+          {props.branches.map((branch) => (
+            <li key={branch.name}>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={props.ticked.has(branch.name)}
+                  onChange={() => props.onToggle(branch.name)}
+                />
+                <span className="truncate">{branch.name}</span>
+                <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                  {branch.merged === 'squashed' ? 'squash/rebase-merged' : 'merged'}
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 

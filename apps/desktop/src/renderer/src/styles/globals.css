@@ -178,6 +178,21 @@
     ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 }
 
+/*
+ * Scrollbars. `color-scheme` tells Chromium which native controls to draw, so
+ * without it scrollbars stay light (white) in the dark theme. `scrollbar-color`
+ * then tints them with theme tokens so they blend in with either theme.
+ */
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+* {
+  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 45%, transparent) transparent;
+}
+
 /* Hide a scrollbar but keep the element scrollable (used by the tab bar). */
 @utility scrollbar-none {
   scrollbar-width: none;

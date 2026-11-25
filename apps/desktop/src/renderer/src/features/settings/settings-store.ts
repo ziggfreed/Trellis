@@ -33,6 +33,9 @@ const INITIAL: Settings = {
   pluginSettings: {},
   ai: { enabled: false, provider: 'anthropic', model: '', baseUrl: '' },
   checkForUpdates: true,
+  panelLayouts: {},
+  pushAfterCommit: false,
+  historyColumns: ['author', 'date', 'sha'],
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
