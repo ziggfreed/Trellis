@@ -32,12 +32,12 @@ It refuses to run if the Unreleased section is empty, if the version wouldn't be
 
    The tag must match the version exactly, or the release workflow stops.
 
-4. The **Release** workflow (`.github/workflows/release.yml`) builds Windows, macOS and Linux installers and attaches them to a **draft** GitHub release, with notes from the changelog.
+4. The **Release** workflow (`.github/workflows/release.yml`) builds installers and attaches them to a **draft** GitHub release, with notes from the changelog.
 5. Check the draft, then click **Publish release**.
 
 Publishing is what rolls the update out: installed copies of Trellis only see published releases.
 
-Each release build runs on Windows, macOS and Linux runners, which use GitHub Actions minutes (macOS minutes count 10×, Windows 2× on private repositories).
+**For now, releases build Windows only**, to save GitHub Actions minutes while the repository is private (macOS minutes count 10×, Windows 2×). To build macOS and Linux again, restore the full `os` list in the matrix in `.github/workflows/release.yml` (it's in a comment there). Until then, macOS and Linux users get no installers, and their auto-update sees nothing new.
 
 ## Auto-update
 

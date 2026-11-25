@@ -12,7 +12,7 @@ Trellis is an open-source (MIT) desktop git client: Electron + React + TypeScrip
 ## State right now
 
 - **All work up to PR #14 is merged into `main`.**
-- **CI is turned off on purpose**: the "CI" GitHub Actions workflow (`.github/workflows/ci.yml`) was disabled by the owner because the account's Actions minutes are nearly used up (the repo is private, and macOS minutes count 10×, Windows 2×). Don't re-enable it without asking. Verify changes locally instead (commands below). The "Release" workflow is still enabled.
+- **CI is turned off on purpose**: the "CI" GitHub Actions workflow (`.github/workflows/ci.yml`) was disabled by the owner because the account's Actions minutes are nearly used up (the repo is private, and macOS minutes count 10×, Windows 2×). Don't re-enable it without asking. Verify changes locally instead (commands below). The "Release" workflow is still enabled, but builds **Windows only** for now (same reason); restore the full `os` matrix in `.github/workflows/release.yml` when the repo goes public.
 - **Owner's working preferences**:
   - Open a pull request (via `gh api repos/ziggfreed/trellis/pulls`) as soon as a substantial piece of work is finished, without waiting to be asked. Work on a new branch from the latest `main`.
   - Use Conventional Commit messages.

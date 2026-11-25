@@ -1,4 +1,4 @@
-# Builds installers for Windows, macOS and Linux and attaches them to a
+# Builds installers (currently Windows only; see the matrix below) and attaches them to a
 # DRAFT GitHub Release. Nothing is published until a maintainer reviews the
 # draft and clicks "Publish release".
 #
@@ -53,7 +53,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # Windows only for now, to save Actions minutes while the repository is
+        # private (macOS minutes count 10x). To build macOS and Linux again:
+        #   os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
