@@ -74,6 +74,31 @@ export async function discardFiles(
 }
 
 /**
+ * Throw away ALL changes to files, staged and unstaged, putting them back
+ * to the last commit. Files that are new since the last commit are DELETED.
+ * Used by "Discard" in the Staged list. This can't be undone.
+ *
+ * For a rename, pass both the new and the old path.
+ */
+export async function discardAllChanges(repoPath: string, paths: string[]): Promise<void> {
+  // Unstaging first turns this into the plain "discard unstaged" case:
+  // new files become untracked (deleted below), the rest go back to HEAD.
+  await unstageFiles(repoPath, paths)
+  const untracked = new Set<string>()
+  await forPathBatches(paths, async (batch) => {
+    const { stdout } = await runGit(['ls-files', '--others', '-z', '--', ...batch], {
+      cwd: repoPath,
+      env: LITERAL,
+    })
+    for (const path of stdout.split('\0')) if (path) untracked.add(path)
+  })
+  await discardFiles(
+    repoPath,
+    paths.map((path) => ({ path, untracked: untracked.has(path) })),
+  )
+}
+
+/**
  * The diff of one file as a parsed patch, or null if it has no changes.
  * - `staged`: HEAD -> index (what will be committed)
  * - `unstaged`: index -> working tree

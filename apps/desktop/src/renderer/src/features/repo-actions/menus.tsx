@@ -335,11 +335,26 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
 }
 
 /** Menu for a file in a list (commit details, Changes view, file history...). */
-export function FileMenu({ repo, path, children }: MenuProps & { path: string }) {
+export function FileMenu({
+  repo,
+  path,
+  extraItems,
+  children,
+}: MenuProps & {
+  path: string
+  /** Items shown first, e.g. the Changes view's stage/stash/discard for the selection. */
+  extraItems?: React.ReactNode
+}) {
   return (
     <Menu
       items={
         <>
+          {extraItems && (
+            <>
+              {extraItems}
+              <ContextMenuSeparator />
+            </>
+          )}
           <ContextMenuItem onSelect={() => actions.openFileView(repo, path, 'blame')}>
             Blame
           </ContextMenuItem>

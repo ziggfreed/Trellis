@@ -64,9 +64,16 @@ The history shows every commit as a graph, newest first, with branch and tag lab
 
 Open **Changes** (`Ctrl+Shift+G`) to see what you've changed.
 
-1. **Stage** what should go in the commit: a whole file (the + button, or **Stage all**), or select a file and stage single hunks or lines in its diff.
+1. **Stage** what should go in the commit: a whole file (the + button, or **Stage all**), or select a file and stage single hunks or lines in its diff. Staged files are listed at the top and unstaged ones below.
 2. Write a **summary** (the first line, ideally under about 72 characters) and, if useful, a **description**.
 3. Click **Commit** or press `Ctrl+Enter`.
+
+**Working with several files.** The Changes view has two lists: **Staged** (what the next commit will contain) above **Unstaged**. Drag the divider between them to resize them. Each list's header has buttons to stage or unstage, **stash** and **discard** the whole list.
+
+- **Select several files** with Ctrl+click (Cmd+click on a Mac) or Shift+click for a range. The header buttons then act on just the selected files (for example **Stage selected**), and so do a file's own buttons and right-click menu.
+- **Drag** files (one, or the selection) from one list to the other to stage or unstage them. Double-clicking a file does the same.
+- **Stash** puts files aside for later, staged and unstaged changes alike, and leaves the other files alone. That way you can commit some files and keep the rest for another time. Apply the stash again from the sidebar's **Stashes** section.
+- **Discard** in the Unstaged list throws away the unstaged changes. In the Staged list, **Discard staged changes** puts the files back to the last commit, losing their staged and unstaged changes, and files added since then are deleted. Trellis asks first, and undo (Ctrl+Z) brings them back.
 
 **Editing in the diff.** Select a changed file and choose **Edit** above its diff to change it right there; what git has is shown inline so you can see your changes as you go. Press `Ctrl+S` (or **Save**) to save it to disk. **Rendered** and **Data** are also available here for Markdown and JSON files.
 

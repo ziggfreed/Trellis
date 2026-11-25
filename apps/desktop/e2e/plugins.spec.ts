@@ -277,7 +277,7 @@ test('plugins can add sidebar panels, commit badges, keep secrets and hear about
   repo.write('new.txt', 'new\n')
   // Wait for the watcher to list the file before staging it.
   await expect(window.getByText('new.txt')).toBeVisible()
-  await window.getByRole('button', { name: 'Stage all' }).click()
+  await window.getByRole('button', { name: 'Stage all', exact: true }).click()
   await window.getByLabel('Commit summary').fill('Add new file')
   const commit = window.getByRole('button', { name: /^Commit 1 file/ })
   await expect(commit).toBeEnabled()

@@ -106,6 +106,15 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       )
     },
 
+    'repo:discardAll': (path, files) => {
+      assertString(path, 'path')
+      assertStringArray(files, 'files')
+      for (const file of files) assertFileInRepo(path, file)
+      return recorded(path, `Discard all changes to ${plural(files.length, 'file')}`, true, () =>
+        git.discardAllChanges(path, files),
+      )
+    },
+
     'repo:getFilePatch': (path, file, area) => {
       assertString(path, 'path')
       assertString(file, 'file')
@@ -245,10 +254,16 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
     'repo:stash': (path, options) => {
       assertString(path, 'path')
       const message = typeof options?.message === 'string' ? options.message : undefined
+      const paths = options?.paths
+      if (paths !== undefined) {
+        assertStringArray(paths, 'options.paths')
+        for (const file of paths) assertFileInRepo(path, file)
+      }
       return runExclusive(path, () =>
         git.stashPush(path, {
           includeUntracked: options?.includeUntracked === true,
           ...(message ? { message } : {}),
+          ...(paths?.length ? { paths } : {}),
         }),
       )
     },
