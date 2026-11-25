@@ -121,6 +121,47 @@ describe('GraphLayout.append', () => {
   })
 })
 
+describe('pinning the current branch to the leftmost lane', () => {
+  it('puts the pinned commit in lane 0 even when newer branches come first', () => {
+    // X is a newer branch built on A; A is checked out.
+    const commits = [c('X', 'A'), c('A', 'R'), c('R')]
+    expect(layoutGraph(commits).rows.map((r) => r.lane)).toEqual([0, 0, 0])
+    const pinned = new GraphLayout({ pinned: 'A' })
+    pinned.append(commits)
+    expect(pinned.rows.map((r) => r.lane)).toEqual([1, 0, 0])
+    // X's line curves into A from the right; nothing is drawn above A in lane 0.
+    expect(shape(pinned)[1]!.top).toEqual([[1, 0]])
+    assertLayoutValid(commits, pinned)
+  })
+
+  it('keeps the pinned commit’s first-parent history in lane 0', () => {
+    for (const seed of [1, 2, 3, 4, 5]) {
+      const commits = randomHistory(3000, seed)
+      const head = commits[500]!
+      const layout = new GraphLayout({ pinned: head.sha })
+      layout.append(commits)
+      assertLayoutValid(commits, layout)
+
+      const index = new Map(commits.map((commit, i) => [commit.sha, i]))
+      for (let sha: string | undefined = head.sha; sha !== undefined;) {
+        const i = index.get(sha)
+        if (i === undefined) break
+        expect(layout.rows[i]!.lane).toBe(0)
+        sha = commits[i]!.parents[0]
+      }
+    }
+  })
+
+  it('gives the same result in pages as all at once', () => {
+    const commits = randomHistory(2000, 3)
+    const paged = new GraphLayout({ pinned: commits[700]!.sha })
+    for (let i = 0; i < commits.length; i += 137) paged.append(commits.slice(i, i + 137))
+    const whole = new GraphLayout({ pinned: commits[700]!.sha })
+    whole.append(commits)
+    expect(paged.rows).toEqual(whole.rows)
+  })
+})
+
 describe('random histories', () => {
   it.each([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])('produces a valid layout (seed %i)', (seed) => {
     const commits = randomHistory(3000, seed)

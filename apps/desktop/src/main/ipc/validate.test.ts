@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  assertCommitFilter,
   assertFileInRepo,
   assertDiffTarget,
   assertPage,
@@ -27,6 +28,15 @@ describe('IPC argument validation', () => {
     expect(() => assertDiffTarget({ kind: 'staged', path: '' })).toThrow()
     // A "sha" that is really a git option must never get through.
     expect(() => assertDiffTarget({ kind: 'commit', sha: '--output=x', path: 'a' })).toThrow()
+  })
+
+  it('checks history filters', () => {
+    expect(() => assertCommitFilter({ author: 'ann', since: '2026-01-31' })).not.toThrow()
+    expect(() => assertCommitFilter({})).not.toThrow()
+    expect(() => assertCommitFilter(null)).toThrow()
+    expect(() => assertCommitFilter({ since: 'yesterday' })).toThrow()
+    expect(() => assertCommitFilter({ author: 42 })).toThrow()
+    expect(() => assertCommitFilter({ format: '%H' })).toThrow()
   })
 
   it('checks commit hashes', () => {

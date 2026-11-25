@@ -4,6 +4,8 @@
  *   getFileHistory  commits that changed a file, following renames
  *   getBlame        who last changed each line, and in which commit
  *   getComparison   what one branch/commit has that another doesn't
+ *   isAncestor      whether one commit is in another's history
+ *   resolveCommit   the commit a branch, tag or hash names (or null)
  */
 import { runGit } from './run-git'
 import { LOG_FORMAT_ARGS, parseCommits } from './log'
@@ -198,4 +200,30 @@ export async function getComparison(
     }))
   }
   return { mergeBase: baseSha, commits: parseCommits(log.stdout), behind, files }
+}
+
+/**
+ * Whether `ancestor` is in the history of `commit` (a commit counts as its
+ * own ancestor). Used to put the older side first when comparing.
+ */
+export async function isAncestor(
+  repoPath: string,
+  ancestor: string,
+  commit: string,
+): Promise<boolean> {
+  const result = await runGit(['merge-base', '--is-ancestor', ancestor, commit], {
+    cwd: repoPath,
+    // 1 = not an ancestor; 128 = one of them isn't a commit.
+    okExitCodes: [0, 1, 128],
+  })
+  return result.exitCode === 0
+}
+
+/** The full hash of the commit `ref` (a branch, tag or hash) points to, or null. */
+export async function resolveCommit(repoPath: string, ref: string): Promise<string | null> {
+  const result = await runGit(['rev-parse', '--verify', '-q', `${ref}^{commit}`], {
+    cwd: repoPath,
+    okExitCodes: [0, 1, 128],
+  })
+  return result.exitCode === 0 ? result.stdout.trim() : null
 }

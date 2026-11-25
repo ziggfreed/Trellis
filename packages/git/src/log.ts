@@ -7,7 +7,7 @@
  * them is always safe, unlike newlines or spaces.
  */
 import { runGit } from './run-git'
-import type { Commit, LogScope } from './types'
+import type { Commit, CommitFilter, LogScope } from './types'
 
 const FIELD = '\x1f'
 
@@ -110,23 +110,39 @@ export async function getLog(repoPath: string, options: LogOptions = {}): Promis
   return parseCommits(stdout)
 }
 
+/** True if the filter has nothing set (so there's nothing to search for). */
+export function isEmptyFilter(filter: CommitFilter): boolean {
+  return !Object.values(filter).some((value) => typeof value === 'string' && value.trim() !== '')
+}
+
 /**
- * Find commits matching `query` by message, author or hash, newest first.
- * Matching ignores case, and the query is treated as plain text (not a
- * regular expression). Returns at most `limit` commit hashes.
+ * Find commits matching `filter`, newest first. Text matching ignores case
+ * and treats the text literally (not as a regular expression). Returns at
+ * most `limit` commit hashes.
  */
-export async function searchCommits(
+export async function findCommits(
   repoPath: string,
-  query: string,
+  filter: CommitFilter,
   options: { scope?: LogScope; limit?: number } = {},
 ): Promise<string[]> {
-  const text = query.trim()
-  if (!text) return []
+  if (isEmptyFilter(filter)) return []
   const { scope = 'all', limit = 1000 } = options
   const revisions = await logRevisions(repoPath, scope)
   if (!revisions) return []
 
-  const search = (filter: string) =>
+  const text = filter.text?.trim() ?? ''
+  const author = filter.author?.trim() ?? ''
+  const path = filter.path?.trim() ?? ''
+  const content = filter.content?.trim() ?? ''
+
+  // Options shared by every search below; git ANDs these together.
+  const common = [
+    ...(author ? [`--author=${author}`] : []),
+    ...(filter.since ? [`--since=${filter.since} 00:00:00`] : []),
+    ...(filter.until ? [`--until=${filter.until} 23:59:59`] : []),
+    ...(content ? [`-S${content}`] : []),
+  ]
+  const search = (extra: string[]) =>
     runGit(
       [
         'log',
@@ -134,24 +150,32 @@ export async function searchCommits(
         '--topo-order',
         '--regexp-ignore-case',
         '--fixed-strings',
-        filter,
+        ...common,
+        ...extra,
         `--max-count=${limit}`,
         ...revisions,
         '--',
+        ...(path ? [path] : []),
       ],
       { cwd: repoPath },
     ).then((r) => r.stdout.split('\n').filter(Boolean))
 
-  // --grep and --author together would require BOTH to match, so run them
-  // separately and combine the results.
+  if (!text) return search([])
+
+  // Free text matches the message OR the author. Several --grep/--author
+  // options in one git command don't combine that way, so run a search for
+  // each and merge the results. (A second --author would be ORed with the
+  // author filter, so skip the author search when one is set.)
   const [byMessage, byAuthor] = await Promise.all([
-    search(`--grep=${text}`),
-    search(`--author=${text}`),
+    search([`--grep=${text}`]),
+    author ? Promise.resolve([]) : search([`--author=${text}`]),
   ])
 
-  // A query that looks like a commit hash (prefix) may match one directly.
+  // Text that looks like a commit hash (or the start of one) may name a commit
+  // directly. Only used when nothing else narrows the search.
   let bySha: string[] = []
-  if (/^[0-9a-f]{4,40}$/i.test(text)) {
+  const onlyText = common.length === 0 && !path
+  if (onlyText && /^[0-9a-f]{4,40}$/i.test(text)) {
     const sha = await runGit(['rev-parse', '--verify', '-q', `${text}^{commit}`], {
       cwd: repoPath,
       okExitCodes: [0, 1, 128],
@@ -159,6 +183,20 @@ export async function searchCommits(
     if (sha.exitCode === 0) bySha = [sha.stdout.trim()]
   }
 
-  // Keep git's newest-first order, without duplicates.
+  // Keep git's newest-first order, without duplicates. (Merging separate
+  // searches can put results slightly out of order; that's fine for jumping
+  // between matches.)
   return [...new Set([...bySha, ...byMessage, ...byAuthor])].slice(0, limit)
+}
+
+/**
+ * Find commits matching `query` by message, author or hash, newest first.
+ * Shorthand for findCommits with just `text`.
+ */
+export async function searchCommits(
+  repoPath: string,
+  query: string,
+  options: { scope?: LogScope; limit?: number } = {},
+): Promise<string[]> {
+  return findCommits(repoPath, { text: query }, options)
 }

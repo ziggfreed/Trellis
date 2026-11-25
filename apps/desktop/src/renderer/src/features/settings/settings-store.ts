@@ -21,6 +21,7 @@ const INITIAL: Settings = {
   openTabs: [],
   activeTab: null,
   recentRepos: [],
+  favouriteRepos: [],
   diffLayout: 'unified',
   lastCloneFolder: null,
   autoFetchMinutes: 10,

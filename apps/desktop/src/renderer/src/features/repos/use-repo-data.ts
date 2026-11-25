@@ -4,7 +4,7 @@
  * repository and refreshed automatically when files change.
  */
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import type { DiffTarget, LogScope } from '@shared/ipc'
+import type { CommitFilter, DiffTarget, LogScope } from '@shared/ipc'
 import { api } from '@/lib/api'
 import { repoKeys } from '@/lib/query-client'
 
@@ -69,13 +69,12 @@ export function useFileDiff(path: string, target: DiffTarget | null) {
   })
 }
 
-/** Hashes of commits matching a search, newest first (empty when `query` is blank). */
-export function useCommitSearch(path: string, query: string, scope: LogScope) {
-  const text = query.trim()
+/** Hashes of commits matching a search/filter, newest first (disabled when `filter` is null). */
+export function useCommitSearch(path: string, filter: CommitFilter | null, scope: LogScope) {
   return useQuery({
-    queryKey: [...repoKeys.all(path), 'search', scope, text],
-    queryFn: () => api.invoke('repo:searchCommits', path, text, scope),
-    enabled: text !== '',
+    queryKey: [...repoKeys.all(path), 'search', scope, filter],
+    queryFn: () => api.invoke('repo:findCommits', path, filter!, scope),
+    enabled: filter !== null,
     placeholderData: keepPreviousData,
   })
 }

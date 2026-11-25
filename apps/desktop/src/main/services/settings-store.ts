@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS: Settings = {
   openTabs: [],
   activeTab: null,
   recentRepos: [],
+  favouriteRepos: [],
   diffLayout: 'unified',
   lastCloneFolder: null,
   autoFetchMinutes: 10,

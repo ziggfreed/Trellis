@@ -33,6 +33,12 @@
  * Lanes keep their column for their whole life, so lines stay straight;
  * empty columns are reused by later branches.
  *
+ * PINNING THE CURRENT BRANCH
+ * With `pinned` set (the checked-out commit), lane 0 is kept free until
+ * that commit appears, and the commit then goes in lane 0 even if newer
+ * branches were drawn first. Its first-parent history then continues down
+ * lane 0 as usual, so the current branch is always the leftmost line.
+ *
  * Example (lanes shown as columns, ● = commit):
  *
  *     ●        merge M, parents A2 and B1   lane 0; starts lane 1 for B1
@@ -69,6 +75,14 @@ export interface GraphRow {
   bottom: GraphEdge[]
 }
 
+/** Marks lane 0 as held for the pinned commit (see "Pinning" above). */
+const RESERVED = '\0reserved'
+
+export interface GraphLayoutOptions {
+  /** Commit to draw in the leftmost lane, with its first-parent history (usually HEAD). */
+  pinned?: string | null
+}
+
 /**
  * Builds the layout incrementally: call `append` with each page of commits
  * as it loads. Appending in several pages gives exactly the same result as
@@ -84,6 +98,15 @@ export class GraphLayout {
   /** For each lane: its colour index. */
   private laneColors: number[] = []
   private nextColor = 0
+  private readonly pinned: string | null
+
+  constructor(options: GraphLayoutOptions = {}) {
+    this.pinned = options.pinned ?? null
+    if (this.pinned) {
+      this.lanes.push(RESERVED)
+      this.laneColors.push(this.nextColor++)
+    }
+  }
 
   append(commits: readonly GraphCommit[]): void {
     for (const commit of commits) this.rows.push(this.place(commit))
@@ -100,7 +123,11 @@ export class GraphLayout {
     lanes.forEach((sha, i) => sha === commit.sha && waiting.push(i))
 
     let lane: number
-    if (waiting.length > 0) {
+    if (commit.sha === this.pinned && lanes[0] === RESERVED) {
+      // The pinned commit takes the lane held for it; any lanes waiting for
+      // it (newer branches built on top) curve in from the right.
+      lane = 0
+    } else if (waiting.length > 0) {
       lane = waiting[0]!
     } else {
       lane = this.allocateLane()
@@ -111,7 +138,7 @@ export class GraphLayout {
     // Top half: lanes waiting for this commit curve into its dot; every other
     // active lane passes straight through.
     lanes.forEach((sha, i) => {
-      if (sha === null) return
+      if (sha === null || sha === RESERVED) return
       top.push({ from: i, to: sha === commit.sha ? lane : i, color: colors[i]! })
     })
     // Lanes that merged into this commit (other than its own) are now free.
@@ -147,7 +174,8 @@ export class GraphLayout {
     // Bottom half: every lane that was already running passes straight
     // through, then the lines leaving the dot.
     lanes.forEach((sha, i) => {
-      if (sha !== null && !started.has(i)) bottom.push({ from: i, to: i, color: colors[i]! })
+      if (sha !== null && sha !== RESERVED && !started.has(i))
+        bottom.push({ from: i, to: i, color: colors[i]! })
     })
     bottom.push(...fromDot)
 

@@ -328,3 +328,25 @@ export interface Worktree {
   /** The folder no longer exists; `git worktree prune` will forget it. */
   prunable: boolean
 }
+
+/**
+ * What to look for when filtering history. Every field is optional; a
+ * commit must match all the fields that are set.
+ */
+export interface CommitFilter {
+  /**
+   * Free text: matches the message, the author, or a commit hash. (If
+   * `author` is also set, only the message and hash are searched.)
+   */
+  text?: string
+  /** Author name or email contains this. */
+  author?: string
+  /** Changed this file or folder (a path from the repository root; `*` wildcards work). */
+  path?: string
+  /** Committed on or after this day (YYYY-MM-DD). */
+  since?: string
+  /** Committed on or before this day (YYYY-MM-DD). */
+  until?: string
+  /** Added or removed this exact text in its changes (git's "pickaxe", `log -S`). */
+  content?: string
+}

@@ -30,10 +30,13 @@ import { openEditor, openTerminal } from '../services/external-apps'
 import { AskpassServer } from '../services/askpass'
 import { askUser, cancelAllPrompts } from '../services/auth-prompts'
 import { createWriteHandlers } from './write-handlers'
+import { scanForRepos } from '../services/scan-repos'
 import {
   assertDiffTarget,
   assertFileInRepo,
   assertPage,
+  assertAbsolutePath,
+  assertCommitFilter,
   assertScope,
   assertSha,
   assertString,
@@ -106,6 +109,11 @@ export function createHandlers(
       return { ok: true, repo: { path: root, name: basename(root) } }
     },
 
+    'repo:scanFolder': (folder) => {
+      assertAbsolutePath(folder, 'folder')
+      return scanForRepos(folder, git.getRepoRoot)
+    },
+
     'repo:showInFolder': async (path) => {
       assertString(path, 'path')
       const error = await shell.openPath(path)
@@ -151,11 +159,11 @@ export function createHandlers(
       return getLogPage(path, page.scope, page.skip, page.limit)
     },
 
-    'repo:searchCommits': (path, query, scope) => {
+    'repo:findCommits': (path, filter, scope) => {
       assertString(path, 'path')
-      if (typeof query !== 'string') throw new TypeError('query must be a string')
+      assertCommitFilter(filter)
       assertScope(scope)
-      return git.searchCommits(path, query, { scope })
+      return git.findCommits(path, filter, { scope })
     },
 
     'repo:getRefs': (path) => {

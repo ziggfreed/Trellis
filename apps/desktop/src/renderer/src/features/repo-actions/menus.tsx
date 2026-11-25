@@ -24,6 +24,8 @@ import * as actions from './actions'
 import { api } from '@/lib/api'
 import { runAction } from '@/lib/run-action'
 import { openInteractiveRebase } from '@/features/rebase/rebase-store'
+import { openCompareDialog } from '@/features/compare/compare-dialog'
+import { useRepoViewStore } from '@/features/repo-view/repo-view-store'
 
 interface MenuProps {
   repo: string
@@ -76,6 +78,9 @@ export function BranchMenu({ repo, branch, children }: MenuProps & { branch: Ref
           >
             Compare with current branch
           </ContextMenuItem>
+          <ContextMenuItem onSelect={() => openCompareDialog(repo, branch.name)}>
+            Compare with…
+          </ContextMenuItem>
           <ContextMenuItem
             onSelect={() =>
               void actions.createBranch(repo, { ref: branch.name, label: branch.name })
@@ -125,6 +130,9 @@ export function RemoteBranchMenu({ repo, branch, children }: MenuProps & { branc
           <ContextMenuItem onSelect={() => void actions.openCompare(repo, branch.name)}>
             Compare with current branch
           </ContextMenuItem>
+          <ContextMenuItem onSelect={() => openCompareDialog(repo, branch.name)}>
+            Compare with…
+          </ContextMenuItem>
           <ContextMenuItem
             onSelect={() =>
               void actions.createBranch(repo, { ref: branch.name, label: branch.name })
@@ -164,6 +172,12 @@ export function TagMenu({ repo, tag, children }: MenuProps & { tag: Ref }) {
             onSelect={() => void actions.createBranch(repo, { ref: tag.name, label: tag.name })}
           >
             Create branch from here…
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => void actions.openCompare(repo, tag.name)}>
+            Compare with current branch
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={() => openCompareDialog(repo, tag.name)}>
+            Compare with…
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem onSelect={() => void actions.pushTag(repo, tag.name)}>
@@ -215,6 +229,8 @@ export function StashMenu({ repo, stash, children }: MenuProps & { stash: Stash 
 
 export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Commit }) {
   const short = shortSha(commit.sha)
+  // The commit selected in the history list, offered as the other side of a comparison.
+  const selectedSha = useRepoViewStore((s) => s.byRepo[repo]?.selectedSha ?? null)
   return (
     <Menu
       items={
@@ -232,6 +248,16 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
           </ContextMenuItem>
           <ContextMenuItem onSelect={() => void actions.openCompare(repo, commit.sha)}>
             Compare with current branch
+          </ContextMenuItem>
+          {selectedSha && selectedSha !== commit.sha && (
+            <ContextMenuItem
+              onSelect={() => void actions.openCompare(repo, commit.sha, selectedSha)}
+            >
+              Compare with selected commit ({shortSha(selectedSha)})
+            </ContextMenuItem>
+          )}
+          <ContextMenuItem onSelect={() => openCompareDialog(repo, commit.sha)}>
+            Compare with…
           </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem onSelect={() => void openInteractiveRebase(repo, commit)}>

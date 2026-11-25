@@ -84,3 +84,55 @@ test('compares a branch with the current branch', async () => {
   await expect(window.getByTestId('diff-viewer')).toContainText('new feature')
   await app.close()
 })
+
+test('comparing an older commit shows what changed since it', async () => {
+  const repo = repoWithHistory()
+  const { app, window } = await launch()
+  await openRepo(app, window, repo.path)
+
+  // "create app" is already in main, so the comparison is flipped round.
+  await window
+    .getByTestId('commit-row')
+    .filter({ hasText: 'create app' })
+    .click({ button: 'right' })
+  await window.getByRole('menuitem', { name: 'Compare with current branch' }).click()
+  await expect(window.getByTestId('compare-view')).toContainText('main compared with')
+  await expect(window.getByTestId('compare-summary')).toHaveText(
+    '1 commit ahead, 0 behind · 1 file changed',
+  )
+  await app.close()
+})
+
+test('Ctrl/Cmd+click compares two commits', async () => {
+  const repo = repoWithHistory()
+  const { app, window } = await launch()
+  await openRepo(app, window, repo.path)
+
+  const rows = window.getByTestId('commit-row')
+  await rows.filter({ hasText: 'create app' }).click()
+  await rows.filter({ hasText: 'build the feature' }).click({ modifiers: ['ControlOrMeta'] })
+  await expect(window.getByTestId('compare-summary')).toHaveText(
+    '2 commits ahead, 0 behind · 2 files changed',
+  )
+  await app.close()
+})
+
+test('the Compare dialog checks names and opens the comparison', async () => {
+  const repo = repoWithHistory()
+  const { app, window } = await launch()
+  await openRepo(app, window, repo.path)
+
+  await window.getByRole('button', { name: 'Compare…' }).click()
+  const dialog = window.getByRole('dialog')
+  await expect(dialog.getByLabel('With')).toHaveValue('main')
+  await dialog.getByLabel('Compare', { exact: true }).fill('nope')
+  await dialog.getByRole('button', { name: 'Compare', exact: true }).click()
+  await expect(dialog).toContainText('No branch, tag or commit called “nope”.')
+
+  await dialog.getByLabel('Compare', { exact: true }).fill('feature')
+  await dialog.getByRole('button', { name: 'Compare', exact: true }).click()
+  await expect(window.getByTestId('compare-summary')).toHaveText(
+    '1 commit ahead, 0 behind · 1 file changed',
+  )
+  await app.close()
+})

@@ -346,6 +346,17 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       assertRefArg(head, 'head')
       return git.getComparison(path, base, head)
     },
+    'repo:isAncestor': (path, ancestor, commit) => {
+      assertString(path, 'path')
+      assertRefArg(ancestor, 'ancestor')
+      assertRefArg(commit, 'commit')
+      return git.isAncestor(path, ancestor, commit)
+    },
+    'repo:resolveCommit': (path, ref) => {
+      assertString(path, 'path')
+      assertRefArg(ref, 'ref')
+      return git.resolveCommit(path, ref)
+    },
 
     // --- Worktrees --------------------------------------------------------------
     'repo:getWorktrees': (path) => {

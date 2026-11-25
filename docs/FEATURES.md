@@ -8,34 +8,34 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 1. Repository management
 
-| Pri | Feature                                                                                      | Status |
-| --- | -------------------------------------------------------------------------------------------- | ------ |
-| P0  | Open a local repo, clone from URL (with progress)                                            | ✅     |
-| P0  | Init a new repo                                                                              | ✅     |
-| P0  | **Repos as tabs** (reorder, close, restore open tabs on launch)                              | ✅     |
-| P0  | Recent repos list and "Repository Manager" home screen                                       | ✅     |
-| P1  | **Workspaces**: named groups of repos (e.g. "Work", "Side projects") with one-click open-all | ✅     |
-| P1  | Scan a folder to discover and import all repos inside it                                     | ⬜     |
-| P1  | Dashboard: status of all tracked repos (dirty, ahead/behind, current branch) with bulk fetch | ✅     |
-| P1  | Background auto-fetch (configurable interval)                                                | ✅     |
-| P2  | Tags/labels and favourites for repos                                                         | ⬜     |
-| P2  | Split view: two repos side by side                                                           | ⬜     |
+| Pri | Feature                                                                                      | Status                           |
+| --- | -------------------------------------------------------------------------------------------- | -------------------------------- |
+| P0  | Open a local repo, clone from URL (with progress)                                            | ✅                               |
+| P0  | Init a new repo                                                                              | ✅                               |
+| P0  | **Repos as tabs** (reorder, close, restore open tabs on launch)                              | ✅                               |
+| P0  | Recent repos list and "Repository Manager" home screen                                       | ✅                               |
+| P1  | **Workspaces**: named groups of repos (e.g. "Work", "Side projects") with one-click open-all | ✅                               |
+| P1  | Scan a folder to discover and import all repos inside it                                     | ✅                               |
+| P1  | Dashboard: status of all tracked repos (dirty, ahead/behind, current branch) with bulk fetch | ✅                               |
+| P1  | Background auto-fetch (configurable interval)                                                | ✅                               |
+| P2  | Tags/labels and favourites for repos                                                         | 🟨 favourites done; labels to do |
+| P2  | Split view: two repos side by side                                                           | ⬜                               |
 
 ## 2. Commit graph & history
 
-| Pri | Feature                                                                     | Status                                       |
-| --- | --------------------------------------------------------------------------- | -------------------------------------------- |
-| P0  | **Commit graph** with coloured lanes, merges, branch/tag/HEAD/remote badges | ✅                                           |
-| P0  | Virtualised list that stays smooth at 100k+ commits (lazy loading)          | ✅ 60 fps at 100k commits                    |
-| P0  | Commit details panel: message, author, date, parents, changed files, diff   | ✅                                           |
-| P1  | Filter graph: by branch, author, path, date range; "current branch only"    | 🟨 all / local / current branch done         |
-| P1  | Search: message, SHA, author, **pickaxe (`-S`/`-G`) content search**        | 🟨 message, author, hash done; pickaxe to do |
-| P1  | Collapse/expand merged branches, hide remote branches                       | ⬜                                           |
-| P1  | Compare any two commits/branches                                            | ✅                                           |
-| P2  | Minimap / timeline scrubber for long histories                              | ⬜                                           |
-| P2  | Keep the checked-out branch in the leftmost graph lane                      | ⬜                                           |
-| P2  | Highlight a branch's commits when hovering its badge                        | ⬜                                           |
-| 💡  | Alternative "branch timeline" view (horizontal, GitKraken/Gource-style)     | ⬜                                           |
+| Pri | Feature                                                                     | Status                                  |
+| --- | --------------------------------------------------------------------------- | --------------------------------------- |
+| P0  | **Commit graph** with coloured lanes, merges, branch/tag/HEAD/remote badges | ✅                                      |
+| P0  | Virtualised list that stays smooth at 100k+ commits (lazy loading)          | ✅ 60 fps at 100k commits               |
+| P0  | Commit details panel: message, author, date, parents, changed files, diff   | ✅                                      |
+| P1  | Filter graph: by branch, author, path, date range; "current branch only"    | ✅                                      |
+| P1  | Search: message, SHA, author, **pickaxe (`-S`/`-G`) content search**        | ✅ (`-S`; regex `-G` to do)             |
+| P1  | Collapse/expand merged branches, hide remote branches                       | 🟨 hide remotes ("Local branches") done |
+| P1  | Compare any two commits/branches                                            | ✅ Compare dialog, Ctrl/Cmd+click       |
+| P2  | Minimap / timeline scrubber for long histories                              | ⬜                                      |
+| P2  | Keep the checked-out branch in the leftmost graph lane                      | ✅                                      |
+| P2  | Highlight a branch's commits when hovering its badge                        | ✅                                      |
+| 💡  | Alternative "branch timeline" view (horizontal, GitKraken/Gource-style)     | ⬜                                      |
 
 ## 3. Working copy, staging & committing
 

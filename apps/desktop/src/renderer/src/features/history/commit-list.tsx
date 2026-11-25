@@ -9,6 +9,8 @@
  * Keyboard: ↑/↓ move the selection when the list has focus.
  * Right-click a commit for actions (branch, tag, cherry-pick, revert, reset...).
  * Drag a branch label onto another row to merge, rebase or move it.
+ * Ctrl/Cmd+click a second commit to compare the two.
+ * Hover a branch label to highlight that branch's line of commits.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
@@ -20,6 +22,8 @@ import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { refsBySha } from '@/features/sidebar/group-refs'
 import { RefBadge } from './ref-badge'
 import { CommitMenu } from '@/features/repo-actions/menus'
+import { openCompare } from '@/features/repo-actions/actions'
+import { firstParentLine, firstParentMap } from './branch-highlight'
 import { handleRefDrop, isRefDrag } from '@/features/drag-drop/drop-menu'
 import { GraphCell, LANE_WIDTH } from './graph-cell'
 import { IncrementalLayout } from './incremental-layout'
@@ -56,11 +60,22 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
   const [incremental] = useState(() => new IncrementalLayout())
   /** Row a branch is being dragged over, to highlight it. */
   const [dropIndex, setDropIndex] = useState<number | null>(null)
+  /** Commit of the branch label under the pointer; its line is highlighted. */
+  const [hoveredTip, setHoveredTip] = useState<string | null>(null)
 
   const pages = log.data?.pages
   const commits = useMemo(() => pages?.flatMap((p) => p.commits) ?? [], [pages])
-  const graph = useMemo(() => incremental.update(pages ?? []), [incremental, pages])
+  // The checked-out commit is kept in the graph's leftmost lane.
+  const graph = useMemo(
+    () => incremental.update(pages ?? [], headSha),
+    [incremental, pages, headSha],
+  )
   const refMap = useMemo(() => refsBySha(refs ?? []), [refs])
+  const firstParents = useMemo(() => firstParentMap(commits), [commits])
+  const highlighted = useMemo(
+    () => (hoveredTip ? firstParentLine(firstParents, hoveredTip) : null),
+    [firstParents, hoveredTip],
+  )
   const selectedIndex = commits.findIndex((c) => c.sha === view.selectedSha)
 
   // This rule warns that the React Compiler can't optimise this hook. We don't
@@ -141,7 +156,11 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
           const commit = commits[item.index]!
           const row = graph.rows[item.index]
           const selected = item.index === selectedIndex
-          const dimmed = matches !== null && !matches.has(commit.sha)
+          // While a branch label is hovered, fade everything off its line;
+          // otherwise fade commits that don't match the search/filter.
+          const dimmed = highlighted
+            ? !highlighted.has(commit.sha)
+            : matches !== null && !matches.has(commit.sha)
           return (
             <CommitMenu key={commit.sha} repo={repoPath} commit={commit}>
               <div
@@ -149,7 +168,16 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
                 aria-selected={selected}
                 data-testid="commit-row"
                 data-match={matches?.has(commit.sha) || undefined}
-                onClick={() => select(commit)}
+                data-dimmed={dimmed || undefined}
+                onClick={(event) => {
+                  // Ctrl/Cmd+click a second commit to compare it with the selected one.
+                  const other = view.selectedSha
+                  if ((event.ctrlKey || event.metaKey) && other && other !== commit.sha) {
+                    void openCompare(repoPath, commit.sha, other)
+                  } else {
+                    select(commit)
+                  }
+                }}
                 onDragOver={(event) => {
                   if (!isRefDrag(event)) return
                   event.preventDefault()
@@ -190,7 +218,11 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
                   className={cn('flex min-w-0 flex-1 items-center gap-1.5', dimmed && 'opacity-40')}
                 >
                   {refMap.get(commit.sha)?.map((ref) => (
-                    <RefBadge key={ref.fullName} gitRef={ref} />
+                    <RefBadge
+                      key={ref.fullName}
+                      gitRef={ref}
+                      onHoverChange={(hovering) => setHoveredTip(hovering ? commit.sha : null)}
+                    />
                   ))}
                   <span className="truncate">{commit.subject}</span>
                 </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { layoutGraph } from '@trellis/graph-layout'
+import { GraphLayout, layoutGraph } from '@trellis/graph-layout'
 import type { Commit, LogPage } from '@shared/ipc'
 import { IncrementalLayout } from './incremental-layout'
 
@@ -39,5 +39,13 @@ describe('IncrementalLayout', () => {
     expect(incremental.update(reloaded).rows).toEqual(
       layoutGraph([commit('Z', 'A'), commit('A')]).rows,
     )
+  })
+
+  it('starts again when the pinned (checked-out) commit changes', () => {
+    const incremental = new IncrementalLayout()
+    incremental.update([p1, p2, p3])
+    const pinned = new GraphLayout({ pinned: 'X' })
+    pinned.append(all)
+    expect(incremental.update([p1, p2, p3], 'X').rows).toEqual(pinned.rows)
   })
 })

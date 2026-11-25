@@ -1,10 +1,19 @@
 /**
  * The home screen, shown when no repository tab is selected:
  * - open, clone or create a repository,
+ * - favourite (starred) repositories,
  * - workspaces (named groups of repositories) with their live status,
- * - recently opened repositories.
+ * - recently opened repositories,
+ * - scanning a folder to find and add every repository in it.
  */
-import { Download, FolderOpen, FolderPlus, MoreHorizontal, RefreshCw } from 'lucide-react'
+import {
+  Download,
+  FolderOpen,
+  FolderPlus,
+  FolderSearch,
+  MoreHorizontal,
+  RefreshCw,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -19,10 +28,12 @@ import { repoActions } from '@/features/repos/repo-actions'
 import { useSettingsStore } from '@/features/settings/settings-store'
 import * as workspaceActions from '@/features/workspaces/workspace-actions'
 import { RepoDashboard } from './repo-dashboard'
+import { scanFolder } from './scan-dialog'
 
 export function HomeScreen() {
   const { recentRepos, openTabs, removeRecent } = useRepos()
   const workspaces = useSettingsStore((s) => s.settings.workspaces)
+  const favourites = useSettingsStore((s) => s.settings.favouriteRepos)
 
   return (
     <div className="h-full overflow-auto p-8">
@@ -46,8 +57,30 @@ export function HomeScreen() {
               <FolderPlus />
               New
             </Button>
+            <Button variant="outline" onClick={() => void scanFolder()}>
+              <FolderSearch />
+              Scan folder…
+            </Button>
           </div>
         </div>
+
+        {favourites.length > 0 && (
+          <RepoDashboard
+            testId="favourite-repos"
+            title="Favourites"
+            repos={favourites}
+            actions={
+              <Button
+                size="xs"
+                variant="ghost"
+                onClick={() => void workspaceActions.fetchRepos(favourites.map((r) => r.path))}
+              >
+                <RefreshCw />
+                Fetch all
+              </Button>
+            }
+          />
+        )}
 
         {workspaces.map((workspace) => (
           <RepoDashboard

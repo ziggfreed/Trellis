@@ -4,7 +4,14 @@
  * Each function throws a TypeError with a clear message if the check fails.
  */
 import { isAbsolute, relative, resolve } from 'node:path'
-import type { CheckoutTarget, DiffTarget, LogScope, PushRequest, RebasePlanItem } from '@shared/ipc'
+import type {
+  CheckoutTarget,
+  CommitFilter,
+  DiffTarget,
+  LogScope,
+  PushRequest,
+  RebasePlanItem,
+} from '@shared/ipc'
 
 export function assertString(value: unknown, name: string): asserts value is string {
   if (typeof value !== 'string' || value.length === 0) {
@@ -51,6 +58,31 @@ export function assertDiffTarget(value: unknown): asserts value is DiffTarget {
     assertRefArg(range.to, 'target.to')
   } else if (target.kind !== 'staged' && target.kind !== 'unstaged') {
     throw new TypeError('target.kind must be commit, range, staged or unstaged')
+  }
+}
+
+const FILTER_TEXT_FIELDS = ['text', 'author', 'path', 'content'] as const
+const FILTER_DATE_FIELDS = ['since', 'until'] as const
+
+/** A history filter: optional short strings, with dates as YYYY-MM-DD. */
+export function assertCommitFilter(value: unknown): asserts value is CommitFilter {
+  if (typeof value !== 'object' || value === null) throw new TypeError('filter must be an object')
+  const filter = value as Record<string, unknown>
+  for (const key of Object.keys(filter)) {
+    if (![...FILTER_TEXT_FIELDS, ...FILTER_DATE_FIELDS].includes(key as never)) {
+      throw new TypeError(`unknown filter field: ${key}`)
+    }
+    const field = filter[key]
+    if (field === undefined) continue
+    if (typeof field !== 'string' || field.length > 1000) {
+      throw new TypeError(`filter.${key} must be a string`)
+    }
+  }
+  for (const key of FILTER_DATE_FIELDS) {
+    const date = filter[key]
+    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date as string)) {
+      throw new TypeError(`filter.${key} must be a date like 2026-01-31`)
+    }
   }
 }
 

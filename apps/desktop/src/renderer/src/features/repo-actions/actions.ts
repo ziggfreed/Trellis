@@ -503,14 +503,31 @@ export function openFileView(repo: string, path: string, mode: 'blame' | 'histor
 }
 
 /**
- * Compare `head` with `base` in the Compare view. Without a base, compares
- * with the current branch.
+ * Compare `head` with `base` in the Compare view: the commits `head` has
+ * that `base` doesn't. Without a base, compares with the current branch.
+ *
+ * If `head` is already in `base`'s history (e.g. an older commit on the
+ * current branch), that comparison would always be empty, so the two are
+ * swapped to show what changed since `head` instead.
  */
 export async function openCompare(repo: string, head: string, base?: string) {
-  const against = base ?? (await getStatus(repo)).branch.head ?? 'HEAD'
+  let from = base ?? (await getStatus(repo)).branch.head ?? 'HEAD'
+  let to = head
+  const [fromSha, toSha] = await Promise.all([
+    api.invoke('repo:resolveCommit', repo, from),
+    api.invoke('repo:resolveCommit', repo, to),
+  ])
+  if (
+    fromSha &&
+    toSha &&
+    fromSha !== toSha &&
+    (await api.invoke('repo:isAncestor', repo, to, from))
+  ) {
+    ;[from, to] = [to, from]
+  }
   useRepoViewStore
     .getState()
-    .update(repo, { view: 'compare', compare: { base: against, head }, selectedFile: null })
+    .update(repo, { view: 'compare', compare: { base: from, head: to }, selectedFile: null })
 }
 
 /** Switch the repository view to Changes (e.g. after a merge stops with conflicts). */

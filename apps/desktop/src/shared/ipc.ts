@@ -19,6 +19,7 @@
 import type {
   Commit,
   LogScope,
+  CommitFilter,
   CommitDetails,
   DiffTarget,
   FileContent,
@@ -62,6 +63,8 @@ export interface Settings {
   activeTab: string | null
   /** Recently opened repositories, newest first. */
   recentRepos: RepoTab[]
+  /** Repositories starred on the home screen, in the order they were starred. */
+  favouriteRepos: RepoTab[]
   /** How the diff viewer shows changes. */
   diffLayout: 'unified' | 'split'
   /** Folder last used as the destination for cloning. */
@@ -92,6 +95,14 @@ export interface AppInfo {
 /** Result of asking to open a folder as a repository. */
 export type OpenRepoResult =
   { ok: true; repo: RepoTab } | { ok: false; reason: 'not-a-repo' | 'not-found'; path: string }
+
+/** Repositories found by scanning a folder. */
+export interface ScanResult {
+  /** Found repositories, sorted by path. */
+  repos: RepoTab[]
+  /** True if the scan stopped at a limit, so there may be more. */
+  truncated: boolean
+}
 
 /** Result of a clone or init. */
 export type CreateRepoResult = { ok: true; repo: RepoTab } | { ok: false; message: string }
@@ -147,6 +158,8 @@ export interface IpcContract {
 
   /** Check that `path` is (inside) a git repo and return its root. */
   'repo:resolve': { args: [path: string]; result: OpenRepoResult }
+  /** Find the git repositories inside a folder (a few levels deep). */
+  'repo:scanFolder': { args: [folder: string]; result: ScanResult }
   /** Open the repo folder in the system file manager. */
   'repo:showInFolder': { args: [path: string]; result: void }
   /** Open the user's terminal program in the repository folder. */
@@ -167,7 +180,11 @@ export interface IpcContract {
     result: LogPage
   }
   /** Hashes of commits matching `query` (message, author or hash), newest first. */
-  'repo:searchCommits': { args: [path: string, query: string, scope: LogScope]; result: string[] }
+  /** Hashes of commits matching a filter (text, author, path, dates, code), newest first. */
+  'repo:findCommits': {
+    args: [path: string, filter: CommitFilter, scope: LogScope]
+    result: string[]
+  }
   'repo:getRefs': { args: [path: string]; result: Ref[] }
   'repo:getRemotes': { args: [path: string]; result: Remote[] }
   'repo:getStashes': { args: [path: string]; result: Stash[] }
@@ -271,6 +288,10 @@ export interface IpcContract {
   'repo:getBlame': { args: [path: string, file: string, revision?: string]; result: BlameResult }
   /** What `head` has that `base` doesn't (commits and changed files). */
   'repo:getComparison': { args: [path: string, base: string, head: string]; result: Comparison }
+  /** Whether `ancestor` is in the history of `commit`. */
+  'repo:isAncestor': { args: [path: string, ancestor: string, commit: string]; result: boolean }
+  /** The commit hash a branch, tag or hash points to, or null if it names no commit. */
+  'repo:resolveCommit': { args: [path: string, ref: string]; result: string | null }
 
   // --- Worktrees ----------------------------------------------------------------
   'repo:getWorktrees': { args: [path: string]; result: Worktree[] }
@@ -359,6 +380,7 @@ const channelMap: Record<IpcChannel, true> = {
   'settings:update': true,
   'dialog:pickFolder': true,
   'repo:resolve': true,
+  'repo:scanFolder': true,
   'repo:showInFolder': true,
   'repo:openFile': true,
   'shell:openTerminal': true,
@@ -366,7 +388,7 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:setWatched': true,
   'repo:getStatus': true,
   'repo:getLog': true,
-  'repo:searchCommits': true,
+  'repo:findCommits': true,
   'repo:getRefs': true,
   'repo:getRemotes': true,
   'repo:getStashes': true,
@@ -406,6 +428,8 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:getFileHistory': true,
   'repo:getBlame': true,
   'repo:getComparison': true,
+  'repo:isAncestor': true,
+  'repo:resolveCommit': true,
   'repo:getWorktrees': true,
   'repo:addWorktree': true,
   'repo:removeWorktree': true,

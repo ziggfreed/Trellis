@@ -4,7 +4,14 @@ import type { Ref } from '@shared/ipc'
 import { cn } from '@/lib/utils'
 import { draggableRef } from '@/features/drag-drop/drop-menu'
 
-export function RefBadge({ gitRef }: { gitRef: Ref }) {
+export function RefBadge({
+  gitRef,
+  onHoverChange,
+}: {
+  gitRef: Ref
+  /** Called with true/false as the pointer enters/leaves (to highlight the branch). */
+  onHoverChange?: (hovering: boolean) => void
+}) {
   const Icon = gitRef.type === 'tag' ? Tag : gitRef.type === 'remote-branch' ? Cloud : GitBranch
   return (
     <span
@@ -14,6 +21,8 @@ export function RefBadge({ gitRef }: { gitRef: Ref }) {
           : `${gitRef.fullName}\nDrag onto another branch or commit to merge, rebase or move it`
       }
       data-ref={gitRef.fullName}
+      onMouseEnter={() => onHoverChange?.(true)}
+      onMouseLeave={() => onHoverChange?.(false)}
       {...draggableRef(gitRef)}
       className={cn(
         'inline-flex max-w-48 shrink-0 items-center gap-1 rounded border px-1.5 text-xs leading-5',
