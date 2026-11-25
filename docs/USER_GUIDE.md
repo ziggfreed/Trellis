@@ -63,7 +63,7 @@ Open **Changes** (`Ctrl+Shift+G`) to see what you've changed.
 2. Write a **summary** (the first line, ideally under about 72 characters) and, if useful, a **description**.
 3. Click **Commit** or press `Ctrl+Enter`.
 
-Tick **Amend** to replace the last commit instead, for example to fix its message. To throw away changes, use the discard button on a file (or **Discard all**), or select lines in its diff and discard just those. Right-click a file for its blame and history.
+Tick **Amend** to replace the last commit instead, for example to fix its message. To throw away changes, use the discard button on a file (or **Discard all**), or select lines in its diff and discard just those. Right-click a file for its blame and history, or choose **Ignore** to add the file, every file with its extension, or its folder to `.gitignore`. If matching files are already committed, Trellis offers to stop tracking them (they stay on your computer).
 
 With AI turned on, **Suggest** writes the message from your staged changes (see [AI features](#ai-features)).
 
@@ -76,6 +76,10 @@ With AI turned on, **Suggest** writes the message from your staged changes (see 
 - **Push** uploads your commits. If the remote has commits you don't, Trellis explains the options; a force push is only ever "with lease", so it can't overwrite work you haven't seen.
 
 When git needs a password, token or SSH passphrase, Trellis asks for it.
+
+**Remotes.** Add one with the **+** next to Remotes in the sidebar (hover over the heading to see it). Right-click a remote to fetch from it, change its URL, rename it or remove it. Removing a remote only makes Trellis forget it; nothing is deleted on the server.
+
+**Cleaning up branches.** Search the command palette for "Delete merged branches" (or right-click a branch and choose **Delete branches merged into …**). Trellis lists the local branches whose commits are all on the target branch, so deleting them loses nothing. Untick any you want to keep. main, master, develop and checked-out branches are never offered, and one undo brings the deleted ones back.
 
 ## Merges, rebases and conflicts
 
@@ -92,6 +96,8 @@ When all files are resolved, click **Continue** in the banner.
 ## Undo
 
 `Ctrl+Z` undoes the last thing you did in Trellis (commit, stage, discard, checkout, merge, rebase, reset, branch and tag changes, pull) and `Ctrl+Shift+Z` redoes it. Undo never moves a branch that has changed somewhere else since, so it can't lose other work.
+
+**Finding lost commits.** If a commit seems to have vanished (after a reset, a rebase, or deleting a branch, including ones done outside Trellis), search the command palette for "Find lost commits". It lists everywhere the repository has been, newest first, and marks commits that aren't on any branch. Click **Create branch…** on one to keep it. Git keeps this history for about 90 days.
 
 ## Several repositories
 
@@ -139,7 +145,7 @@ Plugins can run any code on your computer, so only install ones you trust. To wr
 
 Open Settings with `Ctrl+,`:
 
-- **General**: theme, diff layout, code editor, background fetch, and updates.
+- **General**: theme, diff layout, code editor, background fetch, your git name and email, commit signing, and updates.
 - **Keyboard shortcuts**: change any shortcut.
 - **AI** and **Plugins**: see above.
 
@@ -160,6 +166,8 @@ Default shortcuts:
 | Settings                  | `Ctrl+,`                             |
 
 In the tab bar, the arrow keys move between tabs and `Delete` closes the focused one.
+
+**Commit signing.** To sign your commits, tick **Sign my commits** in Settings > General and choose a GPG key or an SSH key (gpg must be installed for GPG keys). These are git's own settings, so the command line signs too. The commit details show whether a selected commit is signed and whether its signature checks out.
 
 **Updates.** Trellis checks for new versions in the background and downloads them; click **Restart to update** in the status bar when it appears. You can turn this off, or check now, in **Settings > General > Updates**. (On macOS, unsigned builds link to the download instead of installing it.)
 
