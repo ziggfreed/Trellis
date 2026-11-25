@@ -3,7 +3,8 @@
  *
  * TanStack Query gives us an array of pages. When a new page is appended we
  * only lay out the new commits; if earlier pages changed (history was
- * reloaded after a commit or fetch), we start again from scratch. Laying
+ * reloaded after a commit or fetch) or the checked-out commit changed (it's
+ * kept in the leftmost lane), we start again from scratch. Laying
  * out a 500-commit page takes about a millisecond, so this happens directly
  * on the UI thread.
  */
@@ -18,13 +19,18 @@ export interface LayoutSnapshot {
 
 export class IncrementalLayout {
   private pages: readonly LogPage[] = []
+  private pinned: string | null = null
   private layout = new GraphLayout()
 
-  update(pages: readonly LogPage[]): LayoutSnapshot {
+  /** `pinned` is the checked-out commit, drawn in the leftmost lane (null for none). */
+  update(pages: readonly LogPage[], pinned: string | null = null): LayoutSnapshot {
     const canContinue =
-      this.pages.length <= pages.length && this.pages.every((page, i) => page === pages[i])
+      pinned === this.pinned &&
+      this.pages.length <= pages.length &&
+      this.pages.every((page, i) => page === pages[i])
     if (!canContinue) {
-      this.layout = new GraphLayout()
+      this.layout = new GraphLayout({ pinned })
+      this.pinned = pinned
       this.pages = []
     }
     for (const page of pages.slice(this.pages.length)) this.layout.append(page.commits)

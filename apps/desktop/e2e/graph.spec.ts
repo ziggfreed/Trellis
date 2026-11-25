@@ -94,3 +94,42 @@ test('jumping to a search result loads older history as needed', async () => {
   await expect(window.getByRole('option', { selected: true })).toContainText('Commit 1 on main')
   await app.close()
 })
+
+test('keeps the checked-out branch in the leftmost lane', async () => {
+  // "side work" is the newest commit, but main is checked out.
+  const repo = repoWithBranches()
+  const { app, window } = await launch()
+  await openRepo(app, window, repo.path)
+
+  const dotX = async (subject: string) =>
+    Number(
+      await window
+        .getByTestId('commit-row')
+        .filter({ hasText: subject })
+        .locator('svg circle')
+        .first()
+        .getAttribute('cx'),
+    )
+  const mainX = await dotX('merge feature')
+  expect(await dotX('side work')).toBeGreaterThan(mainX)
+  expect(await dotX('main work')).toBe(mainX)
+  await app.close()
+})
+
+test('hovering a branch label highlights its commits', async () => {
+  const repo = repoWithBranches()
+  const { app, window } = await launch()
+  await openRepo(app, window, repo.path)
+
+  const rows = window.getByTestId('commit-row')
+  await rows.locator('[data-ref="refs/heads/side"]').hover()
+  // side's line: side work → main work → base commit → initial commit.
+  await expect(rows.filter({ hasText: 'side work' })).not.toHaveAttribute('data-dimmed')
+  await expect(rows.filter({ hasText: 'base commit' })).not.toHaveAttribute('data-dimmed')
+  await expect(rows.filter({ hasText: 'merge feature' })).toHaveAttribute('data-dimmed', 'true')
+  await expect(rows.filter({ hasText: 'feature work' })).toHaveAttribute('data-dimmed', 'true')
+
+  await window.mouse.move(0, 0)
+  await expect(rows.filter({ hasText: 'feature work' })).not.toHaveAttribute('data-dimmed')
+  await app.close()
+})
