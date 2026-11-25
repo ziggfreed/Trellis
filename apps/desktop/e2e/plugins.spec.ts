@@ -275,9 +275,14 @@ test('plugins can add sidebar panels, commit badges, keep secrets and hear about
   // so commit through the UI.
   await window.getByRole('tab', { name: /Changes/ }).click()
   repo.write('new.txt', 'new\n')
+  // Wait for the watcher to list the file before staging it.
+  await expect(window.getByText('new.txt')).toBeVisible()
   await window.getByRole('button', { name: 'Stage all' }).click()
   await window.getByLabel('Commit summary').fill('Add new file')
-  await window.getByLabel('Commit summary').press('ControlOrMeta+Enter')
+  const commit = window.getByRole('button', { name: /^Commit 1 file/ })
+  await expect(commit).toBeEnabled()
+  await commit.click()
+  await expect(window.getByText(/^Committed/)).toBeVisible()
   await expect(status).toHaveText('op:commit')
   await app.close()
 })
