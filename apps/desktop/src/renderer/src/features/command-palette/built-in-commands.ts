@@ -229,9 +229,9 @@ export function builtInCommands(context: CommandContext): Command[] {
     },
     {
       id: 'git.pruneMerged',
-      title: 'Delete merged branches…',
+      title: 'Clean up branches (merged, gone, never pushed)…',
       group: 'Branches',
-      keywords: ['prune', 'clean up', 'tidy'],
+      keywords: ['delete merged branches', 'prune', 'tidy', 'squash', 'stale', 'gone'],
       run: () => openPruneDialog(path),
     },
     {

@@ -10,6 +10,7 @@ import {
   findUnreachable,
   getCommitSignature,
   getDefaultBranch,
+  getBranchCleanup,
   getMergedBranches,
   getReflog,
   getRemotes,
@@ -26,7 +27,7 @@ import {
   setSigningConfig,
   untrack,
 } from '../src'
-import { createTempDir, createTempRepo, type TempRepo } from './helpers'
+import { createRepoWithRemote, createTempDir, createTempRepo, type TempRepo } from './helpers'
 
 let repo: TempRepo | undefined
 afterEach(async () => {
@@ -189,5 +190,58 @@ describe('merged branches', () => {
 
     expect(await getDefaultBranch(r.path)).toBe('main')
     expect(await getMergedBranches(r.path, 'main')).toEqual(['merged-feature'])
+  })
+
+  it('finds normal, squash and rebase merges, and branches whose remote was deleted', async () => {
+    const { repo: r, remote } = await createRepoWithRemote()
+    try {
+      const branch = async (name: string, files: Record<string, string>) => {
+        await r.git('switch', '-c', name, 'main')
+        for (const [file, content] of Object.entries(files)) {
+          await r.write(file, content)
+          await r.commit(`${name}: ${file}`)
+        }
+        await r.git('switch', 'main')
+      }
+      await branch('normal', { 'n.txt': 'n\n' })
+      await branch('squashed', { 's1.txt': 's1\n', 's2.txt': 's2\n' })
+      await branch('rebased', { 'r1.txt': 'r1\n', 'r2.txt': 'r2\n' })
+      await branch('in-progress', { 'w.txt': 'w\n' })
+      await branch('pushed-then-deleted', { 'p.txt': 'p\n' })
+      await r.git('push', '-u', 'origin', 'pushed-then-deleted')
+
+      // Move main on first, so none of these merges is a fast-forward.
+      await r.write('main.txt', 'main\n')
+      await r.commit('work on main')
+      await r.git('merge', '--no-ff', '-m', 'merge normal', 'normal')
+      await r.git('merge', '--squash', 'squashed')
+      await r.commit('squash merge')
+      await r.git('cherry-pick', 'main..rebased')
+      // The remote branch is deleted (e.g. after its PR closed) and we fetch with prune.
+      await remote.git('branch', '-D', 'pushed-then-deleted')
+      await r.git('fetch', '--prune')
+
+      const result = await getBranchCleanup(r.path, 'main')
+      const byName = Object.fromEntries(result.map((b) => [b.name, b]))
+      expect(Object.keys(byName).sort()).toEqual([
+        'in-progress',
+        'normal',
+        'pushed-then-deleted',
+        'rebased',
+        'squashed',
+      ])
+      expect(byName.normal).toMatchObject({ merged: 'merged', aheadOfTarget: 0 })
+      expect(byName.squashed).toMatchObject({ merged: 'squashed', aheadOfTarget: 2 })
+      expect(byName.rebased).toMatchObject({ merged: 'squashed', aheadOfTarget: 2 })
+      expect(byName['in-progress']).toMatchObject({ merged: 'unmerged', upstream: null })
+      expect(byName['pushed-then-deleted']).toMatchObject({
+        merged: 'unmerged',
+        upstream: 'origin/pushed-then-deleted',
+        upstreamGone: true,
+      })
+    } finally {
+      await r.cleanup()
+      await remote.cleanup()
+    }
   })
 })

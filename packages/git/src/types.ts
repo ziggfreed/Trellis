@@ -466,3 +466,27 @@ export interface StackBranch {
   /** Commits on it since the branch below (0 if it shares that branch's commit). */
   commits: number
 }
+
+/**
+ * How a local branch relates to a target branch (e.g. main), for "clean up
+ * branches". See getBranchCleanup in merged-branches.ts.
+ *
+ * - merged: every commit on the branch is on the target (a normal merge or
+ *   fast-forward), so `git branch -d` is happy to delete it.
+ * - squashed: the branch's changes are on the target, but as different
+ *   commits (a squash merge, or "rebase and merge" on GitHub). Git can't tell,
+ *   so deleting it needs `git branch -D`.
+ * - unmerged: some of its changes aren't on the target.
+ */
+export type BranchMergeState = 'merged' | 'squashed' | 'unmerged'
+
+export interface CleanupBranch {
+  name: string
+  merged: BranchMergeState
+  /** Commits on the branch that aren't on the target (as commits, not changes). */
+  aheadOfTarget: number
+  /** Upstream such as "origin/feature", or null if none is set. */
+  upstream: string | null
+  /** True when the upstream branch was deleted on the remote. */
+  upstreamGone: boolean
+}

@@ -120,9 +120,11 @@ test('deletes merged branches in one go, and undo brings them back', async () =>
   const { app, window } = await launch()
   await openRepo(app, window, repo.path)
 
-  await runCommand(window, 'Delete merged branches')
+  await runCommand(window, /Clean up branches/)
   const dialog = window.getByTestId('prune-dialog')
-  await expect(dialog.getByRole('checkbox')).toHaveCount(3) // done-1, done-2, keep-me
+  // done-1, done-2, keep-me (ticked), and "unmerged" (never pushed, left unticked).
+  await expect(dialog.getByRole('checkbox')).toHaveCount(4)
+  await expect(dialog.getByRole('checkbox', { name: 'unmerged' })).not.toBeChecked()
   await dialog.getByRole('checkbox', { name: 'keep-me' }).uncheck()
   await dialog.getByRole('button', { name: 'Delete 2 branches' }).click()
   await expect(window.getByText('Deleted 2 branches')).toBeVisible()

@@ -7,22 +7,32 @@ import { draggableRef } from '@/features/drag-drop/drop-menu'
 export function RefBadge({
   gitRef,
   onHoverChange,
+  onDoubleClick,
 }: {
   gitRef: Ref
   /** Called with true/false as the pointer enters/leaves (to highlight the branch). */
   onHoverChange?: (hovering: boolean) => void
+  /** Double-click to check this ref out (the row's own double-click is skipped). */
+  onDoubleClick?: () => void
 }) {
   const Icon = gitRef.type === 'tag' ? Tag : gitRef.type === 'remote-branch' ? Cloud : GitBranch
   return (
     <span
       title={
         gitRef.type === 'tag'
-          ? gitRef.fullName
-          : `${gitRef.fullName}\nDrag onto another branch or commit to merge, rebase or move it`
+          ? `${gitRef.fullName}\nDouble-click to check out`
+          : `${gitRef.fullName}\nDouble-click to check out. Drag onto another branch or commit to merge, rebase or move it`
       }
       data-ref={gitRef.fullName}
       onMouseEnter={() => onHoverChange?.(true)}
       onMouseLeave={() => onHoverChange?.(false)}
+      onDoubleClick={
+        onDoubleClick &&
+        ((event) => {
+          event.stopPropagation()
+          onDoubleClick()
+        })
+      }
       {...draggableRef(gitRef)}
       className={cn(
         'inline-flex max-w-48 shrink-0 items-center gap-1 rounded border px-1.5 text-xs leading-5',

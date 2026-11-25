@@ -1,7 +1,7 @@
 /**
  * IPC handlers for repository housekeeping: managing remotes, commit
  * signatures and signing settings, the reflog, .gitignore, and cleaning up
- * merged branches. Spread into the full handler list in handlers.ts.
+ * branches. Spread into the full handler list in handlers.ts.
  *
  * Arguments come from the renderer, so they're checked first. Changes that
  * undo can restore (branch deletions) are recorded as operations; changes
@@ -31,7 +31,7 @@ type ToolChannel =
   | 'repo:ignore'
   | 'repo:untrack'
   | 'repo:getDefaultBranch'
-  | 'repo:getMergedBranches'
+  | 'repo:getBranchCleanup'
   | 'repo:deleteBranches'
 
 type ToolHandlers = {
@@ -125,21 +125,24 @@ export function createToolHandlers(): ToolHandlers {
       return runExclusive(path, () => git.untrack(path, files))
     },
 
-    // --- Merged branches -----------------------------------------------------
+    // --- Cleaning up branches -------------------------------------------------
     'repo:getDefaultBranch': (path) => {
       assertString(path, 'path')
       return git.getDefaultBranch(path)
     },
-    'repo:getMergedBranches': (path, target) => {
+    'repo:getBranchCleanup': (path, target) => {
       assertString(path, 'path')
       assertRefArg(target, 'target')
-      return git.getMergedBranches(path, target)
+      return git.getBranchCleanup(path, target)
     },
-    'repo:deleteBranches': (path, names) => {
+    'repo:deleteBranches': (path, names, options) => {
       assertString(path, 'path')
       assertStringArray(names, 'names')
       for (const name of names) assertRefArg(name, 'name')
-      const label = `Delete ${names.length} merged ${names.length === 1 ? 'branch' : 'branches'}`
+      const forced = options?.force ?? []
+      assertStringArray(forced, 'options.force')
+      const force = new Set(forced)
+      const label = `Delete ${names.length} ${names.length === 1 ? 'branch' : 'branches'}`
       // One recorded operation, so a single undo brings them all back.
       return runExclusive(path, () =>
         git.recordOperation(path, label, { worktree: false }, async () => {
@@ -147,8 +150,10 @@ export function createToolHandlers(): ToolHandlers {
           const failed: { name: string; error: string }[] = []
           for (const name of names) {
             try {
-              // Not forced: git refuses if a branch isn't fully merged after all.
-              await git.deleteBranch(path, name)
+              // Only forced when asked (squash-merged branches, or ones the user
+              // chose to delete anyway); otherwise git refuses if a branch isn't
+              // fully merged after all. Undo restores either kind.
+              await git.deleteBranch(path, name, force.has(name))
               deleted.push(name)
             } catch (error) {
               failed.push({ name, error: error instanceof Error ? error.message : String(error) })

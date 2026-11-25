@@ -55,6 +55,7 @@ The history shows every commit as a graph, newest first, with branch and tag lab
 - **Compare**: right-click a commit and choose a compare option, or `Ctrl`+click a second commit to compare the two.
 - **Blame and file history**: right-click a file and choose **Blame** (who last changed each line) or **File history** (every commit that changed it, following renames).
 - **Drag** a branch label onto another branch or a commit to merge, rebase or move it.
+- **Double-click** a commit to check it out. If a branch points at it, you switch to that branch (a remote branch becomes a local one); otherwise Trellis asks before checking out the bare commit. Double-click a branch label to check out that branch.
 
 ## Staging and committing
 
@@ -73,7 +74,8 @@ With AI turned on, **Suggest** writes the message from your staged changes (see 
 ## Branches, fetching, pulling and pushing
 
 - **Create a branch**: **Branch** in the toolbar, or right-click a commit and choose **Create branch here…**.
-- **Switch branch**: double-click it in the sidebar, or right-click it and choose **Check out**.
+- **Switch branch**: double-click it in the sidebar, or right-click it and choose **Check out**. Double-clicking a remote branch (such as `origin/feature`) switches to a local `feature` branch, creating one that tracks it if needed.
+- **Branches not on a remote** are marked in the sidebar: **local** means it was never pushed, **gone** means its remote branch was deleted (often because its pull request was merged), and **not tracking** means a remote has a branch of that name but yours isn't linked to it.
 - **Fetch** downloads new commits from remotes without changing your work. Trellis also fetches in the background every 10 minutes (you can change this in Settings).
 - **Pull** brings your branch up to date with its upstream.
 - **Push** uploads your commits. If the remote has commits you don't, Trellis explains the options; a force push is only ever "with lease", so it can't overwrite work you haven't seen.
@@ -84,7 +86,13 @@ When git needs a password, token or SSH passphrase, Trellis asks for it.
 
 **Stacked branches.** If you build branches on top of each other (say `feature-api`, then `feature-ui` on top of it), search the command palette for "Branch stack", or right-click the top branch and choose **Show stack…**. It lists the branches between it and the base (usually main). **Rebase stack onto main** moves them all at once, keeping each branch's own commits (one undo puts them all back). **Push stack** then pushes them all, safely (force with lease). This needs git 2.38 or newer.
 
-**Cleaning up branches.** Search the command palette for "Delete merged branches" (or right-click a branch and choose **Delete branches merged into …**). Trellis lists the local branches whose commits are all on the target branch, so deleting them loses nothing. Untick any you want to keep. main, master, develop and checked-out branches are never offered, and one undo brings the deleted ones back.
+**Cleaning up branches.** Click the broom button on the sidebar's **Branches** header (or search the command palette for "Clean up branches", or right-click a branch and choose **Clean up branches merged into …**). Pick the target branch (main by default) and Trellis checks every local branch:
+
+- **Merged into main**: all its commits are on main. Ticked.
+- **Squash- or rebase-merged into main**: its changes are on main, but as different commits, as with GitHub's "Squash and merge" or "Rebase and merge". Git itself calls these unmerged; Trellis compares the changes instead. Ticked.
+- **Remote branch deleted, not merged** and **Never pushed, not merged**: shown so you can decide, but not ticked, because they have changes that aren't on main.
+
+Branches still in progress (unmerged and on a remote) aren't listed. Untick any you want to keep and click **Delete**. main, master, develop and checked-out branches are never offered, remote branches aren't touched, and one undo brings the deleted ones back. Run **Fetch** first so Trellis knows which remote branches were deleted.
 
 **Finding the commit that broke something (bisect).** Right-click a commit that has the bug and choose **Bisect › Start: this commit has the bug**. Then right-click an older commit where it worked and choose **Bisect › Mark good**. Trellis checks out a commit halfway between: test it, then click **Good**, **Bad** or **Skip** in the banner. Each answer halves the range (about 10 steps for 1,000 commits) until the banner names the first bad commit, which is marked in the history. Click **Stop bisecting** to go back to where you were.
 

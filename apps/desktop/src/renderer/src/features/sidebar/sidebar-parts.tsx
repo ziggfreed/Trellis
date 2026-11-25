@@ -13,8 +13,8 @@ export function Section(props: {
   count: number
   nested?: boolean
   defaultOpen?: boolean
-  /** A small "+" button in the header. */
-  action?: { label: string; onClick: () => void }
+  /** A small button in the header ("+" unless another icon is given). */
+  action?: { label: string; onClick: () => void; icon?: LucideIcon }
   /** Wraps the header button, e.g. in a right-click menu. */
   wrapHeader?: (header: React.ReactElement) => React.ReactNode
   /** Hover text for the header. */
@@ -23,6 +23,7 @@ export function Section(props: {
 }) {
   const [open, setOpen] = useState(props.defaultOpen ?? true)
   const Icon = props.icon
+  const ActionIcon = props.action?.icon ?? Plus
   const header = (
     <button
       title={props.tooltip}
@@ -53,7 +54,7 @@ export function Section(props: {
           onClick={props.action.onClick}
           className="absolute top-1 right-8 rounded p-0.5 text-muted-foreground opacity-0 group-hover/section:opacity-100 hover:text-foreground focus:opacity-100"
         >
-          <Plus className="size-3.5" />
+          <ActionIcon className="size-3.5" />
         </button>
       )}
       {open && (

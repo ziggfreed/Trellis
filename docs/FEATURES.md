@@ -67,7 +67,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | Pri | Feature                                                                                         | Status                                    |
 | --- | ----------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | P0  | Sidebar: local branches, remotes, tags, stashes                                                 | ✅                                        |
-| P0  | Create / checkout / rename / delete branch                                                      | ✅                                        |
+| P0  | Create / checkout / rename / delete branch (double-click to check out, incl. remote branches)   | ✅                                        |
 | P0  | Fetch / pull (merge or rebase) / push, with progress and ahead/behind counts                    | ✅                                        |
 | P0  | Merge branch (with conflict detection)                                                          | ✅                                        |
 | P0  | Auth: use system git credential helpers + SSH agent; prompt for credentials when needed         | ✅ helpers + askpass prompts (HTTPS, SSH) |
@@ -77,7 +77,8 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | P1  | Tags: create (annotated/lightweight), push, delete                                              | ✅                                        |
 | P1  | Manage remotes (add/edit/remove)                                                                | ✅                                        |
 | P1  | Force push with `--force-with-lease` safety by default                                          | ✅                                        |
-| P2  | Prune stale branches helper ("delete all branches merged into main")                            | ✅ local branches; one undo               |
+| P2  | Prune stale branches helper ("delete all branches merged into main")                            | ✅ incl. squash/rebase merges and gone    |
+| P2  | Mark branches that aren't on a remote (never pushed / remote deleted)                           | ✅ "local", "gone", "not tracking"        |
 | P2  | Git-flow / trunk-based helpers                                                                  | ⬜                                        |
 
 ## 6. Advanced git
