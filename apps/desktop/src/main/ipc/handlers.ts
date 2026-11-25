@@ -34,6 +34,7 @@ import {
   assertDiffTarget,
   assertFileInRepo,
   assertPage,
+  assertCommitFilter,
   assertScope,
   assertSha,
   assertString,
@@ -151,11 +152,11 @@ export function createHandlers(
       return getLogPage(path, page.scope, page.skip, page.limit)
     },
 
-    'repo:searchCommits': (path, query, scope) => {
+    'repo:findCommits': (path, filter, scope) => {
       assertString(path, 'path')
-      if (typeof query !== 'string') throw new TypeError('query must be a string')
+      assertCommitFilter(filter)
       assertScope(scope)
-      return git.searchCommits(path, query, { scope })
+      return git.findCommits(path, filter, { scope })
     },
 
     'repo:getRefs': (path) => {

@@ -19,6 +19,7 @@
 import type {
   Commit,
   LogScope,
+  CommitFilter,
   CommitDetails,
   DiffTarget,
   FileContent,
@@ -167,7 +168,11 @@ export interface IpcContract {
     result: LogPage
   }
   /** Hashes of commits matching `query` (message, author or hash), newest first. */
-  'repo:searchCommits': { args: [path: string, query: string, scope: LogScope]; result: string[] }
+  /** Hashes of commits matching a filter (text, author, path, dates, code), newest first. */
+  'repo:findCommits': {
+    args: [path: string, filter: CommitFilter, scope: LogScope]
+    result: string[]
+  }
   'repo:getRefs': { args: [path: string]; result: Ref[] }
   'repo:getRemotes': { args: [path: string]; result: Remote[] }
   'repo:getStashes': { args: [path: string]; result: Stash[] }
@@ -370,7 +375,7 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:setWatched': true,
   'repo:getStatus': true,
   'repo:getLog': true,
-  'repo:searchCommits': true,
+  'repo:findCommits': true,
   'repo:getRefs': true,
   'repo:getRemotes': true,
   'repo:getStashes': true,

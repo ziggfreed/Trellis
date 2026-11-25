@@ -5,6 +5,7 @@
  */
 import { create } from 'zustand'
 import type { DiffTarget, LogScope } from '@shared/ipc'
+import type { HistoryFilter } from '@/features/history/history-filter'
 
 /** A file opened for blame or history. */
 export interface FileViewState {
@@ -39,6 +40,8 @@ export interface RepoViewState {
   scope: LogScope
   /** Text in the history search box. */
   search: string
+  /** History filter: author, path, dates, code changes (see history-filter.ts). */
+  filter: HistoryFilter
   /** Commit message being written (kept while switching tabs). */
   commitSummary: string
   commitDescription: string
@@ -57,6 +60,7 @@ const DEFAULT_VIEW: RepoViewState = {
   selectedFile: null,
   scope: 'all',
   search: '',
+  filter: {},
   commitSummary: '',
   commitDescription: '',
   amend: false,

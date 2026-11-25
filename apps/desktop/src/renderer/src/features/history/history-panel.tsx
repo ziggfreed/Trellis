@@ -1,6 +1,6 @@
 /**
- * The top half of the History view: toolbar (branch filter + search) and
- * the commit list. Runs the search and shares the results with both.
+ * The top half of the History view: toolbar (branches, search, filter) and
+ * the commit list. Runs the search/filter and shares the results with both.
  */
 import { useMemo } from 'react'
 import { useCommitSearch } from '@/features/repos/use-repo-data'
@@ -8,13 +8,20 @@ import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { CommitList } from './commit-list'
 import { HistoryToolbar } from './history-toolbar'
+import { buildCommitFilter } from './history-filter'
 
 export function HistoryPanel({ repoPath }: { repoPath: string }) {
   const [view] = useRepoView(repoPath)
-  const query = useDebouncedValue(view.search.trim(), 250)
-  const search = useCommitSearch(repoPath, query, view.scope)
+  // Wait for typing to pause before asking git.
+  const wanted = useMemo(
+    () => buildCommitFilter(view.search, view.filter),
+    [view.search, view.filter],
+  )
+  const filter = useDebouncedValue(wanted, 250)
+  const search = useCommitSearch(repoPath, filter, view.scope)
 
-  const active = view.search.trim() !== '' && query !== '' && search.data !== undefined
+  // Highlight results only while a search is still wanted (clearing it is instant).
+  const active = wanted !== null && filter !== null && search.data !== undefined
   const matches = active ? search.data! : null
   const matchSet = useMemo(() => (matches ? new Set(matches) : null), [matches])
 

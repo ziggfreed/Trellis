@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { getLog, searchCommits } from '../src'
+import { findCommits, getLog, isEmptyFilter, runGit, searchCommits } from '../src'
 import { createRepoWithRemote, createTempRepo, type TempRepo } from './helpers'
 
 const cleanups: TempRepo[] = []
@@ -69,5 +69,73 @@ describe('searchCommits', () => {
     await repo.git('reset', '-q', '--hard', 'HEAD~1')
     expect(await searchCommits(repo.path, 'remote only', { scope: 'all' })).toHaveLength(1)
     expect(await searchCommits(repo.path, 'remote only', { scope: 'local' })).toHaveLength(0)
+  })
+})
+
+describe('findCommits', () => {
+  /** Three commits by two authors, on different days, touching different files. */
+  async function filterRepo() {
+    const repo = await createTempRepo()
+    cleanups.push(repo)
+    const commit = async (
+      file: string,
+      text: string,
+      message: string,
+      author: string,
+      day: string,
+    ) => {
+      await repo.write(file, text)
+      await repo.git('add', '-A')
+      // Date filters use the commit date, so set it as well as the author date.
+      const date = `${day}T12:00:00`
+      await runGit(['commit', '-q', '-m', message, `--author=${author}`, `--date=${date}`], {
+        cwd: repo.path,
+        env: { GIT_COMMITTER_DATE: date },
+      })
+    }
+    await commit(
+      'src/app.ts',
+      'const answer = 41\n',
+      'Start app',
+      'Ann <ann@example.com>',
+      '2026-01-10',
+    )
+    await commit('docs/guide.md', '# Guide\n', 'Write guide', 'Bob <bob@example.com>', '2026-02-10')
+    await commit(
+      'src/app.ts',
+      'const answer = 42\n',
+      'Fix answer',
+      'Ann <ann@example.com>',
+      '2026-03-10',
+    )
+    return repo
+  }
+
+  it('filters by author, path and date, combining them', async () => {
+    const repo = await filterRepo()
+    const find = async (filter: Parameters<typeof findCommits>[1]) =>
+      subjects(repo, await findCommits(repo.path, filter))
+
+    expect(await find({ author: 'ann' })).toEqual(['Fix answer', 'Start app'])
+    expect(await find({ path: 'docs' })).toEqual(['Write guide'])
+    expect(await find({ path: 'src/*.ts' })).toEqual(['Fix answer', 'Start app'])
+    expect(await find({ since: '2026-02-01' })).toEqual(['Fix answer', 'Write guide'])
+    expect(await find({ until: '2026-02-10' })).toEqual(['Write guide', 'Start app'])
+    expect(await find({ author: 'ann', since: '2026-02-01' })).toEqual(['Fix answer'])
+    expect(await find({ text: 'guide', path: 'src' })).toEqual([])
+  })
+
+  it('finds commits that added or removed some text (pickaxe)', async () => {
+    const repo = await filterRepo()
+    const shas = await findCommits(repo.path, { content: 'answer = 41' })
+    // Added in "Start app", removed in "Fix answer".
+    expect(await subjects(repo, shas)).toEqual(['Fix answer', 'Start app'])
+    expect(await findCommits(repo.path, { content: 'not in any file' })).toEqual([])
+  })
+
+  it('treats a filter with only blank fields as empty', async () => {
+    expect(isEmptyFilter({})).toBe(true)
+    expect(isEmptyFilter({ text: '  ', author: '' })).toBe(true)
+    expect(isEmptyFilter({ path: 'src' })).toBe(false)
   })
 })
