@@ -6,6 +6,17 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Plugins.** Plugins add commands to the command palette, items to the commit, branch and file right-click menus, status bar items and their own settings. They run in a separate process so they can't freeze Trellis. See [docs/PLUGINS.md](docs/PLUGINS.md).
+- **Settings > Plugins**: turn plugins on and off, change their settings, install from npm or a folder, uninstall, and load a plugin you're developing straight from its folder.
+- Built-in plugins: **Open on Remote** (open a commit, branch, file or the repository on GitHub, GitLab, Bitbucket or Gitea) and **Conventional Commits** (write a conventional commit message step by step; the status bar warns about unpushed commits that don't follow the convention).
+- `npm create trellis-plugin` to start a new plugin.
+- Settings is split into General, Keyboard shortcuts, AI and Plugins tabs.
+- **AI features** (off by default, bring your own key): suggest a commit message from the staged changes, explain a commit, and get help with a merge conflict, including a suggested resolution. Works with Anthropic (Claude) or any OpenAI-compatible service, including local models (Ollama, LM Studio). Turn it on in **Settings > AI**; the key is stored encrypted.
+- **GitHub plugin** (built in): sign in with a token or the GitHub CLI, see pull requests in the sidebar with their CI and review state, CI results on commits in the history, and this branch's pull request in the status bar.
+- Plugin API: sidebar panels, commit badges in the history graph, encrypted secret storage, operation events (commit, checkout, fetch, push...) and password input boxes. These need Trellis 0.3.0.
+
 ## [0.2.0] - 2026-11-25
 
 ### Added

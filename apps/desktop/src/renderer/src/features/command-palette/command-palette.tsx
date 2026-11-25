@@ -19,8 +19,10 @@ import { useRepos } from '@/features/repos/use-repos'
 import { useSettingsStore } from '@/features/settings/settings-store'
 import { getCommands, registerCommands, type CommandPicker } from './registry'
 import { builtInCommands } from './built-in-commands'
+import { pluginPaletteCommands } from '@/features/plugins/plugin-palette'
 
 registerCommands(builtInCommands)
+registerCommands(pluginPaletteCommands)
 
 interface PaletteStore {
   open: boolean

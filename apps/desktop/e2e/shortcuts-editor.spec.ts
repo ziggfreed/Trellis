@@ -10,6 +10,7 @@ test('a shortcut can be changed in Settings and then used', async () => {
   const { app, window } = await launch()
   await window.getByRole('heading', { name: 'Welcome to Trellis' }).click() // focus the window
   await window.keyboard.press('ControlOrMeta+,')
+  await window.getByRole('tab', { name: 'Keyboard shortcuts' }).click()
 
   const shortcuts = window.getByRole('list', { name: 'Keyboard shortcuts' })
   const row = shortcuts.getByRole('listitem').filter({ hasText: /^Open repository/ })

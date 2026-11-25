@@ -1,0 +1,52 @@
+{
+  "name": "conventional-commits",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Write Conventional Commits messages step by step, and see which unpushed commits don't follow the convention.",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "trellis": ">=0.2.0"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@trellis/plugin-api": "workspace:*",
+    "vitest": "^5.1.1"
+  },
+  "trellis": {
+    "displayName": "Conventional Commits",
+    "contributes": {
+      "commands": [
+        {
+          "id": "conventionalCommits.compose",
+          "title": "Write a conventional commit message…"
+        },
+        {
+          "id": "conventionalCommits.showUnconventional",
+          "title": "Show unpushed commits that aren't conventional",
+          "palette": false
+        }
+      ],
+      "settings": [
+        {
+          "key": "types",
+          "type": "string",
+          "default": "feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert",
+          "title": "Commit types",
+          "description": "The types you use, separated by commas."
+        },
+        {
+          "key": "checkUnpushed",
+          "type": "boolean",
+          "default": true,
+          "title": "Check unpushed commits",
+          "description": "Show a warning in the status bar when commits you haven't pushed don't follow the convention."
+        }
+      ]
+    }
+  }
+}

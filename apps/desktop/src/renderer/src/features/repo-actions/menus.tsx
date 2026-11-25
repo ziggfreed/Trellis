@@ -4,7 +4,8 @@
  *
  *   <BranchMenu repo={path} branch={ref}><button>main</button></BranchMenu>
  *
- * The menu items just call functions in ./actions.ts.
+ * The menu items just call functions in ./actions.ts. Plugins can add
+ * items to the commit, branch and file menus (PluginMenuItems).
  */
 import type { Commit, Ref, Stash, Worktree } from '@shared/ipc'
 import { openRepoAtPath } from '@/features/repos/use-repos'
@@ -25,7 +26,10 @@ import { api } from '@/lib/api'
 import { runAction } from '@/lib/run-action'
 import { openInteractiveRebase } from '@/features/rebase/rebase-store'
 import { openCompareDialog } from '@/features/compare/compare-dialog'
+import { PluginMenuItems } from '@/features/plugins/plugin-menu-items'
 import { useRepoViewStore } from '@/features/repo-view/repo-view-store'
+import { useAiEnabled } from '@/features/ai/ai-client'
+import { explainCommitWithAi } from '@/features/ai/ai-dialog'
 
 interface MenuProps {
   repo: string
@@ -103,6 +107,7 @@ export function BranchMenu({ repo, branch, children }: MenuProps & { branch: Ref
           >
             Copy name
           </ContextMenuItem>
+          <PluginMenuItems location="branch" args={{ repo, branch: branch.name }} />
         </>
       }
     >
@@ -152,6 +157,7 @@ export function RemoteBranchMenu({ repo, branch, children }: MenuProps & { branc
           >
             Copy name
           </ContextMenuItem>
+          <PluginMenuItems location="branch" args={{ repo, branch: branch.name }} />
         </>
       }
     >
@@ -231,6 +237,7 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
   const short = shortSha(commit.sha)
   // The commit selected in the history list, offered as the other side of a comparison.
   const selectedSha = useRepoViewStore((s) => s.byRepo[repo]?.selectedSha ?? null)
+  const aiEnabled = useAiEnabled()
   return (
     <Menu
       items={
@@ -259,6 +266,11 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
           <ContextMenuItem onSelect={() => openCompareDialog(repo, commit.sha)}>
             Compare with…
           </ContextMenuItem>
+          {aiEnabled && (
+            <ContextMenuItem onSelect={() => explainCommitWithAi(repo, commit.sha, commit.subject)}>
+              Explain with AI
+            </ContextMenuItem>
+          )}
           <ContextMenuSeparator />
           <ContextMenuItem onSelect={() => void openInteractiveRebase(repo, commit)}>
             Interactive rebase from here…
@@ -300,6 +312,7 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
           >
             Copy message
           </ContextMenuItem>
+          <PluginMenuItems location="commit" args={{ repo, sha: commit.sha }} />
         </>
       }
     >
@@ -329,6 +342,7 @@ export function FileMenu({ repo, path, children }: MenuProps & { path: string })
           <ContextMenuItem onSelect={() => void actions.copyToClipboard(path, 'path')}>
             Copy path
           </ContextMenuItem>
+          <PluginMenuItems location="file" args={{ repo, path }} />
         </>
       }
     >

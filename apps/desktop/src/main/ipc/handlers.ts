@@ -9,7 +9,7 @@
  */
 import { basename, join, relative, resolve } from 'node:path'
 import { existsSync, readdirSync } from 'node:fs'
-import { app, dialog, ipcMain, shell, BrowserWindow } from 'electron'
+import { app, dialog, ipcMain, safeStorage, shell, BrowserWindow } from 'electron'
 import * as git from '@trellis/git'
 import {
   IPC_CHANNELS,
@@ -30,6 +30,9 @@ import { openEditor, openTerminal } from '../services/external-apps'
 import { AskpassServer } from '../services/askpass'
 import { askUser, cancelAllPrompts } from '../services/auth-prompts'
 import { createWriteHandlers } from './write-handlers'
+import { createPluginService } from '../plugins/plugin-ipc'
+import { createAiService } from '../ai/ai-ipc'
+import { SecretStore, safeStorageEncryptor } from '../services/secret-store'
 import { scanForRepos } from '../services/scan-repos'
 import {
   assertDiffTarget,
@@ -69,8 +72,12 @@ export function createHandlers(
   watcher: RepoWatcher,
   commandLog: CommandLog,
   autoFetcher: AutoFetcher,
+  plugins: ReturnType<typeof createPluginService>,
+  ai: ReturnType<typeof createAiService>,
 ): IpcHandlers {
   return {
+    ...plugins.handlers,
+    ...ai.handlers,
     ...createWriteHandlers(commandLog, (operationId, phase, percent) =>
       sendToAllWindows('operation:progress', { operationId, phase, percent }),
     ),
@@ -84,8 +91,19 @@ export function createHandlers(
       if (typeof patch !== 'object' || patch === null) {
         throw new TypeError('patch must be an object')
       }
-      const updated = settings.update(patch)
+      const before = settings.get()
+      let updated = settings.update(patch)
       if ('autoFetchMinutes' in patch) autoFetcher.configure(updated.autoFetchMinutes)
+      // Keep nested settings whole when a patch only sends some fields.
+      if ('ai' in patch) updated = settings.update({ ai: { ...before.ai, ...patch.ai } })
+      // Plugins can follow which repository is open.
+      if (updated.activeTab !== before.activeTab) {
+        plugins.manager.activeRepoChanged(updated.activeTab)
+      }
+      // Plugin settings are edited in Settings > Plugins; pass on the new values.
+      if ('pluginSettings' in patch) {
+        for (const id of Object.keys(updated.pluginSettings)) plugins.manager.settingsChanged(id)
+      }
       return updated
     },
 
@@ -248,9 +266,13 @@ export interface IpcServices {
  * lets git ask the user for passwords. Call once at start-up.
  */
 export async function registerIpcHandlers(settings: SettingsStore): Promise<IpcServices> {
-  const watcher = new RepoWatcher((path, scope) =>
-    sendToAllWindows('repo:changed', { path, scope }),
-  )
+  const secrets = new SecretStore(app.getPath('userData'), safeStorageEncryptor(safeStorage))
+  const plugins = createPluginService(settings, secrets)
+  const ai = createAiService(settings, secrets)
+  const watcher = new RepoWatcher((path, scope) => {
+    sendToAllWindows('repo:changed', { path, scope })
+    plugins.manager.repoChanged(path)
+  })
   const commandLog = new CommandLog((entry) => sendToAllWindows('git:command', entry))
 
   // The helper scripts must be real files git can run, so they live in the
@@ -275,15 +297,21 @@ export async function registerIpcHandlers(settings: SettingsStore): Promise<IpcS
   )
   autoFetcher.configure(settings.get().autoFetchMinutes)
 
-  const handlers = createHandlers(settings, watcher, commandLog, autoFetcher)
+  const handlers = createHandlers(settings, watcher, commandLog, autoFetcher, plugins, ai)
   for (const channel of IPC_CHANNELS) {
     const handler = handlers[channel] as (...args: unknown[]) => unknown
     ipcMain.handle(channel, (_event, ...args: unknown[]) => handler(...args))
   }
 
+  // Load plugins in the background; the UI asks for their state when it's ready.
+  void plugins.manager.start().catch((error) => console.error('Could not start plugins:', error))
+
   return {
     watcher,
     dispose: () => {
+      void plugins.manager.dispose()
+      plugins.dispose()
+      ai.dispose()
       watcher.dispose()
       autoFetcher.dispose()
       commandLog.dispose()

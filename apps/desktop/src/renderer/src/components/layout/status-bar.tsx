@@ -24,6 +24,7 @@ import { shortSha } from '@/lib/format'
 import { useOperationsStore } from '@/features/repo-actions/operations-store'
 import { toggleCommandLog, useCommandLogStore } from '@/features/command-log/command-log-store'
 import { openSettings } from '@/features/settings/settings-dialog'
+import { PluginStatusItems } from '@/features/plugins/plugin-status-items'
 
 const THEME_ICONS = { light: Sun, dark: Moon, system: Monitor } as const
 
@@ -42,11 +43,13 @@ export function StatusBar({ gitVersion, repoPath }: StatusBarProps) {
     <footer className="flex h-6 shrink-0 items-center gap-4 border-t bg-sidebar px-3 text-xs text-muted-foreground">
       {repoPath && <BranchStatus repoPath={repoPath} />}
       <RunningOperations />
-      <span className="ml-auto">{gitVersion}</span>
+      <span className="ml-auto" />
+      <PluginStatusItems repoPath={repoPath} />
+      <span>{gitVersion}</span>
       <CommandLogToggle />
       <button
         type="button"
-        onClick={openSettings}
+        onClick={() => openSettings()}
         aria-label="Settings"
         title="Settings (Ctrl+,)"
         className="flex items-center hover:text-foreground"

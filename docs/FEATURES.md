@@ -113,46 +113,47 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 8. Plugin system
 
-| Pri | Feature                                                                                              | Status |
-| --- | ---------------------------------------------------------------------------------------------------- | ------ |
-| P1  | Plugin manifest (`package.json` with `contributes` section, VS Code-style)                           | ⬜     |
-| P1  | Plugins run in an isolated **extension host** process with a typed, permission-gated API             | ⬜     |
-| P1  | Contribution points: commands, context menus (commit/branch/file), toolbar buttons, status bar items | ⬜     |
-| P1  | Custom panels/views (rendered in sandboxed iframes, themed via CSS variables)                        | ⬜     |
-| P1  | Events API: `onCommit`, `onCheckout`, `onFetch`, `onRepoOpen`, etc.                                  | ⬜     |
-| P1  | Plugin manager UI: install from folder/URL/npm, enable/disable, permissions view                     | ⬜     |
-| P2  | Graph decorations (badges and colours on commits, e.g. CI status)                                    | ⬜     |
-| P2  | Commit message providers (AI, templates, ticket IDs)                                                 | ⬜     |
-| P2  | Diff renderers (e.g. custom viewer for a file type)                                                  | ⬜     |
-| P2  | Plugin marketplace / registry                                                                        | ⬜     |
-| P2  | Plugin SDK package + `create-plugin` scaffolder + docs                                               | ⬜     |
+| Pri | Feature                                                                                              | Status                                                  |
+| --- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| P1  | Plugin manifest (`package.json` with `contributes` section, VS Code-style)                           | ✅                                                      |
+| P1  | Plugins run in an isolated **extension host** process with a typed, permission-gated API             | ✅ typed API; no permissions (plugins are trusted)      |
+| P1  | Contribution points: commands, context menus (commit/branch/file), toolbar buttons, status bar items | 🟨 commands, menus, status bar, settings; toolbar to do |
+| P1  | Custom panels/views (rendered in sandboxed iframes, themed via CSS variables)                        | 🟨 sidebar list panels; iframe views to do              |
+| P1  | Events API: `onCommit`, `onCheckout`, `onFetch`, `onRepoOpen`, etc.                                  | ✅ `onDidRunOperation`, active repo, repo changed       |
+| P1  | Plugin manager UI: install from folder/URL/npm, enable/disable, permissions view                     | ✅ folder, npm, development folders                     |
+| P2  | Graph decorations (badges and colours on commits, e.g. CI status)                                    | ✅ status badges                                        |
+| P2  | Commit message providers (AI, templates, ticket IDs)                                                 | 🟨 `setCommitMessage`                                   |
+| P2  | Diff renderers (e.g. custom viewer for a file type)                                                  | ⬜                                                      |
+| P2  | Plugin marketplace / registry                                                                        | ⬜                                                      |
+| P2  | Plugin SDK package + `create-plugin` scaffolder + docs                                               | ✅ docs/PLUGINS.md                                      |
 
 **First-party plugins to build (they also validate the API):**
 
-- GitHub / GitLab / Bitbucket integration (PRs, issues, CI status)
-- AI assistant (commit messages, explain commit, conflict suggestions, PR descriptions)
+- GitHub / GitLab / Bitbucket integration (PRs, issues, CI status) (✅ GitHub plugin and Open on Remote are built in; GitLab/Bitbucket to do)
+- Secret storage for plugin tokens (✅ `trellis.secrets`)
+- AI assistant (commit messages, explain commit, conflict suggestions, PR descriptions) (✅ built into the app instead; PR descriptions to do)
 - Jira / Linear ticket linking
-- Conventional Commits + changelog generator
+- Conventional Commits + changelog generator (✅ Conventional Commits helper is built in)
 - Repo stats (contributors, activity heatmap, code churn)
 
 ## 9. Integrations (likely shipped as plugins)
 
-| Pri | Feature                                                               | Status |
-| --- | --------------------------------------------------------------------- | ------ |
-| P2  | Hosting accounts (GitHub/GitLab/Bitbucket/Azure DevOps) via OAuth/PAT | ⬜     |
-| P2  | Create/view/checkout PRs, PR review comments inline in diff           | ⬜     |
-| P2  | CI status on commits and branches                                     | ⬜     |
-| P2  | Clone from account repo list                                          | ⬜     |
+| Pri | Feature                                                               | Status                          |
+| --- | --------------------------------------------------------------------- | ------------------------------- |
+| P2  | Hosting accounts (GitHub/GitLab/Bitbucket/Azure DevOps) via OAuth/PAT | 🟨 GitHub (token or GitHub CLI) |
+| P2  | Create/view/checkout PRs, PR review comments inline in diff           | 🟨 view PRs, create via GitHub  |
+| P2  | CI status on commits and branches                                     | ✅ GitHub, on commits and PRs   |
+| P2  | Clone from account repo list                                          | ⬜                              |
 
 ## 10. AI (built in, optional)
 
-| Pri | Feature                                                                                                                           | Status |
-| --- | --------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| P1  | Settings: choose provider, bring your own API key (stored with OS-level encryption), or **disable AI entirely** (hides all AI UI) | ⬜     |
-| P1  | Generate commit message from staged changes                                                                                       | ⬜     |
-| P2  | Explain a commit / diff                                                                                                           | ⬜     |
-| P2  | Suggest conflict resolutions                                                                                                      | ⬜     |
-| P2  | Natural-language command bar (shows the git commands before running them)                                                         | ⬜     |
+| Pri | Feature                                                                                                                           | Status                                                                 |
+| --- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| P1  | Settings: choose provider, bring your own API key (stored with OS-level encryption), or **disable AI entirely** (hides all AI UI) | ✅ Anthropic or OpenAI-compatible (incl. local models); off by default |
+| P1  | Generate commit message from staged changes                                                                                       | ✅                                                                     |
+| P2  | Explain a commit / diff                                                                                                           | 🟨 commits                                                             |
+| P2  | Suggest conflict resolutions                                                                                                      | ✅                                                                     |
+| P2  | Natural-language command bar (shows the git commands before running them)                                                         | ⬜                                                                     |
 
 ## 11. 💡 Cool / differentiating ideas
 

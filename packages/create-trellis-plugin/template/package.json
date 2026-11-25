@@ -1,0 +1,46 @@
+{
+  "name": "{{name}}",
+  "version": "0.1.0",
+  "description": "A Trellis plugin.",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "keywords": [
+    "trellis-plugin"
+  ],
+  "engines": {
+    "trellis": ">=0.3.0"
+  },
+  "trellis": {
+    "displayName": "{{displayName}}",
+    "contributes": {
+      "commands": [
+        {
+          "id": "{{prefix}}.hello",
+          "title": "Say hello"
+        },
+        {
+          "id": "{{prefix}}.showCommit",
+          "title": "Show commit details",
+          "palette": false
+        }
+      ],
+      "menus": {
+        "commit": [
+          {
+            "command": "{{prefix}}.showCommit"
+          }
+        ]
+      },
+      "settings": [
+        {
+          "key": "greeting",
+          "type": "string",
+          "default": "Hello",
+          "title": "Greeting",
+          "description": "What “Say hello” says."
+        }
+      ]
+    }
+  }
+}

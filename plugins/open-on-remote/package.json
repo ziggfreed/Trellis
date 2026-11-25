@@ -1,0 +1,86 @@
+{
+  "name": "open-on-remote",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Open the repository, a commit, a branch or a file on GitHub, GitLab, Bitbucket or Gitea.",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "trellis": ">=0.2.0"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@trellis/plugin-api": "workspace:*",
+    "vitest": "^5.1.1"
+  },
+  "trellis": {
+    "displayName": "Open on Remote",
+    "contributes": {
+      "commands": [
+        {
+          "id": "openOnRemote.repo",
+          "title": "Open repository on remote"
+        },
+        {
+          "id": "openOnRemote.commit",
+          "title": "Open commit on remote",
+          "palette": false
+        },
+        {
+          "id": "openOnRemote.branch",
+          "title": "Open branch on remote",
+          "palette": false
+        },
+        {
+          "id": "openOnRemote.file",
+          "title": "Open file on remote",
+          "palette": false
+        }
+      ],
+      "menus": {
+        "commit": [
+          {
+            "command": "openOnRemote.commit"
+          }
+        ],
+        "branch": [
+          {
+            "command": "openOnRemote.branch"
+          }
+        ],
+        "file": [
+          {
+            "command": "openOnRemote.file"
+          }
+        ]
+      },
+      "settings": [
+        {
+          "key": "remote",
+          "type": "string",
+          "default": "origin",
+          "title": "Remote",
+          "description": "Which remote's website to open."
+        },
+        {
+          "key": "style",
+          "type": "enum",
+          "default": "auto",
+          "options": [
+            "auto",
+            "github",
+            "gitlab",
+            "bitbucket",
+            "gitea"
+          ],
+          "title": "Website type",
+          "description": "How to build links. \"auto\" guesses from the host name (github.com, gitlab.com...)."
+        }
+      ]
+    }
+  }
+}

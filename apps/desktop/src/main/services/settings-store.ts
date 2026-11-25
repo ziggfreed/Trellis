@@ -19,6 +19,10 @@ export const DEFAULT_SETTINGS: Settings = {
   workspaces: [],
   keybindings: {},
   editorCommand: '',
+  disabledPlugins: [],
+  pluginDevFolders: [],
+  pluginSettings: {},
+  ai: { enabled: false, provider: 'anthropic', model: '', baseUrl: '' },
 }
 
 export class SettingsStore {
@@ -44,7 +48,8 @@ export class SettingsStore {
     try {
       const saved = JSON.parse(readFileSync(this.file, 'utf8')) as Partial<Settings>
       // Merge over defaults so settings added in newer versions get a value.
-      return { ...DEFAULT_SETTINGS, ...saved }
+      // `ai` is an object, so merge it too.
+      return { ...DEFAULT_SETTINGS, ...saved, ai: { ...DEFAULT_SETTINGS.ai, ...saved.ai } }
     } catch {
       // Missing or corrupt file: start fresh.
       return { ...DEFAULT_SETTINGS }

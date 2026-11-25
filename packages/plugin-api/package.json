@@ -1,0 +1,19 @@
+{
+  "name": "@trellis/plugin-api",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Types and helpers for writing Trellis plugins: the plugin manifest and the API passed to activate().",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^5.1.1"
+  }
+}

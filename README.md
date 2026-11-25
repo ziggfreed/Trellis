@@ -2,7 +2,7 @@
 
 A fast, good-looking, open-source git client with **multiple repositories in tabs**, a **visual commit graph** and a **plugin system**. Built with Electron, React, TypeScript, Tailwind CSS and shadcn/ui. Runs on Windows, macOS and Linux.
 
-> **Status: early development.** Everyday git work (v0.1) plus power features: undo, interactive rebase, a conflict editor, blame, worktrees and workspaces. Plugins are next. See the [roadmap](docs/PLAN.md#5-phased-roadmap) and [changelog](CHANGELOG.md).
+> **Status: early development.** Everyday git work (v0.1) plus power features (undo, interactive rebase, a conflict editor, blame, worktrees and workspaces) plugins, a GitHub integration and optional AI. Polish for v1.0 is next. See the [roadmap](docs/PLAN.md#5-phased-roadmap) and [changelog](CHANGELOG.md).
 
 ## Features
 
@@ -24,8 +24,11 @@ Working now:
 - **Worktrees**, **workspaces** and a dashboard of all your repositories; background fetch
 - **Custom keyboard shortcuts**; open the repository in your terminal or editor
 - Live refresh when files change; light, dark and system themes
+- **Plugins:** commands, right-click menu items, status bar items, sidebar panels, commit badges and settings, installed from npm or a folder. Three come built in: GitHub, Open on Remote and Conventional Commits. [Write your own](docs/PLUGINS.md)
+- **GitHub:** pull requests in the sidebar, CI results on commits, this branch's pull request in the status bar
+- **Optional AI** with your own key (Anthropic, OpenAI-compatible or a local model): commit message suggestions, commit explanations and conflict help. Off until you turn it on
 
-Planned: plugins and optional AI (bring your own key, or turn it off). See [docs/FEATURES.md](docs/FEATURES.md).
+Planned: GitLab/Bitbucket integrations and more. See [docs/FEATURES.md](docs/FEATURES.md).
 
 ## Requirements
 

@@ -6,6 +6,9 @@
  * When every block has a choice, "Save and mark resolved" writes the file
  * and stages it.
  *
+ * With AI turned on, "Ask AI" explains the conflict and suggests a
+ * resolved file (see features/ai/ai-dialog.tsx).
+ *
  * Conflicts without markers (e.g. one side deleted the file) can't be
  * merged line by line, so whole-file choices are offered instead.
  *
@@ -14,7 +17,7 @@
  */
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Check, ExternalLink, Pencil } from 'lucide-react'
+import { Check, ExternalLink, Pencil, Sparkles } from 'lucide-react'
 import {
   chosenLines,
   parseConflicts,
@@ -30,6 +33,8 @@ import { runAction } from '@/lib/run-action'
 import { Button } from '@/components/ui/button'
 import { confirmDialog } from '@/features/dialogs/dialog-store'
 import { useStatus } from '@/features/repos/use-repo-data'
+import { useAiEnabled } from '@/features/ai/ai-client'
+import { resolveConflictWithAi } from '@/features/ai/ai-dialog'
 
 type Conflict = Extract<ConflictSegment, { kind: 'conflict' }>
 
@@ -55,6 +60,7 @@ function sideNames(operation: RepoOperation | null | undefined, conflict: Confli
 
 export function ConflictEditor({ repoPath, file }: { repoPath: string; file: string }) {
   const operation = useStatus(repoPath).data?.operation
+  const aiEnabled = useAiEnabled()
   const { data, error } = useQuery({
     // Under 'diff', so it reloads when the file changes on disk.
     queryKey: [...repoKeys.all(repoPath), 'diff', 'conflict', file],
@@ -133,12 +139,29 @@ export function ConflictEditor({ repoPath, file }: { repoPath: string; file: str
           )
         })}
       </div>
-      <div className="flex shrink-0 items-center gap-2 border-t px-3 py-2">
-        <span className="text-sm text-muted-foreground" role="status">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-t px-3 py-2">
+        <span className="text-sm whitespace-nowrap text-muted-foreground" role="status">
           {resolvedCount} of {conflicts.length} {conflicts.length === 1 ? 'conflict' : 'conflicts'}{' '}
           resolved
         </span>
-        <Button variant="outline" size="sm" className="ml-auto" onClick={openFile}>
+        {aiEnabled && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-auto"
+            onClick={() => resolveConflictWithAi(repoPath, file)}
+            title="Explain this conflict and suggest a resolution with AI"
+          >
+            <Sparkles />
+            Ask AI
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(!aiEnabled && 'ml-auto')}
+          onClick={openFile}
+        >
           <ExternalLink />
           Open in editor
         </Button>

@@ -17,6 +17,9 @@ import { ThemeProvider } from '@/features/theme/theme-provider'
 import { useSettingsStore } from '@/features/settings/settings-store'
 import { useRepos } from '@/features/repos/use-repos'
 import { useRepoSync } from '@/features/repos/use-repo-sync'
+import { usePluginSync } from '@/features/plugins/use-plugin-sync'
+import { QuickPickDialog } from '@/features/plugins/quick-pick-dialog'
+import { AiDialog } from '@/features/ai/ai-dialog'
 import { HomeScreen } from '@/features/home/home-screen'
 import { RepoView } from '@/features/repo-view/repo-view'
 import { GitMissingScreen } from '@/features/git-check/git-missing-screen'
@@ -70,6 +73,7 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
   const { activeRepo } = useRepos()
   useKeyboardShortcuts()
   useRepoSync()
+  usePluginSync()
   const connectCommandLog = useCommandLogStore((s) => s.connect)
   useEffect(() => connectCommandLog(), [connectCommandLog])
 
@@ -84,6 +88,8 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
       <StatusBar gitVersion={gitVersion} repoPath={activeRepo?.path ?? null} />
       <CloneDialog />
       <CompareDialog />
+      <QuickPickDialog />
+      <AiDialog />
       <ScanDialog />
       <Dialogs />
       <AuthPrompt />
