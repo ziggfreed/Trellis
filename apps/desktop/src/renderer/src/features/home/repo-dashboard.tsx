@@ -35,11 +35,13 @@ interface RepoDashboardProps {
 
 export function RepoDashboard(props: RepoDashboardProps) {
   const favourites = useSettingsStore((s) => s.settings.favouriteRepos)
-  // Same query keys as the rest of the app, so open repositories share the cache.
+  // A summary (branch and number of changes) rather than the full status:
+  // with dozens of repositories, full file lists were slow to load and send.
+  // Under repoKeys.all, so refreshing a repository refreshes its row too.
   const statuses = useQueries({
     queries: props.repos.map((repo) => ({
-      queryKey: repoKeys.status(repo.path),
-      queryFn: () => api.invoke('repo:getStatus', repo.path),
+      queryKey: repoKeys.summary(repo.path),
+      queryFn: () => api.invoke('repo:getSummary', repo.path),
       retry: false,
     })),
   })
@@ -65,7 +67,7 @@ export function RepoDashboard(props: RepoDashboardProps) {
         <ul className="divide-y rounded-lg border">
           {props.repos.map((repo, i) => {
             const { data: status, error } = statuses[i]!
-            const changes = status?.files.length ?? 0
+            const changes = status?.changes ?? 0
             const starred = isFavourite(favourites, repo.path)
             return (
               <li key={repo.path} className="group flex items-center">

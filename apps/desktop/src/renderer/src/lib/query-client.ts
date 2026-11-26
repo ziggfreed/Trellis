@@ -24,6 +24,8 @@ export const queryClient = new QueryClient({
 export const repoKeys = {
   all: (path: string) => ['repo', path] as const,
   status: (path: string) => ['repo', path, 'status'] as const,
+  /** The home screen's lighter status (branch and number of changes). */
+  summary: (path: string) => ['repo', path, 'summary'] as const,
   log: (path: string) => ['repo', path, 'log'] as const,
   refs: (path: string) => ['repo', path, 'refs'] as const,
   remotes: (path: string) => ['repo', path, 'remotes'] as const,

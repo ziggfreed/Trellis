@@ -6,6 +6,10 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Scrolling the home screen no longer stutters with many repositories. Each row now loads a lighter status (branch and number of changes, not the whole file list), and only a few load at a time instead of dozens of git processes starting at once.
+
 ### Added
 
 - **Tips on the home screen**: a card shows one useful feature at a time (a different one each day), with arrows to flip through them and a **Learn more** link. Hide it with its **×**, in **Settings > General**, or from the command palette.
