@@ -167,6 +167,9 @@ function FileListPane(props: PaneProps) {
     discard: multi ? 'Discard selected' : staged ? 'Discard staged changes' : 'Discard all',
   }
 
+  /** Nothing to list: show a hint instead. */
+  const empty = entries.length === 0 && !props.conflicts?.length
+
   const onDrop = (event: React.DragEvent) => {
     setDropping(false)
     const raw = event.dataTransfer.getData(DRAG_TYPE[other(area)])
@@ -230,11 +233,17 @@ function FileListPane(props: PaneProps) {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto py-1">
+      <div
+        className="min-h-0 flex-1 overflow-y-auto py-1"
+        // When the list is empty its only content is a hint, which can be
+        // taller than a short pane. Nothing inside is focusable then, so make
+        // the scroll area itself focusable, letting keyboard users scroll it.
+        tabIndex={empty ? 0 : undefined}
+      >
         {props.conflicts && props.conflicts.length > 0 && (
           <ConflictsSection {...props} conflicts={props.conflicts} />
         )}
-        {entries.length === 0 && !props.conflicts?.length ? (
+        {empty ? (
           <p className="px-3 py-2 text-xs text-muted-foreground">
             {staged
               ? 'Nothing staged yet. Stage files below (or drag them here) to choose what goes in the next commit.'
