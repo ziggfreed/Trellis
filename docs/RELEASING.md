@@ -19,7 +19,7 @@ To cancel a release before it's built, close the pull request and delete its bra
 
 It goes through a pull request because `main` only accepts changes that way (a repository rule), and a workflow can't skip that rule even when you start it yourself: its pushes are made by `github-actions[bot]`, not by you.
 
-**One-time setup:** in **Settings → Actions → General → Workflow permissions**, tick **Allow GitHub Actions to create and approve pull requests**, or the workflow can't open the pull request. Pull requests opened by a workflow don't start the CI workflow; that's a GitHub rule, and fine here since the pull request only changes the version and changelog.
+**One-time setup:** in **Settings → Actions → General → Workflow permissions**, tick **Allow GitHub Actions to create and approve pull requests**, or the workflow can't open the pull request. CI runs on the release pull request like on any other (it did for v0.4.0). The pull request only changes the version and changelog, and the Release workflow runs the tests on every platform again before building.
 
 It refuses to run if the Unreleased section is empty, if the version wouldn't be newer than the latest release (or older than the version already in `package.json`), or if a `release/vx.y.z` branch already exists (merge or close that release first). The version logic is in `scripts/release/` and tested with `pnpm test:scripts`; you can try it locally without changing git with `node scripts/release/prepare-release.mjs minor --dry-run`.
 
