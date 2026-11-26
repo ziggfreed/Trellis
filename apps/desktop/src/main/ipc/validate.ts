@@ -11,6 +11,7 @@ import type {
   LogScope,
   PushRequest,
   RebasePlanItem,
+  TimelineRange,
 } from '@shared/ipc'
 
 export function assertString(value: unknown, name: string): asserts value is string {
@@ -99,6 +100,27 @@ export function assertScope(value: unknown): asserts value is LogScope {
 export function assertRefArg(value: unknown, name: string): asserts value is string {
   assertString(value, name)
   if (value.startsWith('-')) throw new TypeError(`${name} must not start with "-"`)
+}
+
+/**
+ * A timeline period: ref names that can't be read as options, Unix-ms dates,
+ * and a sensible limit.
+ */
+export function assertTimelineRange(value: unknown): asserts value is TimelineRange {
+  const range = value as Partial<TimelineRange> | null
+  const isTime = (n: unknown) => typeof n === 'number' && Number.isFinite(n) && n >= 0
+  if (
+    !range ||
+    !isTime(range.since) ||
+    !(range.until === null || isTime(range.until)) ||
+    !Number.isInteger(range.limit) ||
+    range.limit! < 1 ||
+    range.limit! > 20_000
+  ) {
+    throw new TypeError('range must be { refs, since, until, limit } (limit 1 to 20000)')
+  }
+  assertStringArray(range.refs, 'refs')
+  for (const ref of range.refs) assertRefArg(ref, 'ref')
 }
 
 /** A stash position: a whole number, 0 or more. */

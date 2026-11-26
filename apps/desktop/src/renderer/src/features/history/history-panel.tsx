@@ -1,6 +1,7 @@
 /**
  * The top half of the History view: toolbar (branches, search, filter) and
- * the commit list. Runs the search/filter and shares the results with both.
+ * either the commit list or the timeline (switched in the toolbar). Runs the
+ * search/filter and shares the results with both.
  */
 import { useMemo } from 'react'
 import { useCommitSearch } from '@/features/repos/use-repo-data'
@@ -9,9 +10,12 @@ import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { CommitList } from './commit-list'
 import { HistoryToolbar } from './history-toolbar'
 import { buildCommitFilter } from './history-filter'
+import { useSettingsStore } from '@/features/settings/settings-store'
+import { TimelineView } from '@/features/timeline/timeline-view'
 
 export function HistoryPanel({ repoPath }: { repoPath: string }) {
   const [view] = useRepoView(repoPath)
+  const timeline = useSettingsStore((s) => s.settings.historyView) === 'timeline'
   // Wait for typing to pause before asking git.
   const wanted = useMemo(
     () => buildCommitFilter(view.search, view.filter),
@@ -29,7 +33,11 @@ export function HistoryPanel({ repoPath }: { repoPath: string }) {
     <div className="flex h-full min-h-0 flex-col">
       <HistoryToolbar repoPath={repoPath} matches={matches} />
       <div className="min-h-0 flex-1">
-        <CommitList repoPath={repoPath} matches={matchSet} />
+        {timeline ? (
+          <TimelineView repoPath={repoPath} matches={matchSet} />
+        ) : (
+          <CommitList repoPath={repoPath} matches={matchSet} />
+        )}
       </div>
     </div>
   )

@@ -49,6 +49,8 @@ import {
   assertSha,
   assertString,
   assertStringArray,
+  assertRefArg,
+  assertTimelineRange,
 } from './validate'
 
 type IpcHandlers = {
@@ -225,6 +227,25 @@ export function createHandlers(
     'repo:getRefs': (path) => {
       assertString(path, 'path')
       return git.getRefs(path)
+    },
+
+    'repo:getTimeline': (path, range) => {
+      assertString(path, 'path')
+      assertTimelineRange(range)
+      return git.getTimeline(path, range)
+    },
+
+    'repo:getBranchActivity': (path) => {
+      assertString(path, 'path')
+      return git.getBranchActivity(path)
+    },
+
+    'repo:getAheadBehind': (path, base, heads) => {
+      assertString(path, 'path')
+      assertRefArg(base, 'base')
+      assertStringArray(heads, 'heads')
+      for (const head of heads) assertRefArg(head, 'head')
+      return git.getAheadBehind(path, base, heads)
     },
 
     'repo:getRemotes': (path) => {

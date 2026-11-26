@@ -397,6 +397,15 @@ test('wiki screenshots', async () => {
   await filter.getByRole('button', { name: 'Clear filters' }).click()
   await window.keyboard.press('Escape')
 
+  // The timeline: branches as tracks over time, merged branches included.
+  await rows.filter({ hasText: 'Add a dark background' }).click()
+  await window.getByRole('radio', { name: 'Timeline' }).click()
+  await window.getByRole('button', { name: 'Merged branches' }).click()
+  await window.getByRole('button', { name: 'Show all loaded history' }).click()
+  await expect(window.getByTestId('timeline-track').first()).toBeVisible()
+  await shot(window, 'history-timeline')
+  await window.getByRole('radio', { name: 'Graph' }).click()
+
   // Side-by-side diff of a commit.
   await rows.filter({ hasText: 'Follow the system theme' }).click()
   await window

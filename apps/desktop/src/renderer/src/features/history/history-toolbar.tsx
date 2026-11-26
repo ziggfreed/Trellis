@@ -1,6 +1,6 @@
 /**
- * Toolbar above the commit list: which branches to show, Compare, columns
- * and search.
+ * Toolbar above the history: Graph/Timeline switch, which branches to show,
+ * Compare, columns and search.
  *
  * Search matches commit messages, authors and hashes; the Filter popover
  * narrows by author, path, date or code changes. Matching commits are
@@ -8,8 +8,16 @@
  * jump between them, loading more history if a match is further back.
  */
 import { useRef } from 'react'
-import { ChevronDown, ChevronUp, GitCompareArrows, Search, X } from 'lucide-react'
-import type { LogScope } from '@shared/ipc'
+import {
+  ChevronDown,
+  ChevronUp,
+  GitCompareArrows,
+  GitCommitVertical,
+  Search,
+  SquareChartGantt,
+  X,
+} from 'lucide-react'
+import type { HistoryView, LogScope } from '@shared/ipc'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -23,6 +31,9 @@ import { shortcutLabel } from '@/features/shortcuts/shortcut-label'
 import { openCompareDialog } from '@/features/compare/compare-dialog'
 import { FilterPopover } from './filter-popover'
 import { ColumnsDropdown } from './columns-menu'
+import { useSettingsStore } from '@/features/settings/settings-store'
+import { TimelineControls } from '@/features/timeline/branch-picker'
+import { cn } from '@/lib/utils'
 
 export const SCOPE_LABELS: Record<LogScope, string> = {
   all: 'All branches',
@@ -54,33 +65,41 @@ export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
     setView({ selectedSha: matches[next]!, seekSelected: true, selectedFile: null })
   }
 
+  const historyView = useSettingsStore((s) => s.settings.historyView)
+  const timeline = historyView === 'timeline'
+
   return (
     <div className="flex h-9 shrink-0 items-center gap-2 border-b px-2">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground"
-            aria-label="Branches shown"
-          >
-            {SCOPE_LABELS[view.scope]}
-            <ChevronDown />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuRadioGroup
-            value={view.scope}
-            onValueChange={(value) => setView({ scope: value as LogScope })}
-          >
-            {(Object.keys(SCOPE_LABELS) as LogScope[]).map((scope) => (
-              <DropdownMenuRadioItem key={scope} value={scope}>
-                {SCOPE_LABELS[scope]}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <ViewSwitch />
+      {timeline ? (
+        <TimelineControls repoPath={repoPath} />
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              aria-label="Branches shown"
+            >
+              {SCOPE_LABELS[view.scope]}
+              <ChevronDown />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuRadioGroup
+              value={view.scope}
+              onValueChange={(value) => setView({ scope: value as LogScope })}
+            >
+              {(Object.keys(SCOPE_LABELS) as LogScope[]).map((scope) => (
+                <DropdownMenuRadioItem key={scope} value={scope}>
+                  {SCOPE_LABELS[scope]}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       <Button
         variant="ghost"
         size="sm"
@@ -93,7 +112,7 @@ export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
       </Button>
 
       <div className="ml-auto flex items-center gap-1">
-        <ColumnsDropdown />
+        {!timeline && <ColumnsDropdown />}
         <FilterPopover repoPath={repoPath} />
         <div className="flex h-7 w-72 items-center gap-1.5 rounded-md border bg-background px-2 focus-within:ring-2 focus-within:ring-ring/50">
           <Search className="size-3.5 shrink-0 text-muted-foreground" />
@@ -153,6 +172,42 @@ export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+const VIEWS: { id: HistoryView; label: string; icon: typeof GitCommitVertical }[] = [
+  { id: 'graph', label: 'Graph', icon: GitCommitVertical },
+  { id: 'timeline', label: 'Timeline', icon: SquareChartGantt },
+]
+
+/** Switch between the vertical commit graph and the horizontal timeline (remembered). */
+function ViewSwitch() {
+  const current = useSettingsStore((s) => s.settings.historyView)
+  const update = useSettingsStore((s) => s.update)
+  return (
+    <div role="radiogroup" aria-label="History view" className="flex rounded-md border p-0.5">
+      {VIEWS.map(({ id, label, icon: Icon }) => (
+        <button
+          key={id}
+          type="button"
+          role="radio"
+          aria-checked={current === id}
+          title={
+            id === 'graph'
+              ? 'Commit graph: one row per commit'
+              : 'Timeline: branches as tracks over time'
+          }
+          onClick={() => update({ historyView: id })}
+          className={cn(
+            'flex h-6 items-center gap-1 rounded-sm px-2 text-xs text-muted-foreground hover:text-foreground',
+            current === id && 'bg-accent text-foreground',
+          )}
+        >
+          <Icon className="size-3.5" />
+          {label}
+        </button>
+      ))}
     </div>
   )
 }

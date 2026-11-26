@@ -50,6 +50,9 @@ import type {
   RepoStatus,
   StatusSummary,
   Stash,
+  AheadBehind,
+  TimelinePage,
+  TimelineRange,
 } from '@trellis/git/types'
 import type { FilePatch } from '@trellis/git/patch'
 import type { CommandArgs, CommitDecoration, Contributions, PanelItem } from '@trellis/plugin-api'
@@ -123,9 +126,14 @@ export interface Settings {
   pushAfterCommit: boolean
   /** Optional columns shown in the history list, in display order. */
   historyColumns: HistoryColumn[]
+  /** How the history is drawn: the vertical commit graph or the horizontal timeline. */
+  historyView: HistoryView
   /** Show a tip card on the home screen (renderer features/tips). */
   showTips: boolean
 }
+
+/** The history's two views (switched in the history toolbar). */
+export type HistoryView = 'graph' | 'timeline'
 
 /** An optional column of the history list (the graph and message are always shown). */
 export type HistoryColumn = 'changes' | 'author' | 'date' | 'committer' | 'commitDate' | 'sha'
@@ -371,6 +379,15 @@ export interface IpcContract {
     result: string[]
   }
   'repo:getRefs': { args: [path: string]; result: Ref[] }
+  /** Timeline view: commits on some refs within a period (see packages/git timeline.ts). */
+  'repo:getTimeline': { args: [path: string, range: TimelineRange]; result: TimelinePage }
+  /** When each local and remote branch last had a commit: full ref name -> Unix ms. */
+  'repo:getBranchActivity': { args: [path: string]; result: Record<string, number> }
+  /** Commits each of `heads` is ahead of and behind `base`, by head. */
+  'repo:getAheadBehind': {
+    args: [path: string, base: string, heads: string[]]
+    result: Record<string, AheadBehind>
+  }
   'repo:getRemotes': { args: [path: string]; result: Remote[] }
   'repo:getStashes': { args: [path: string]; result: Stash[] }
   'repo:getCommit': { args: [path: string, sha: string]; result: CommitDetails }
@@ -768,6 +785,9 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:getLog': true,
   'repo:findCommits': true,
   'repo:getRefs': true,
+  'repo:getTimeline': true,
+  'repo:getBranchActivity': true,
+  'repo:getAheadBehind': true,
   'repo:getRemotes': true,
   'repo:getStashes': true,
   'repo:getCommit': true,

@@ -12,7 +12,7 @@ Trellis is an open-source (MIT) desktop git client: Electron + React + TypeScrip
 ## State right now
 
 - **All work up to PR #25 is merged into `main`.** No pull requests are open.
-- **Next focus (owner's choice): the history graph**, starting with exploring a horizontal "branch timeline" view (`docs/FEATURES.md`, History section). It was being explored as a design before any code.
+- **Current focus (owner's choice): the history graph.** The first version of the horizontal **timeline view** is built (`features/timeline/`; git side in `packages/git/src/timeline.ts`): tracks per branch over time, zoom, minimap, branch picker, merged branches, stale fading and ahead/behind counts. Ideas for later, agreed with the owner: drag a track onto another to merge or rebase, GitHub pull requests and CI on tracks, bisect range shading, an author activity strip, Gource-style playback, and a minimap for the vertical graph too.
 - **CI** (`.github/workflows/ci.yml`) runs on every pull request (Windows, macOS and Linux) and by hand from the Actions tab; not on push to `main`, since `main` only changes through pull requests and the pull request run already tests the merge result. CI isn't a required check, so the owner may merge before it finishes. Still verify changes locally (commands below). The "Release" workflow builds Windows, macOS and Linux.
 - **Owner's working preferences**:
   - Open a pull request (via `gh api repos/ziggfreed/trellis/pulls`) as soon as a substantial piece of work is finished, without waiting to be asked. Work on a new branch from the latest `main`.
@@ -47,6 +47,7 @@ The roadmap is `docs/PLAN.md` (sections 8–15 record what each phase delivered)
 | #23         | User guide as wiki pages with screenshots (`docs/wiki`, published by `wiki.yml`; `pnpm screenshots`)                                                                                                                      |
 | #24         | Tips card on the home screen and in-app help links, branch folders in the sidebar, Changes ordered by folder, home screen stutter fix                                                                                     |
 | #25         | Release v0.5.0                                                                                                                                                                                                            |
+| (open PR)   | History timeline view: branches as tracks over time, zoom, minimap, branch picker, merged branches, stale fading, ahead/behind counts                                                                                     |
 
 ## What's left
 

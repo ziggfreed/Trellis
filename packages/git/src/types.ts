@@ -119,6 +119,39 @@ export interface Commit {
   body: string
 }
 
+/** A period of history to load for the timeline (see `getTimeline`). */
+export interface TimelineRange {
+  /** Full ref names to follow, e.g. "refs/heads/main". */
+  refs: string[]
+  /** Oldest commit date to include (Unix time in milliseconds). */
+  since: number
+  /** Newest commit date to include, or null for "up to now". */
+  until: number | null
+  /** Most commits to return. */
+  limit: number
+}
+
+export interface TimelinePage {
+  /** Commits in the period, newest first. */
+  commits: Commit[]
+  /**
+   * The start of the period these commits cover completely. Usually `since`;
+   * later when the limit was reached (then older commits in the period are
+   * left for the next request, which should use this as its `until`).
+   */
+  from: number
+  /** True if the refs have commits older than `from`. */
+  hasMore: boolean
+}
+
+/** How far a branch has moved away from another (see `getAheadBehind`). */
+export interface AheadBehind {
+  /** Commits on the branch that the other doesn't have. */
+  ahead: number
+  /** Commits on the other branch that this one doesn't have. */
+  behind: number
+}
+
 // ---------------------------------------------------------------------------
 // Branches, tags, remotes and stashes
 // ---------------------------------------------------------------------------

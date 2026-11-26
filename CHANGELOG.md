@@ -6,6 +6,16 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Timeline view** of the history: switch between **Graph** and **Timeline** above the history (remembered). Each branch is a horizontal track with its commits placed by date, so you can see when branches started, how long they lived, where they merged and what's happening in parallel.
+  - Zoom with Ctrl/Cmd+wheel or the +/− buttons, scroll through time with Shift+wheel, a sideways swipe or by dragging; older history loads as you scroll back.
+  - A **minimap** under the tracks shows all loaded history with the visible part boxed: drag it, drag its edges to zoom, or click to jump.
+  - **Branches** button: by default local branches and recently active remote ones; tick exactly the branches you want, with search.
+  - **Merged branches** shows branches that were merged and deleted, named from their merge commits ("Merge pull request #12 from …").
+  - Each track shows how far the branch is ahead of and behind the main branch; branches with no commits for a month are faded and marked **stale**.
+  - Click a commit for its details, double-click to check out, right-click for actions; arrow keys move along and between tracks. Search and filters fade non-matching commits, as in the graph.
+
 ## [0.5.0] - 2026-11-26
 
 ### Changed

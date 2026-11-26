@@ -58,6 +58,14 @@ for (const theme of ['light', 'dark'] as const) {
       .click()
     await check('history with a diff')
 
+    await window.getByRole('radio', { name: 'Timeline' }).click()
+    await window.getByTestId('timeline-commit').first().click()
+    await check('history timeline')
+    await window.getByRole('button', { name: 'Timeline branches' }).click()
+    await check('timeline branch picker')
+    await window.keyboard.press('Escape')
+    await window.getByRole('radio', { name: 'Graph' }).click()
+
     await window.getByRole('tab', { name: /Changes/ }).click()
     await window
       .getByRole('button', { name: /README\.md/ })
