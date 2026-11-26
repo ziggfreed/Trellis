@@ -6,6 +6,11 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Branch folders**: branches named with slashes are grouped into folders in the sidebar (`feature/login` and `feature/search` under **feature**), nested as deep as the names go, for local and remote branches. The folder holding the current branch starts open.
+- The Changes view lists files by folder, then by name, with new files among the other changes in their folder (they used to be listed last).
+
 ### Fixed
 
 - Scrolling the home screen no longer stutters with many repositories. Each row now loads a lighter status (branch and number of changes, not the whole file list), and only a few load at a time instead of dozens of git processes starting at once.

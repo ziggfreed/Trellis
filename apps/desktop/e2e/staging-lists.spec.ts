@@ -133,3 +133,27 @@ test('discards staged files back to the last commit, and undo brings them back',
   expect(readFileSync(join(repo.path, 'a.txt'), 'utf8')).toBe('a.txt changed\n')
   await app.close()
 })
+
+test('lists changes by folder, then by name, with new files among them', async () => {
+  const repo = createRepo()
+  repo.write('src/app.ts', 'app\n')
+  repo.write('src/ui/button.tsx', 'button\n')
+  repo.commit('source')
+  repo.write('src/app.ts', 'app changed\n')
+  repo.write('src/ui/button.tsx', 'button changed\n')
+  repo.write('src/new.ts', 'new\n') // untracked
+  repo.write('README.md', '# changed\n')
+  repo.write('docs/guide.md', 'guide\n') // untracked
+  const { app, window } = await launch()
+  await openRepo(app, window, repo.path)
+  await window.getByRole('tab', { name: /Changes/ }).click()
+
+  const rows = list(window, 'Unstaged').getByRole('listitem')
+  await expect(rows).toHaveCount(5)
+  const order = await rows.allTextContents()
+  // Each row shows the file name, then its folder (e.g. "app.ts src/").
+  const position = (file: string) => order.findIndex((text) => text.includes(file))
+  const expected = ['README.md', 'guide.md', 'app.ts', 'new.ts', 'button.tsx']
+  expect(expected.map(position)).toEqual([0, 1, 2, 3, 4])
+  await app.close()
+})

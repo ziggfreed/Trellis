@@ -4,7 +4,7 @@ When you open a repository, its tab looks like this:
 
 ![The repository window, with numbered parts](images/repo-window.png)
 
-1. **Sidebar.** Your branches, remotes, worktrees, tags and stashes, plus panels added by plugins (such as GitHub's pull requests). Click an item to show its commit in the history. **Right-click** any item for its actions (check out, merge, rename, delete, push…), and **double-click** a branch to switch to it. Collapse a section by clicking its heading.
+1. **Sidebar.** Your branches, remotes, worktrees, tags and stashes, plus panels added by plugins (such as GitHub's pull requests). Click an item to show its commit in the history. **Right-click** any item for its actions (check out, merge, rename, delete, push…), and **double-click** a branch to switch to it. Collapse a section by clicking its heading. Branches named like `feature/login` are grouped into folders.
 2. **History and Changes.** Switch between the commit graph (**History**, `Ctrl+Shift+H`) and your uncommitted work (**Changes**, `Ctrl+Shift+G`). The number on Changes is how many files you've changed.
 3. **Toolbar.** Undo and redo, **Fetch**, **Pull** and **Push** (the arrows next to Pull and Push have more options, such as pull with rebase or force push), **Branch** to create one, **Stash** to put your changes aside, and a button to open the folder.
 4. **History.** Every commit as a graph, newest first, with branch and tag labels. See [History and diffs](History-and-Diffs).

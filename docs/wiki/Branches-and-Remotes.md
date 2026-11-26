@@ -11,6 +11,14 @@ A **branch** is a line of work. You usually keep `main` working and do each chan
 
 Right-click a branch for everything else: rename, delete, merge, rebase, push, compare, and more.
 
+### Branch folders
+
+Branches named with slashes are grouped into folders, like files: `feature/login` and `feature/search` appear inside a **feature** folder, and `team/ann/fix` inside **team › ann**. Click a folder to open or close it; the number shows how many branches are inside. The folder holding the branch you're on starts open. Remote branches are grouped the same way under their remote.
+
+![Branch folders in the sidebar, with "feature" open](images/branch-folders.png)
+
+Branches in folders work exactly like the others: double-click, right-click and drag them as usual.
+
 ### What the markers mean
 
 The sidebar shows how each branch relates to its remote:

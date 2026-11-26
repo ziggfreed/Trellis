@@ -42,7 +42,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 | Pri | Feature                                                                                  | Status                                                                           |
 | --- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| P0  | File status list (staged / unstaged / untracked / conflicted), tree or flat view         | ✅ (flat list)                                                                   |
+| P0  | File status list (staged / unstaged / untracked / conflicted), tree or flat view         | ✅ (flat list, ordered by folder)                                                |
 | P1  | Staged and unstaged in separate lists; multi-select, drag between them, per-list actions | ✅                                                                               |
 | P1  | Stash only some files (from the Changes view)                                            | ✅                                                                               |
 | P0  | Stage/unstage/discard file                                                               | ✅                                                                               |
@@ -71,7 +71,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 | Pri | Feature                                                                                         | Status                                    |
 | --- | ----------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| P0  | Sidebar: local branches, remotes, tags, stashes                                                 | ✅                                        |
+| P0  | Sidebar: local branches, remotes, tags, stashes; branch folders (feature/x)                     | ✅                                        |
 | P0  | Create / checkout / rename / delete branch (double-click to check out, incl. remote branches)   | ✅                                        |
 | P0  | Fetch / pull (merge or rebase) / push, with progress and ahead/behind counts                    | ✅                                        |
 | P0  | Merge branch (with conflict detection)                                                          | ✅                                        |

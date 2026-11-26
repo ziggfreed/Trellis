@@ -360,6 +360,21 @@ test('wiki screenshots', async () => {
   await shot(window, 'repo-window')
   await clearAnnotations(window)
 
+  // Branch folders in the sidebar: open "feature" (and close it again after).
+  const featureFolder = nav
+    .getByRole('group', { name: 'feature folder' })
+    .first()
+    .getByRole('button', { name: /^feature/ })
+  await featureFolder.click()
+  // Just the top of the sidebar: the rest is empty.
+  const navBox = (await nav.boundingBox())!
+  await window.waitForTimeout(300)
+  await window.screenshot({
+    path: join(OUT, 'branch-folders.png'),
+    clip: { x: navBox.x, y: navBox.y, width: navBox.width, height: 440 },
+  })
+  await featureFolder.click()
+
   // The command palette, then one of its pickers.
   await window.keyboard.press('Control+K')
   const palette = window.getByRole('dialog', { name: 'Command palette' })

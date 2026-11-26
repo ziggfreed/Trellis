@@ -75,6 +75,11 @@ export interface ItemProps extends React.ComponentProps<'button'> {
   selected: boolean
   strong?: boolean
   indent?: boolean
+  /**
+   * Nesting depth inside branch folders (branch-tree-view.tsx). Each level
+   * indents by one step; it replaces `indent` when given.
+   */
+  depth?: number
   /** Shown before the label (e.g. a status icon). */
   leading?: React.ReactNode
   trailing?: React.ReactNode
@@ -89,10 +94,12 @@ export function Item({
   selected,
   strong,
   indent,
+  depth,
   leading,
   trailing,
   title,
   className,
+  style,
   ...rest
 }: ItemProps) {
   return (
@@ -100,9 +107,10 @@ export function Item({
       type="button"
       title={title ?? label}
       {...rest}
+      style={depth === undefined ? style : { ...style, paddingLeft: itemIndent(depth) }}
       className={cn(
         'flex w-full items-center gap-2 py-1 pr-2 text-left hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent',
-        indent ? 'pl-12' : 'pl-8',
+        depth === undefined && (indent ? 'pl-12' : 'pl-8'),
         selected && 'bg-sidebar-accent',
         className,
       )}
@@ -115,4 +123,12 @@ export function Item({
       {trailing}
     </button>
   )
+}
+
+/**
+ * Left padding of an item at a folder depth, in pixels: 2rem (like `pl-8`)
+ * plus 1rem per level, so depth 1 lines up with `indent` (`pl-12`).
+ */
+export function itemIndent(depth: number): number {
+  return 32 + depth * 16
 }
