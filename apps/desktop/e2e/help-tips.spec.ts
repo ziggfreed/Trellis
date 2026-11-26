@@ -29,7 +29,7 @@ test('opens the user guide from the status bar and the command palette', async (
   await window.getByRole('button', { name: 'User guide' }).click()
   await expect.poll(opened).toEqual(['https://github.com/ziggfreed/Trellis/wiki'])
 
-  await window.keyboard.press('Control+K')
+  await window.keyboard.press('ControlOrMeta+K')
   const palette = window.getByRole('dialog', { name: 'Command palette' })
   await palette.getByRole('combobox').fill('choose a page')
   await window.keyboard.press('Enter')
@@ -66,7 +66,7 @@ test('flips through tips, and hiding them is remembered', async () => {
   const again = await launch(userData)
   await expect(again.window.getByRole('heading', { name: 'Welcome to Trellis' })).toBeVisible()
   await expect(tipsCard(again.window)).toBeHidden()
-  await again.window.keyboard.press('Control+,')
+  await again.window.keyboard.press('ControlOrMeta+,')
   const checkbox = again.window.getByRole('checkbox', { name: 'Show tips on the home screen' })
   await expect(checkbox).not.toBeChecked()
   await checkbox.check()
@@ -80,12 +80,12 @@ test('the command palette hides and shows tips', async () => {
   await expect(tipsCard(window)).toBeVisible()
   const palette = window.getByRole('dialog', { name: 'Command palette' })
 
-  await window.keyboard.press('Control+K')
+  await window.keyboard.press('ControlOrMeta+K')
   await palette.getByRole('combobox').fill('hide tips')
   await window.keyboard.press('Enter')
   await expect(tipsCard(window)).toBeHidden()
 
-  await window.keyboard.press('Control+K')
+  await window.keyboard.press('ControlOrMeta+K')
   await palette.getByRole('combobox').fill('show tips')
   await window.keyboard.press('Enter')
   await expect(tipsCard(window)).toBeVisible()

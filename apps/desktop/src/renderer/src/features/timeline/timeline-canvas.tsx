@@ -12,7 +12,7 @@ import type { Commit } from '@shared/ipc'
 import { formatRelativeDate, shortSha } from '@/lib/format'
 import { CommitMenu } from '@/features/repo-actions/menus'
 import { clusterByX, xOf, type Cluster, type Domain, type Viewport } from './time-scale'
-import type { TimelineModel } from './tracks'
+import type { TimelineModel, Track } from './tracks'
 
 export const ROW_HEIGHT = 32
 export const rowY = (row: number) => row * ROW_HEIGHT + ROW_HEIGHT / 2
@@ -143,14 +143,45 @@ export const TimelineCanvas = memo(function TimelineCanvas(props: TimelineCanvas
 
   // Branches with no commit of their own on screen.
   const markers: React.ReactNode[] = []
+  const shortDate = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' })
+  /**
+   * A pointer at the left or right edge of a row whose commits are all off
+   * screen, so the row doesn't look empty; click it to scroll there.
+   */
+  const edgeHint = (track: Track, index: number, time: number, text: string) => {
+    const left = x(time) < 0
+    markers.push(
+      <text
+        key={`edge-${track.id}`}
+        x={left ? 8 : width - 8}
+        y={rowY(track.row) + 4}
+        textAnchor={left ? 'start' : 'end'}
+        data-testid="timeline-edge-hint"
+        className="cursor-pointer fill-muted-foreground text-xs hover:fill-foreground"
+        {...HALO}
+        opacity={faded(index) ? 0.6 : 1}
+        onClick={() => props.onJumpTo(time)}
+      >
+        {left ? `← ${text} ${shortDate.format(time)}` : `${text} ${shortDate.format(time)} →`}
+      </text>,
+    )
+  }
   model.tracks.forEach((track, index) => {
     const y = rowY(track.row)
-    if (track.tip === 'shared' && track.ref) {
+    if (track.tip === 'own' && track.ref) {
+      const dates = track.commits.map((sha) => model.placed.get(sha)!.commit.commitDate)
+      if (!dates.some((date) => x(date) >= 0 && x(date) <= width)) {
+        const newest = Math.max(...dates)
+        if (x(newest) < 0) edgeHint(track, index, newest, 'last commit')
+        else edgeHint(track, index, Math.min(...dates), 'first commit')
+      }
+    } else if (track.tip === 'shared' && track.ref) {
       // The branch points at a commit on another track: a hollow dot here,
       // joined to it with a dotted line.
       const commit = commitsBySha.get(track.ref.sha)
       if (!commit) return
       const cx = x(commit.commitDate)
+      if (cx < 0 || cx > width) edgeHint(track, index, commit.commitDate, 'at')
       if (!onScreen(cx)) return
       const owner = model.placed.get(track.ref.sha)
       markers.push(
@@ -280,17 +311,21 @@ export const TimelineCanvas = memo(function TimelineCanvas(props: TimelineCanvas
 
   return (
     <svg width={width} height={height} className="block select-none">
-      {Array.from({ length: model.rows }, (_, row) => (
-        <line
-          key={row}
-          x1={0}
-          x2={width}
-          y1={(row + 1) * ROW_HEIGHT - 0.5}
-          y2={(row + 1) * ROW_HEIGHT - 0.5}
-          className="stroke-border"
-          strokeOpacity={0.5}
-        />
-      ))}
+      {/* Every other row is shaded, here and behind the branch names, so
+          each name lines up visibly with its track. */}
+      {Array.from({ length: model.rows }, (_, row) =>
+        row % 2 === 1 ? (
+          <rect
+            key={row}
+            x={0}
+            y={row * ROW_HEIGHT}
+            width={width}
+            height={ROW_HEIGHT}
+            className="fill-muted"
+            fillOpacity={0.6}
+          />
+        ) : null,
+      )}
       {nowX >= 0 && nowX <= width && (
         <line
           x1={nowX}

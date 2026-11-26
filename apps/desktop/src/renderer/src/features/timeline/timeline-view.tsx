@@ -19,7 +19,7 @@
  * check out, right-click for actions.
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Locate, Maximize2, ZoomIn, ZoomOut } from 'lucide-react'
+import { GitMerge, Locate, Maximize2, ZoomIn, ZoomOut } from 'lucide-react'
 import type { Commit, Ref } from '@shared/ipc'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -29,7 +29,7 @@ import { useRepoView } from '@/features/repo-view/repo-view-store'
 import { BranchMenu } from '@/features/repo-actions/menus'
 import { checkoutChoice, openCompare } from '@/features/repo-actions/actions'
 import { checkoutChoiceForCommit, checkoutChoiceForRef } from '@/features/history/checkout-target'
-import { buildTimeline, type Track } from './tracks'
+import { buildTimeline, type TimelineModel, type Track } from './tracks'
 import { isStale, localRefName } from './timeline-refs'
 import { axisTicks, clampViewport, viewportFor, xOf, zoomAt, type Viewport } from './time-scale'
 import { ROW_HEIGHT, TimelineCanvas, rowY, type HoverInfo } from './timeline-canvas'
@@ -322,6 +322,12 @@ export function TimelineView({ repoPath, matches }: TimelineViewProps) {
         <div className="flex" style={{ height: canvasHeight }}>
           <TrackLabels
             repoPath={repoPath}
+            model={model}
+            visible={
+              viewport
+                ? { from: viewport.start, to: viewport.start + width * viewport.msPerPx }
+                : null
+            }
             tracks={model.tracks}
             mergedRowStart={model.mergedRowStart}
             rows={rowCount}
@@ -478,8 +484,33 @@ function Axis({ viewport, width }: { viewport: Viewport; width: number }) {
   )
 }
 
+/**
+ * Names of the merged branches sharing a row: those on screen if any, else
+ * all of them. Newest first.
+ */
+function mergedRowNames(
+  tracks: readonly Track[],
+  row: number,
+  model: TimelineModel,
+  visible: { from: number; to: number } | null,
+): string[] {
+  const onRow = tracks
+    .filter((track) => track.row === row && !track.ref)
+    .map((track) => {
+      const dates = track.commits.map((sha) => model.placed.get(sha)!.commit.commitDate)
+      const end = model.placed.get(track.mergedInto ?? '')?.commit.commitDate ?? Math.max(...dates)
+      return { name: track.name, start: Math.min(...dates), end }
+    })
+    .sort((a, b) => b.end - a.end)
+  const shown = visible ? onRow.filter((t) => t.end >= visible.from && t.start <= visible.to) : []
+  return (shown.length > 0 ? shown : onRow).map((t) => t.name)
+}
+
 interface TrackLabelsProps {
   repoPath: string
+  model: TimelineModel
+  /** The dates on screen, to name the merged branches in view. */
+  visible: { from: number; to: number } | null
   tracks: Track[]
   mergedRowStart: number | null
   rows: number
@@ -496,6 +527,16 @@ function TrackLabels(props: TrackLabelsProps) {
   const { tracks, refsByName, counts, base } = props
   return (
     <div className="relative shrink-0 border-r" style={{ width: LABEL_WIDTH }}>
+      {/* Shading on every other row, matching the tracks. */}
+      {Array.from({ length: props.rows }, (_, row) =>
+        row % 2 === 1 ? (
+          <div
+            key={`band-${row}`}
+            className="absolute inset-x-0 bg-muted/60"
+            style={{ top: row * ROW_HEIGHT, height: ROW_HEIGHT }}
+          />
+        ) : null,
+      )}
       {tracks.map((track, i) => {
         if (!track.ref) return null
         const ref = refsByName.get(track.ref.fullName)
@@ -507,7 +548,7 @@ function TrackLabels(props: TrackLabelsProps) {
             data-testid="timeline-track"
             data-stale={stale || undefined}
             className={cn(
-              'absolute inset-x-0 flex cursor-default items-center gap-1.5 border-b border-border/50 px-2 text-sm hover:bg-accent/50',
+              'absolute inset-x-0 flex cursor-default items-center gap-1.5 px-2 text-sm hover:bg-accent/50',
               stale && 'opacity-50',
             )}
             style={{ top: track.row * ROW_HEIGHT, height: ROW_HEIGHT }}
@@ -559,15 +600,22 @@ function TrackLabels(props: TrackLabelsProps) {
         )
       })}
       {props.mergedRowStart !== null &&
-        Array.from({ length: props.rows - props.mergedRowStart }, (_, i) => (
-          <div
-            key={`merged-${i}`}
-            className="absolute inset-x-0 flex items-center border-b border-border/50 px-2 text-xs text-muted-foreground italic"
-            style={{ top: (props.mergedRowStart! + i) * ROW_HEIGHT, height: ROW_HEIGHT }}
-          >
-            {i === 0 && 'Merged branches'}
-          </div>
-        ))}
+        Array.from({ length: props.rows - props.mergedRowStart }, (_, i) => {
+          const row = props.mergedRowStart! + i
+          const names = mergedRowNames(tracks, row, props.model, props.visible)
+          return (
+            <div
+              key={`merged-${row}`}
+              data-testid="timeline-merged-row"
+              className="absolute inset-x-0 flex items-center gap-1.5 px-2 text-xs text-muted-foreground italic"
+              style={{ top: row * ROW_HEIGHT, height: ROW_HEIGHT }}
+              title={`Merged branches: ${names.join(', ')}`}
+            >
+              <GitMerge className="size-3 shrink-0" />
+              <span className="truncate">{names.join(', ')}</span>
+            </div>
+          )
+        })}
     </div>
   )
 }

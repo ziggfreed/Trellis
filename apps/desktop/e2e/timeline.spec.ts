@@ -97,7 +97,8 @@ test('shows branches as tracks, with merged branches on request', async () => {
 
   await window.getByRole('button', { name: 'Merged branches' }).click()
   await expect(dot(window, 'login 1')).toBeVisible()
-  await expect(window.getByText('Merged branches', { exact: true }).last()).toBeVisible()
+  // Its row is labelled with its name, next to the track.
+  await expect(window.getByTestId('timeline-merged-row')).toContainText('login')
   await expect(window.locator('svg text', { hasText: /^login$/ })).toBeVisible()
 
   // The choice of view is remembered: back to the graph and the list returns.
@@ -177,6 +178,9 @@ test('zooming changes the part of history shown in the minimap', async () => {
   // scroll back (here by clicking the start of the minimap).
   await window.getByRole('button', { name: 'Zoom in' }).click()
   await expect(dot(window, 'base work')).toHaveCount(0)
+  // spike's only commit is off screen now: its row points to where it is.
+  const spikeHint = window.getByTestId('timeline-edge-hint').filter({ hasText: 'last commit' })
+  await expect(spikeHint).toHaveCount(1)
   const minimap = window.getByTestId('timeline-minimap')
   const area = (await minimap.boundingBox())!
   await minimap.click({ position: { x: 4, y: area.height / 2 } })

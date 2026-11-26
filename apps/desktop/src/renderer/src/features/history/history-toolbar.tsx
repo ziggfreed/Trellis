@@ -69,7 +69,7 @@ export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
   const timeline = historyView === 'timeline'
 
   return (
-    <div className="flex h-9 shrink-0 items-center gap-2 border-b px-2">
+    <div className="@container flex h-9 shrink-0 items-center gap-2 border-b px-2">
       <ViewSwitch />
       {timeline ? (
         <TimelineControls repoPath={repoPath} />
@@ -104,17 +104,19 @@ export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
         variant="ghost"
         size="sm"
         className="text-muted-foreground"
+        aria-label="Compare…"
         title="Compare two branches, tags or commits (or Ctrl/Cmd+click a second commit)"
         onClick={() => openCompareDialog(repoPath)}
       >
         <GitCompareArrows />
-        Compare…
+        {/* Labels drop out when the toolbar is narrow; the icons stay. */}
+        <span className="hidden @4xl:inline">Compare…</span>
       </Button>
 
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex min-w-0 items-center gap-1">
         {!timeline && <ColumnsDropdown />}
         <FilterPopover repoPath={repoPath} />
-        <div className="flex h-7 w-72 items-center gap-1.5 rounded-md border bg-background px-2 focus-within:ring-2 focus-within:ring-ring/50">
+        <div className="flex h-7 w-72 min-w-24 shrink items-center gap-1.5 rounded-md border bg-background px-2 focus-within:ring-2 focus-within:ring-ring/50">
           <Search className="size-3.5 shrink-0 text-muted-foreground" />
           <input
             ref={inputRef}
@@ -193,6 +195,7 @@ function ViewSwitch() {
           type="button"
           role="radio"
           aria-checked={current === id}
+          aria-label={label}
           title={
             id === 'graph'
               ? 'Commit graph: one row per commit'
@@ -205,7 +208,7 @@ function ViewSwitch() {
           )}
         >
           <Icon className="size-3.5" />
-          {label}
+          <span className="hidden @2xl:inline">{label}</span>
         </button>
       ))}
     </div>

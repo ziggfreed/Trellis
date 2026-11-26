@@ -34,6 +34,7 @@ export function TimelineControls({ repoPath }: { repoPath: string }) {
         variant="ghost"
         size="sm"
         aria-pressed={view.timelineShowMerged}
+        aria-label="Merged branches"
         title="Also show branches that were merged and deleted, named from their merge commits"
         className={cn(
           'text-muted-foreground',
@@ -42,7 +43,7 @@ export function TimelineControls({ repoPath }: { repoPath: string }) {
         onClick={() => setView({ timelineShowMerged: !view.timelineShowMerged })}
       >
         <GitMerge />
-        Merged branches
+        <span className="hidden @4xl:inline">Merged branches</span>
       </Button>
     </>
   )
@@ -86,7 +87,13 @@ function BranchPicker({ repoPath }: { repoPath: string }) {
           className="text-muted-foreground"
           aria-label="Timeline branches"
         >
-          {view.timelineRefs ? `${tracks.length} branches` : `Branches: default (${tracks.length})`}
+          {view.timelineRefs ? (
+            `${tracks.length} branches`
+          ) : (
+            <>
+              Branches<span className="hidden @4xl:inline">: default</span> ({tracks.length})
+            </>
+          )}
           <ChevronDown />
         </Button>
       </PopoverTrigger>
