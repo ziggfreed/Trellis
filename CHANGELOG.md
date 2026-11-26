@@ -6,6 +6,10 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Double-clicking a branch to check it out now responds straight away: a "Switching to …" message shows while git works (a big repository, or a background fetch that's still running, can make that take a few seconds) and changes to "Switched to …" once the branch list shows it. Double-clicking the branch you're already on says so instead of doing nothing.
+
 ## [0.4.0] - 2026-11-26
 
 ### Fixed

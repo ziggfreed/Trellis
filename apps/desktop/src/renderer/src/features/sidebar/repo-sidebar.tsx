@@ -70,7 +70,12 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
               label={branch.name}
               selected={view.selectedSha === branch.sha}
               onClick={() => select(branch.sha)}
-              onDoubleClick={() => !branch.isHead && void checkoutBranch(repoPath, branch.name)}
+              onDoubleClick={() =>
+                // Say so rather than do nothing, which looks like a missed click.
+                branch.isHead
+                  ? toast.info(`${branch.name} is already checked out`)
+                  : void checkoutBranch(repoPath, branch.name)
+              }
               strong={branch.isHead}
               title={`${branchTooltip(branch, refs)} Double-click to check out; right-click for more.`}
               trailing={<AheadBehind branch={branch} refs={refs} hasRemotes={remotes.length > 0} />}
