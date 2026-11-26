@@ -6,6 +6,8 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-26
+
 ### Changed
 
 - **Branch folders**: branches named with slashes are grouped into folders in the sidebar (`feature/login` and `feature/search` under **feature**), nested as deep as the names go, for local and remote branches. The folder holding the current branch starts open.
