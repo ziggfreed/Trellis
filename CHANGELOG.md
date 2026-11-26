@@ -9,7 +9,7 @@ All notable changes to Trellis are listed here. The format follows
 ### Changed
 
 - **Branch folders**: branches named with slashes are grouped into folders in the sidebar (`feature/login` and `feature/search` under **feature**), nested as deep as the names go, for local and remote branches. The folder holding the current branch starts open.
-- The Changes view lists files by folder, then by name, with new files among the other changes in their folder (they used to be listed last).
+- The Changes view lists files by folder, then by name, so each folder's changes are together. In Unstaged, new files still come after changes to existing files, sorted the same way.
 
 ### Fixed
 

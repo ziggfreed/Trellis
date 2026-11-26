@@ -134,7 +134,7 @@ test('discards staged files back to the last commit, and undo brings them back',
   await app.close()
 })
 
-test('lists changes by folder, then by name, with new files among them', async () => {
+test('lists tracked changes, then new files, each by folder and name', async () => {
   const repo = createRepo()
   repo.write('src/app.ts', 'app\n')
   repo.write('src/ui/button.tsx', 'button\n')
@@ -153,7 +153,7 @@ test('lists changes by folder, then by name, with new files among them', async (
   const order = await rows.allTextContents()
   // Each row shows the file name, then its folder (e.g. "app.ts src/").
   const position = (file: string) => order.findIndex((text) => text.includes(file))
-  const expected = ['README.md', 'guide.md', 'app.ts', 'new.ts', 'button.tsx']
+  const expected = ['README.md', 'app.ts', 'button.tsx', 'guide.md', 'new.ts']
   expect(expected.map(position)).toEqual([0, 1, 2, 3, 4])
   await app.close()
 })

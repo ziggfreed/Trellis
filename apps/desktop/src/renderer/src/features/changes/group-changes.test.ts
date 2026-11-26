@@ -19,17 +19,19 @@ describe('groupChanges', () => {
     expect(countChanges(groups)).toBe(6)
   })
 
-  it('lists new (untracked) files with the other changes in their folder', () => {
+  it('lists tracked changes first, then new (untracked) files, each by folder and name', () => {
     const groups = groupChanges([
       { path: 'src/new.ts', staged: null, unstaged: 'untracked' },
       { path: 'src/app.ts', staged: null, unstaged: 'modified' },
       { path: 'README.md', staged: null, unstaged: 'modified' },
       { path: 'docs/guide.md', staged: null, unstaged: 'untracked' },
+      { path: 'NOTES.md', staged: null, unstaged: 'untracked' },
     ])
     expect(groups.unstaged.map((e) => e.path)).toEqual([
       'README.md',
-      'docs/guide.md',
       'src/app.ts',
+      'NOTES.md',
+      'docs/guide.md',
       'src/new.ts',
     ])
   })

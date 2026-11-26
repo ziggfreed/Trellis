@@ -5,7 +5,9 @@
  * keep editing it, it has both staged and unstaged changes.
  *
  * Each group is ordered by folder, then by file name (comparePaths), so all
- * the changes in one folder are listed together.
+ * the changes in one folder are listed together. In the unstaged group,
+ * new (untracked) files come after changes to tracked files, sorted the
+ * same way.
  */
 import type { ChangeKind, FileStatus } from '@shared/ipc'
 
@@ -20,12 +22,13 @@ export interface ChangeEntry {
 export interface ChangeGroups {
   conflicted: ChangeEntry[]
   staged: ChangeEntry[]
-  /** Unstaged changes, including untracked (new) files. */
+  /** Unstaged changes to tracked files, then untracked (new) files. */
   unstaged: ChangeEntry[]
 }
 
 export function groupChanges(files: FileStatus[]): ChangeGroups {
   const groups: ChangeGroups = { conflicted: [], staged: [], unstaged: [] }
+  const untracked: ChangeEntry[] = []
 
   for (const file of files) {
     if (file.unstaged === 'conflicted') {
@@ -41,14 +44,16 @@ export function groupChanges(files: FileStatus[]): ChangeGroups {
       })
     }
     if (file.unstaged) {
-      groups.unstaged.push({ path: file.path, change: file.unstaged, area: 'unstaged' })
+      const entry: ChangeEntry = { path: file.path, change: file.unstaged, area: 'unstaged' }
+      if (file.unstaged === 'untracked') untracked.push(entry)
+      else groups.unstaged.push(entry)
     }
   }
 
   const byPath = (a: ChangeEntry, b: ChangeEntry) => comparePaths(a.path, b.path)
   groups.conflicted.sort(byPath)
   groups.staged.sort(byPath)
-  groups.unstaged.sort(byPath)
+  groups.unstaged = [...groups.unstaged.sort(byPath), ...untracked.sort(byPath)]
   return groups
 }
 

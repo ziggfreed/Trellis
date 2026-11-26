@@ -11,7 +11,7 @@ Open the **Changes** view (`Ctrl+Shift+G`, or **Changes** at the top):
 - The **diff** of the selected file is on the right.
 - The **commit box** is at the bottom left.
 
-Both lists are ordered by folder, then by file name, so all the changes in one folder (including new files) are listed together. Drag the divider between the two lists to resize them.
+Both lists are ordered by folder, then by file name, so all the changes in one folder are listed together. In Unstaged, new files come after changes to existing files, sorted the same way. Drag the divider between the two lists to resize them.
 
 ## Staging files
 
