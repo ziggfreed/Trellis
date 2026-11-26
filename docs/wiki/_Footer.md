@@ -1,0 +1,1 @@
+These pages are kept in [`docs/wiki`](https://github.com/ziggfreed/Trellis/tree/main/docs/wiki) in the Trellis repository and published here automatically. To fix or improve one, edit it there and open a pull request; edits made directly on the wiki are overwritten.

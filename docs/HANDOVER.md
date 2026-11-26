@@ -16,6 +16,7 @@ Trellis is an open-source (MIT) desktop git client: Electron + React + TypeScrip
 - **Owner's working preferences**:
   - Open a pull request (via `gh api repos/ziggfreed/trellis/pulls`) as soon as a substantial piece of work is finished, without waiting to be asked. Work on a new branch from the latest `main`.
   - Use Conventional Commit messages.
+  - User docs: the wiki pages live in `docs/wiki` (synced to the GitHub wiki on merge; edits made on github.com are overwritten). Update the relevant page when a feature changes, and regenerate screenshots with `pnpm screenshots` (apps/desktop) when the UI changes.
   - Releases: Actions → **New release** opens a `chore(release): vX.Y.Z` pull request (version bump + changelog); merging it tags the release and builds a draft release (`tag-release.yml`). `main` only accepts changes through pull requests (the "Branch cleanliness" ruleset). See `docs/RELEASING.md`.
   - Don't delete remote branches (the environment blocks it anyway; tell the owner which ones can go).
 
@@ -53,22 +54,22 @@ The roadmap is `docs/PLAN.md` (sections 8–15 record what each phase delivered)
 
 ## Files to read to get up to speed
 
-| File                                      | Why                                                                                                   |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `CLAUDE.md`                               | Rules for AI assistants working on the repo (short; read first)                                       |
-| `CONTRIBUTING.md`                         | Repo layout, how to run things, conventions                                                           |
-| `docs/ARCHITECTURE.md`                    | How main/preload/renderer fit together, IPC, data freshness, undo, security, plugins, AI              |
-| `docs/FEATURES.md`                        | Every feature and its status                                                                          |
-| `docs/PLAN.md`                            | Roadmap and what each phase delivered                                                                 |
-| `CHANGELOG.md`                            | User-facing changes since v0.2.0 (the Unreleased section)                                             |
-| `docs/USER_GUIDE.md`                      | How the app is used, feature by feature                                                               |
-| `docs/PLUGINS.md`                         | Plugin authoring guide, API reference, and a map of the plugin internals                              |
-| `docs/RELEASING.md`                       | Making a release, code signing secrets, auto-update                                                   |
-| `apps/desktop/src/shared/ipc.ts`          | The typed contract of every UI → main call and main → UI event (best single overview of capabilities) |
-| `apps/desktop/src/main/ipc/*.ts`          | Handlers: `handlers.ts` (core), `write-handlers.ts`, `tool-handlers.ts`, `content-handlers.ts`        |
-| `packages/git/src/index.ts`               | Everything the git layer offers, one module per area                                                  |
-| `apps/desktop/src/renderer/src/features/` | UI, one folder per feature                                                                            |
-| `apps/desktop/e2e/`                       | End-to-end tests; good executable examples of each feature                                            |
+| File                                      | Why                                                                                                                                                    |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CLAUDE.md`                               | Rules for AI assistants working on the repo (short; read first)                                                                                        |
+| `CONTRIBUTING.md`                         | Repo layout, how to run things, conventions                                                                                                            |
+| `docs/ARCHITECTURE.md`                    | How main/preload/renderer fit together, IPC, data freshness, undo, security, plugins, AI                                                               |
+| `docs/FEATURES.md`                        | Every feature and its status                                                                                                                           |
+| `docs/PLAN.md`                            | Roadmap and what each phase delivered                                                                                                                  |
+| `CHANGELOG.md`                            | User-facing changes since v0.2.0 (the Unreleased section)                                                                                              |
+| `docs/wiki/`                              | The user guide, published to the GitHub wiki by `.github/workflows/wiki.yml`; update it with features. Screenshots: `pnpm screenshots` in apps/desktop |
+| `docs/PLUGINS.md`                         | Plugin authoring guide, API reference, and a map of the plugin internals                                                                               |
+| `docs/RELEASING.md`                       | Making a release, code signing secrets, auto-update                                                                                                    |
+| `apps/desktop/src/shared/ipc.ts`          | The typed contract of every UI → main call and main → UI event (best single overview of capabilities)                                                  |
+| `apps/desktop/src/main/ipc/*.ts`          | Handlers: `handlers.ts` (core), `write-handlers.ts`, `tool-handlers.ts`, `content-handlers.ts`                                                         |
+| `packages/git/src/index.ts`               | Everything the git layer offers, one module per area                                                                                                   |
+| `apps/desktop/src/renderer/src/features/` | UI, one folder per feature                                                                                                                             |
+| `apps/desktop/e2e/`                       | End-to-end tests; good executable examples of each feature                                                                                             |
 
 ## Checking changes locally
 

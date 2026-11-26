@@ -1,0 +1,51 @@
+# Publishes docs/wiki to the repository's GitHub wiki.
+#
+# The wiki pages are kept in this repository (docs/wiki), so they're
+# reviewed in pull requests like code. When changes to them reach main,
+# this copies the folder to the wiki (a separate git repository,
+# <repo>.wiki.git) and pushes it. The wiki is replaced to match the folder,
+# so edit the pages here, not on github.com: edits made there are
+# overwritten next time. To publish without a change (e.g. after editing
+# the wiki by mistake), run it from Actions > "Publish wiki" > Run workflow.
+#
+# The wiki must already exist: GitHub only creates its repository once the
+# first page has been saved on github.com.
+name: Publish wiki
+
+on:
+  push:
+    branches: [main]
+    paths: ['docs/wiki/**']
+  workflow_dispatch:
+
+concurrency:
+  group: wiki
+  cancel-in-progress: false
+
+permissions:
+  contents: write # push to the wiki repository
+
+jobs:
+  publish:
+    name: Publish docs/wiki
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy the pages to the wiki and push
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" wiki
+          # Mirror the folder: add and update pages, and remove ones deleted here.
+          rsync -a --delete --exclude .git docs/wiki/ wiki/
+          cd wiki
+          git add -A
+          if git diff --cached --quiet; then
+            echo "The wiki is already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update from ${GITHUB_REPOSITORY}@${SHA::7}"
+          git push
