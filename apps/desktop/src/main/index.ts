@@ -5,6 +5,7 @@
  * the IPC handlers that the UI calls. Git work lives in @trellis/git and the
  * handlers in ./ipc, so keep this file about app/window lifecycle only.
  */
+import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { app, BrowserWindow, shell, nativeTheme } from 'electron'
 import { registerIpcHandlers } from './ipc/handlers'
@@ -17,7 +18,21 @@ if (process.env.TRELLIS_USER_DATA_DIR) {
   app.setPath('userData', process.env.TRELLIS_USER_DATA_DIR)
 }
 
+/**
+ * The app icon as a PNG. Installers get their icons from build/icon.png at
+ * packaging time, but a window still needs telling which icon to show when
+ * running from source (otherwise it's Electron's default) and on Linux. The
+ * packaged app carries a copy in its resources folder (electron-builder.yml).
+ */
+function appIconPath(): string | undefined {
+  const path = app.isPackaged
+    ? join(process.resourcesPath, 'icon.png')
+    : join(app.getAppPath(), 'build', 'icon.png')
+  return existsSync(path) ? path : undefined
+}
+
 function createWindow(): BrowserWindow {
+  const icon = appIconPath()
   const window = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -27,6 +42,8 @@ function createWindow(): BrowserWindow {
     show: false, // shown once the page has rendered, to avoid a white flash
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#0a0a0a' : '#ffffff',
     autoHideMenuBar: true,
+    // Window and taskbar icon on Windows and Linux (macOS uses the dock icon).
+    ...(icon ? { icon } : {}),
     webPreferences: {
       preload: join(import.meta.dirname, '../preload/index.cjs'),
       // Security: the UI is treated like an untrusted web page.
@@ -68,6 +85,10 @@ if (!app.requestSingleInstanceLock()) {
 
   void app.whenReady().then(async () => {
     app.setAppUserModelId('dev.trellis.app') // Windows taskbar grouping
+    // macOS: the packaged app's dock icon comes from its .icns; running from
+    // source, set it here so it isn't Electron's.
+    const icon = appIconPath()
+    if (process.platform === 'darwin' && !app.isPackaged && icon) app.dock?.setIcon(icon)
     const services = await registerIpcHandlers(new SettingsStore(app.getPath('userData')))
     app.on('will-quit', () => {
       services.dispose()
