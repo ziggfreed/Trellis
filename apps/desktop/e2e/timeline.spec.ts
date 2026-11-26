@@ -177,6 +177,9 @@ test('zooming changes the part of history shown in the minimap', async () => {
   // Zoomed in on the last few days, older commits are off screen until you
   // scroll back (here by clicking the start of the minimap).
   await window.getByRole('button', { name: 'Zoom in' }).click()
+  // Zooming keeps the middle in place, so how far back the view reaches
+  // depends on the window's width; jump to today to show only the last week.
+  await window.getByRole('button', { name: 'Go to today' }).click()
   await expect(dot(window, 'base work')).toHaveCount(0)
   // spike's only commit is off screen now: its row points to where it is.
   const spikeHint = window.getByTestId('timeline-edge-hint').filter({ hasText: 'last commit' })
