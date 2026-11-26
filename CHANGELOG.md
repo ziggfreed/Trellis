@@ -6,6 +6,8 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-26
+
 ### Fixed
 
 - Very long error messages (for example a failed fetch, which included every "Receiving objects" progress line) no longer grow past the top of the screen: git's progress lines are left out, long messages scroll, and toasts have a close button. Tall dialogs scroll too.
