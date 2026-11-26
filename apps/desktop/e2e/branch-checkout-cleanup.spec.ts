@@ -4,6 +4,7 @@
  * aren't on a remote, and cleaning up squash-merged and abandoned branches.
  */
 import { execFileSync } from 'node:child_process'
+import { chmodSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
 import { cleanupTempDirs, createRepo, launch, openRepo, tempDir } from './helpers'
@@ -137,5 +138,32 @@ test('cleans up a squash-merged branch and offers an abandoned one', async () =>
 
   await window.keyboard.press('ControlOrMeta+z')
   await expect.poll(branches).toEqual(['abandoned', 'main', 'squashed'])
+  await app.close()
+})
+
+test('double-clicking a local branch in the sidebar shows it is switching straight away', async () => {
+  const repo = createRepo()
+  repo.git('branch', 'slow')
+  // A slow post-checkout hook stands in for a big repository (or a checkout
+  // waiting for a background fetch): the switch takes a while to finish.
+  repo.write('.git/hooks/post-checkout', '#!/bin/sh\nsleep 2\n')
+  chmodSync(join(repo.path, '.git/hooks/post-checkout'), 0o755)
+
+  const { app, window } = await launch()
+  await openRepo(app, window, repo.path)
+  await sidebar(window).getByRole('button', { name: /^slow/ }).dblclick()
+  // Feedback appears before git has finished...
+  await expect(window.getByText('Switching to slow…')).toBeVisible({ timeout: 1000 })
+  // ...and turns into the result once the sidebar shows the new branch.
+  await expect(window.getByText('Switched to slow')).toBeVisible()
+  await expect(window.getByText('Switching to slow…')).toHaveCount(0)
+  expect(currentBranch(repo)).toBe('slow')
+  // The current branch's button is named "Current branch slow".
+  const current = sidebar(window).getByRole('button', { name: /^Current branch slow/ })
+  await expect(current).toBeVisible()
+
+  // Double-clicking the branch you're on says so instead of doing nothing.
+  await current.dblclick()
+  await expect(window.getByText('slow is already checked out')).toBeVisible()
   await app.close()
 })

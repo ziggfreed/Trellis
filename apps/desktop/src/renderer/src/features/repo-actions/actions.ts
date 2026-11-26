@@ -143,6 +143,7 @@ export async function createBranch(repo: string, startPoint?: { ref: string; lab
 
 export function checkoutBranch(repo: string, name: string) {
   return runAction(repo, () => api.invoke('repo:checkout', repo, { kind: 'branch', name }), {
+    pending: `Switching to ${name}…`,
     success: `Switched to ${name}`,
   })
 }
@@ -153,7 +154,7 @@ export function checkoutRemoteBranch(repo: string, ref: Ref) {
   return runAction(
     repo,
     () => api.invoke('repo:checkout', repo, { kind: 'remote-branch', name: ref.name, localName }),
-    { success: `Switched to ${localName}` },
+    { pending: `Switching to ${localName}…`, success: `Switched to ${localName}` },
   )
 }
 
@@ -164,7 +165,11 @@ export async function checkoutCommit(repo: string, sha: string) {
       'You’ll be on this commit directly, not on a branch (“detached HEAD”). New commits here won’t belong to any branch unless you create one.',
     confirmLabel: 'Check out',
   })
-  if (ok) await runAction(repo, () => api.invoke('repo:checkout', repo, { kind: 'commit', sha }))
+  if (ok)
+    await runAction(repo, () => api.invoke('repo:checkout', repo, { kind: 'commit', sha }), {
+      pending: `Checking out ${shortSha(sha)}…`,
+      success: `Checked out ${shortSha(sha)}`,
+    })
 }
 
 /**
