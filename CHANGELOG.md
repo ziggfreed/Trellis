@@ -16,7 +16,6 @@ All notable changes to Trellis are listed here. The format follows
   - Each track shows how far the branch is ahead of and behind the main branch; branches with no commits for a month are faded and marked **stale**.
   - Click a commit for its details, double-click to check out, right-click for actions; arrow keys move along and between tracks. Search and filters fade non-matching commits, as in the graph.
 - **Keep a branch highlighted** in the commit graph: click its label (or choose **Highlight** from the commit's or the sidebar branch's right-click menu) and its line of commits stays highlighted while you scroll. A bar above the list shows which branch; `Esc` or its **✕** clears it.
-- **Keep a branch highlighted** in the commit graph: click its label (or choose **Highlight** from the commit's or the sidebar branch's right-click menu) and its line of commits stays highlighted while you scroll. A bar above the list shows which branch; `Esc` or its **✕** clears it.
 
 ## [0.5.0] - 2026-11-26
 
