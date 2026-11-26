@@ -4,6 +4,21 @@ The **History** view (`Ctrl+Shift+H`) shows every commit as a graph, newest firs
 
 The list loads as you scroll and stays smooth even with hundreds of thousands of commits.
 
+## The timeline
+
+Switch between **Graph** and **Timeline** at the top left of the history; Trellis remembers your choice. The timeline turns history on its side: time runs left to right and **each branch gets its own track**, so you can see when a branch started, how long it has been going, where it merged and what was happening at the same time.
+
+![The timeline, with merged branches shown](images/history-timeline.png)
+
+- **Moving around**: Ctrl/Cmd+mouse wheel (or the magnifier buttons, or `+`/`-`) zooms; Shift+wheel, a sideways swipe or dragging the background scrolls through time. The other buttons show all loaded history or go back to today. Older history loads as you scroll back.
+- **The minimap** under the tracks shows all loaded history, with the visible part in a box. Drag the box, drag its edges to zoom, or click anywhere to jump there.
+- **Commits** work as in the graph: click for details, `Ctrl`+click to compare, double-click to check out, right-click for actions. Commits too close together to draw apart become a pill with a count; click it to zoom in. Hover for the message, author and date. With the timeline focused, ←/→ move along a track and ↑/↓ jump to the nearest commit on the track above or below.
+- **Which branches**: by default your local branches and remote branches with commits in the last two weeks (the main branch first, then the one you're on). Click **Branches** to tick exactly the ones you want, with a search box: handy when you're chasing a problem across a few branches. **Use default** goes back.
+- **Merged branches**: branches that were merged and then deleted have no name in git any more, but their merge commit usually remembers it ("Merge branch 'login'", "Merge pull request #12 from …"). Turn this on to show them, named from those messages.
+- **Branch health**: next to each name, ↑ is how many commits the branch has that the main branch doesn't, and ↓ how many the main branch has that it doesn't. Branches with no commits for a month are faded and marked **stale**.
+
+Search and filters work in the timeline too: commits that don't match are faded.
+
 ## Looking at a commit
 
 Click a commit to see its details and the files it changed below the graph. Click a file to see its diff. Use the arrow keys to move up and down the list.
@@ -11,7 +26,7 @@ Click a commit to see its details and the files it changed below the graph. Clic
 ![A commit's details and a side-by-side diff](images/commit-details.png)
 
 - **Unified or side by side**: the two buttons at the top right of the diff. Your choice is remembered (and can be set in Settings).
-- **Hover over a branch label** to highlight that branch's commits and fade the rest.
+- **Hover over a branch label** to highlight that branch's line of commits and fade the rest. **Click the label** (or right-click the commit, or the branch in the sidebar, and choose **Highlight**) to keep it highlighted while you scroll; a bar above the list shows which branch it is. Press `Esc` or click **✕** in the bar to stop. The line starts at the branch's commit and follows each commit's first parent back in time, so commits that came in through merges are faded.
 - **Click a parent's hash** in the details to jump to it.
 
 ### Pictures, Markdown and JSON

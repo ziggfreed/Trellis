@@ -23,20 +23,20 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 2. Commit graph & history
 
-| Pri | Feature                                                                      | Status                                  |
-| --- | ---------------------------------------------------------------------------- | --------------------------------------- |
-| P0  | **Commit graph** with coloured lanes, merges, branch/tag/HEAD/remote badges  | ✅                                      |
-| P0  | Virtualised list that stays smooth at 100k+ commits (lazy loading)           | ✅ 60 fps at 100k commits               |
-| P0  | Commit details panel: message, author, date, parents, changed files, diff    | ✅                                      |
-| P1  | Choose history columns (changes, author, dates, committer, hash), remembered | ✅                                      |
-| P1  | Filter graph: by branch, author, path, date range; "current branch only"     | ✅                                      |
-| P1  | Search: message, SHA, author, **pickaxe (`-S`/`-G`) content search**         | ✅ (`-S`; regex `-G` to do)             |
-| P1  | Collapse/expand merged branches, hide remote branches                        | 🟨 hide remotes ("Local branches") done |
-| P1  | Compare any two commits/branches                                             | ✅ Compare dialog, Ctrl/Cmd+click       |
-| P2  | Minimap / timeline scrubber for long histories                               | ⬜                                      |
-| P2  | Keep the checked-out branch in the leftmost graph lane                       | ✅                                      |
-| P2  | Highlight a branch's commits when hovering its badge                         | ✅                                      |
-| 💡  | Alternative "branch timeline" view (horizontal, GitKraken/Gource-style)      | ⬜                                      |
+| Pri | Feature                                                                      | Status                                                                                                                |
+| --- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| P0  | **Commit graph** with coloured lanes, merges, branch/tag/HEAD/remote badges  | ✅                                                                                                                    |
+| P0  | Virtualised list that stays smooth at 100k+ commits (lazy loading)           | ✅ 60 fps at 100k commits                                                                                             |
+| P0  | Commit details panel: message, author, date, parents, changed files, diff    | ✅                                                                                                                    |
+| P1  | Choose history columns (changes, author, dates, committer, hash), remembered | ✅                                                                                                                    |
+| P1  | Filter graph: by branch, author, path, date range; "current branch only"     | ✅                                                                                                                    |
+| P1  | Search: message, SHA, author, **pickaxe (`-S`/`-G`) content search**         | ✅ (`-S`; regex `-G` to do)                                                                                           |
+| P1  | Collapse/expand merged branches, hide remote branches                        | 🟨 hide remotes ("Local branches") done                                                                               |
+| P1  | Compare any two commits/branches                                             | ✅ Compare dialog, Ctrl/Cmd+click                                                                                     |
+| P2  | Minimap / timeline scrubber for long histories                               | 🟨 minimap in the timeline view; not yet in the graph                                                                 |
+| P2  | Keep the checked-out branch in the leftmost graph lane                       | ✅                                                                                                                    |
+| P2  | Highlight a branch's commits when hovering its badge                         | ✅ click a label (or Highlight in a menu) to keep it highlighted while scrolling                                      |
+| 💡  | Alternative "branch timeline" view (horizontal, GitKraken/Gource-style)      | ✅ Timeline view: tracks per branch, zoom, minimap, branch picker, merged branches, stale fading, ahead/behind counts |
 
 ## 3. Working copy, staging & committing
 

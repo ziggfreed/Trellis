@@ -96,14 +96,21 @@ test('stashes just the selected files, keeping the rest', async () => {
   const { repo, app, window } = await openWithChanges()
   await row(window, 'Unstaged', 'a.txt').getByRole('button', { name: 'Stage' }).click()
   await expect.poll(() => staged(repo)).toEqual(['a.txt'])
+  // Wait for the lists to show it too: selecting while they're still
+  // refreshing can lose the selection on slow machines.
+  await expect(list(window, 'Unstaged').getByRole('listitem')).toHaveCount(2)
 
-  await row(window, 'Unstaged', 'b.txt')
-    .getByRole('button', { name: /b\.txt/ })
-    .click()
-  await row(window, 'Unstaged', 'c.txt')
-    .getByRole('button', { name: /c\.txt/ })
-    .click({ modifiers: ['ControlOrMeta'] })
-  await list(window, 'Unstaged').getByRole('button', { name: 'Stash selected' }).click()
+  const stashSelected = list(window, 'Unstaged').getByRole('button', { name: 'Stash selected' })
+  await expect(async () => {
+    await row(window, 'Unstaged', 'b.txt')
+      .getByRole('button', { name: /b\.txt/ })
+      .click()
+    await row(window, 'Unstaged', 'c.txt')
+      .getByRole('button', { name: /c\.txt/ })
+      .click({ modifiers: ['ControlOrMeta'] })
+    await expect(stashSelected).toBeVisible({ timeout: 2000 })
+  }).toPass()
+  await stashSelected.click()
   const dialog = window.getByRole('dialog')
   await dialog.getByRole('textbox').fill('for later')
   await dialog.getByRole('button', { name: 'Stash' }).click()

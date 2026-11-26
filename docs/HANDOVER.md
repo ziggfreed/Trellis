@@ -1,17 +1,18 @@
 # Handover: where Trellis is up to
 
-A snapshot for whoever (human or AI assistant) picks up the work next. Last updated 2026-11-25, after PR #14 was merged.
+A snapshot for whoever (human or AI assistant) picks up the work next. Last updated 2026-11-26, after PR #25 (the v0.5.0 release) was merged.
 
 ## The project
 
 Trellis is an open-source (MIT) desktop git client: Electron + React + TypeScript + Tailwind v4 + shadcn/ui, in a pnpm monorepo. Windows is the main platform; macOS and Linux are supported too. The owner wants code that contributors can follow: header comments on new files, comments explaining _why_ on anything complex, and doc comments on exported functions (see `CLAUDE.md`).
 
 - Repository: `ziggfreed/Trellis` on GitHub (**public**). Main branch: `main`.
-- App version: **0.3.0** (`apps/desktop/package.json`; not released yet; the last release was v0.2.0). `CHANGELOG.md`'s `## [Unreleased]` section lists everything since.
+- App version: **0.5.0** (`apps/desktop/package.json`), released 2026-11-26. Tags exist for v0.1.0–v0.5.0; the v0.5.0 GitHub release is still a **draft** for the owner to check and publish. `CHANGELOG.md`'s `## [Unreleased]` section is empty, ready for the next changes.
 
 ## State right now
 
-- **All work up to PR #14 is merged into `main`.**
+- **All work up to PR #25 is merged into `main`.** No pull requests are open.
+- **Current focus (owner's choice): the history graph.** The first version of the horizontal **timeline view** is built (`features/timeline/`; git side in `packages/git/src/timeline.ts`): tracks per branch over time, zoom, minimap, branch picker, merged branches, stale fading and ahead/behind counts. Ideas for later, agreed with the owner: drag a track onto another to merge or rebase, GitHub pull requests and CI on tracks, bisect range shading, an author activity strip, Gource-style playback, and a minimap for the vertical graph too.
 - **CI** (`.github/workflows/ci.yml`) runs on every pull request (Windows, macOS and Linux) and by hand from the Actions tab; not on push to `main`, since `main` only changes through pull requests and the pull request run already tests the merge result. CI isn't a required check, so the owner may merge before it finishes. Still verify changes locally (commands below). The "Release" workflow builds Windows, macOS and Linux.
 - **Owner's working preferences**:
   - Open a pull request (via `gh api repos/ziggfreed/trellis/pulls`) as soon as a substantial piece of work is finished, without waiting to be asked. Work on a new branch from the latest `main`.
@@ -24,19 +25,29 @@ Trellis is an open-source (MIT) desktop git client: Electron + React + TypeScrip
 
 The roadmap is `docs/PLAN.md` (sections 8–15 record what each phase delivered).
 
-| Phase / PR | What                                                                                                                                                                                                                      |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0–3        | Scaffold, read-only client, commit graph, everyday write operations (stage/commit/branch/merge/fetch/pull/push…), command palette, git command log                                                                        |
-| 4          | Undo/redo, interactive rebase, conflict editor, blame, file history, compare, drag and drop, worktrees, workspaces, background fetch, custom shortcuts                                                                    |
-| #5         | Repo management (scan folder, favourites), history filters, compare fixes                                                                                                                                                 |
-| 5          | Plugin system: plugin host process, manifest, palette/menu/status-bar contributions, Settings > Plugins, npm/folder install, built-in plugins Open on Remote + Conventional Commits, `create-trellis-plugin`              |
-| 6          | Plugin API 0.3 (sidebar panels, commit badges, secrets, operation events), built-in GitHub plugin (PRs, CI badges), built-in AI (bring your own key: Anthropic or OpenAI-compatible; commit messages, explain, conflicts) |
-| 7 (#8)     | Onboarding (git name/email), accessibility (axe checks in e2e), auto-update (electron-updater), signing-ready releases, app icon, performance (lazy diff editor), user guide                                              |
-| #9         | Manage remotes, commit signatures + signing settings, reflog browser ("find lost commits"), .gitignore helper, delete merged branches                                                                                     |
-| #10        | Submodules, Git LFS, editing in the diff, rendered Markdown and JSON diffs                                                                                                                                                |
-| #11        | Image diffs (side by side / swipe / onion skin), bisect assistant, stacked branches                                                                                                                                       |
-| #13        | Double-click to check out (remote branches, history commits and labels), "local"/"gone" branch markers, clean-up finds squash- and rebase-merged branches                                                                 |
-| #14        | Remembered panel sizes and history columns (Changes, Committer, Commit date), commit-and-push, side-by-side hunks in Changes, themed scrollbars, deleting merged remote branches                                          |
+| Phase / PR  | What                                                                                                                                                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0–3         | Scaffold, read-only client, commit graph, everyday write operations (stage/commit/branch/merge/fetch/pull/push…), command palette, git command log                                                                        |
+| 4           | Undo/redo, interactive rebase, conflict editor, blame, file history, compare, drag and drop, worktrees, workspaces, background fetch, custom shortcuts                                                                    |
+| #5          | Repo management (scan folder, favourites), history filters, compare fixes                                                                                                                                                 |
+| 5           | Plugin system: plugin host process, manifest, palette/menu/status-bar contributions, Settings > Plugins, npm/folder install, built-in plugins Open on Remote + Conventional Commits, `create-trellis-plugin`              |
+| 6           | Plugin API 0.3 (sidebar panels, commit badges, secrets, operation events), built-in GitHub plugin (PRs, CI badges), built-in AI (bring your own key: Anthropic or OpenAI-compatible; commit messages, explain, conflicts) |
+| 7 (#8)      | Onboarding (git name/email), accessibility (axe checks in e2e), auto-update (electron-updater), signing-ready releases, app icon, performance (lazy diff editor), user guide                                              |
+| #9          | Manage remotes, commit signatures + signing settings, reflog browser ("find lost commits"), .gitignore helper, delete merged branches                                                                                     |
+| #10         | Submodules, Git LFS, editing in the diff, rendered Markdown and JSON diffs                                                                                                                                                |
+| #11         | Image diffs (side by side / swipe / onion skin), bisect assistant, stacked branches                                                                                                                                       |
+| #13         | Double-click to check out (remote branches, history commits and labels), "local"/"gone" branch markers, clean-up finds squash- and rebase-merged branches                                                                 |
+| #14         | Remembered panel sizes and history columns (Changes, Committer, Commit date), commit-and-push, side-by-side hunks in Changes, themed scrollbars, deleting merged remote branches                                          |
+| #15, #19–21 | "New release" workflow (release through a `chore(release)` pull request, tagged on merge); CI only on pull requests                                                                                                       |
+| #16         | Staged and unstaged as separate lists, multi-select, drag between them, stash only some files, discard staged files                                                                                                       |
+| #17         | Reuse a recent commit message from a dropdown                                                                                                                                                                             |
+| #18         | Long error messages stay on screen (progress lines dropped, scrolling toasts); macOS and Linux release builds fixed                                                                                                       |
+| #20         | Release v0.4.0                                                                                                                                                                                                            |
+| #22         | Double-click checkout shows "Switching to …" straight away                                                                                                                                                                |
+| #23         | User guide as wiki pages with screenshots (`docs/wiki`, published by `wiki.yml`; `pnpm screenshots`)                                                                                                                      |
+| #24         | Tips card on the home screen and in-app help links, branch folders in the sidebar, Changes ordered by folder, home screen stutter fix                                                                                     |
+| #25         | Release v0.5.0                                                                                                                                                                                                            |
+| (open PR)   | History timeline view: branches as tracks over time, zoom, minimap, branch picker, merged branches, stale fading, ahead/behind counts                                                                                     |
 
 ## What's left
 
@@ -80,7 +91,7 @@ pnpm test                                   # unit tests, all packages
 cd apps/desktop && npx electron-vite build && xvfb-run -a npx playwright test --trace off   # e2e (Linux)
 ```
 
-At the last run: all unit tests and all 83 e2e tests passed on Linux. A few e2e tests are timing-sensitive on slow Windows CI runners and have flaked there before; re-running passed them.
+At the last run all unit tests and e2e tests passed on Linux. A few e2e tests are timing-sensitive on slow CI runners: they have flaked on Windows before, and the macOS e2e job failed on some PR #24 runs while Windows and Linux passed. Re-running has passed them so far; if one keeps failing, make that test wait for a visible state rather than a fixed time.
 
 Gotchas seen in this environment:
 

@@ -36,6 +36,7 @@ const INITIAL: Settings = {
   panelLayouts: {},
   pushAfterCommit: false,
   historyColumns: ['author', 'date', 'sha'],
+  historyView: 'graph',
   // Off until the saved settings load, so the tip card doesn't flash up for
   // people who turned tips off (the saved default is on).
   showTips: false,

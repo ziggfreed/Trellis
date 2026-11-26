@@ -42,6 +42,18 @@ export interface RepoViewState {
   search: string
   /** History filter: author, path, dates, code changes (see history-filter.ts). */
   filter: HistoryFilter
+  /**
+   * Branch whose line of commits stays highlighted in the history graph
+   * (full ref name), or null (see features/history/pinned-highlight.ts).
+   */
+  highlightRef: string | null
+  /**
+   * Branches given a track in the history timeline (full ref names), or null
+   * for the default choice (see features/timeline/timeline-refs.ts).
+   */
+  timelineRefs: string[] | null
+  /** Show branches that were merged and deleted as tracks in the timeline. */
+  timelineShowMerged: boolean
   /** Commit message being written (kept while switching tabs). */
   commitSummary: string
   commitDescription: string
@@ -61,6 +73,9 @@ const DEFAULT_VIEW: RepoViewState = {
   scope: 'all',
   search: '',
   filter: {},
+  highlightRef: null,
+  timelineRefs: null,
+  timelineShowMerged: false,
   commitSummary: '',
   commitDescription: '',
   amend: false,

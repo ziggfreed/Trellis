@@ -36,6 +36,8 @@ import { openPruneDialog } from '@/features/repo-tools/prune-dialog'
 import { LfsMenuItems } from '@/features/lfs/lfs'
 import { BisectMenuItems } from '@/features/bisect/bisect'
 import { openStack } from '@/features/stacks/stack-dialog'
+import { highlightInHistory, togglePinnedHighlight } from '@/features/history/pinned-highlight'
+import { useRefs } from '@/features/repos/use-repo-data'
 
 interface MenuProps {
   repo: string
@@ -82,6 +84,9 @@ export function BranchMenu({ repo, branch, children }: MenuProps & { branch: Ref
             </>
           )}
           <ContextMenuSeparator />
+          <ContextMenuItem onSelect={() => highlightInHistory(repo, branch)}>
+            Highlight in history
+          </ContextMenuItem>
           <ContextMenuItem
             disabled={branch.isHead}
             onSelect={() => void actions.openCompare(repo, branch.name)}
@@ -144,6 +149,9 @@ export function RemoteBranchMenu({ repo, branch, children }: MenuProps & { branc
             Rebase current branch onto this…
           </ContextMenuItem>
           <ContextMenuSeparator />
+          <ContextMenuItem onSelect={() => highlightInHistory(repo, branch)}>
+            Highlight in history
+          </ContextMenuItem>
           <ContextMenuItem onSelect={() => void actions.openCompare(repo, branch.name)}>
             Compare with current branch
           </ContextMenuItem>
@@ -250,10 +258,21 @@ export function CommitMenu({ repo, commit, children }: MenuProps & { commit: Com
   // The commit selected in the history list, offered as the other side of a comparison.
   const selectedSha = useRepoViewStore((s) => s.byRepo[repo]?.selectedSha ?? null)
   const aiEnabled = useAiEnabled()
+  // Branches pointing at this commit, offered for highlighting their line.
+  const pinned = useRepoViewStore((s) => s.byRepo[repo]?.highlightRef ?? null)
+  const branches = (useRefs(repo).data ?? []).filter(
+    (ref) => ref.sha === commit.sha && ref.type !== 'tag',
+  )
   return (
     <Menu
       items={
         <>
+          {branches.map((ref) => (
+            <ContextMenuItem key={ref.fullName} onSelect={() => togglePinnedHighlight(repo, ref)}>
+              {pinned === ref.fullName ? `Stop highlighting ${ref.name}` : `Highlight ${ref.name}`}
+            </ContextMenuItem>
+          ))}
+          {branches.length > 0 && <ContextMenuSeparator />}
           <ContextMenuItem
             onSelect={() => void actions.createBranch(repo, { ref: commit.sha, label: short })}
           >

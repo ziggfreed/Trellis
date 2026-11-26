@@ -28,15 +28,21 @@ test('remembers panel sizes and history columns after a restart', async () => {
   let { app, window } = await launch(userData)
   await openRepo(app, window, repo.path)
 
-  // Drag the divider to the right of the sidebar 150px further right.
+  // Drag the divider to the right of the sidebar 150px further right. The
+  // target is fixed, so if a slow machine drops part of the drag (it has on
+  // Windows CI), trying again ends up in the same place.
+  await expect(window.getByTestId('commit-row').first()).toBeVisible()
   const before = await width(window)
   const box = (await sidebar(window).boundingBox())!
-  await window.mouse.move(box.x + box.width + 1, box.y + 200)
-  await window.mouse.down()
-  await window.mouse.move(box.x + box.width + 151, box.y + 200, { steps: 10 })
-  await window.mouse.up()
+  await expect(async () => {
+    const edge = box.x + (await width(window))
+    await window.mouse.move(edge + 1, box.y + 200)
+    await window.mouse.down()
+    await window.mouse.move(box.x + before + 151, box.y + 200, { steps: 10 })
+    await window.mouse.up()
+    expect(await width(window)).toBeGreaterThan(before + 100)
+  }).toPass({ timeout: 10_000 })
   const after = await width(window)
-  expect(after).toBeGreaterThan(before + 100)
 
   // Turn on the Changes column, turn off the Commit (hash) column.
   await window.getByRole('button', { name: 'Columns' }).click()
