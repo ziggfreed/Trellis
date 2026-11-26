@@ -122,7 +122,16 @@ test('hovering a branch label highlights its commits', async () => {
   await openRepo(app, window, repo.path)
 
   const rows = window.getByTestId('commit-row')
-  await rows.locator('[data-ref="refs/heads/side"]').hover()
+  // The list can re-render just after the repository opens (refs and the
+  // graph column load separately), which can swallow the first mouseenter.
+  // Hover again until the highlight shows, so the test isn't flaky.
+  await expect(async () => {
+    await window.mouse.move(0, 0)
+    await rows.locator('[data-ref="refs/heads/side"]').hover()
+    await expect(rows.filter({ hasText: 'merge feature' })).toHaveAttribute('data-dimmed', 'true', {
+      timeout: 1000,
+    })
+  }).toPass()
   // side's line: side work → main work → base commit → initial commit.
   await expect(rows.filter({ hasText: 'side work' })).not.toHaveAttribute('data-dimmed')
   await expect(rows.filter({ hasText: 'base commit' })).not.toHaveAttribute('data-dimmed')

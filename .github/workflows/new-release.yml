@@ -1,4 +1,4 @@
-# Makes a new release from main in one click: Actions > "New release" >
+# Starts a new release from main in one click: Actions > "New release" >
 # Run workflow, then pick how big the change is.
 #
 #   1. Works out the version: the latest v* tag bumped by patch/minor/major,
@@ -6,11 +6,16 @@
 #   2. Sets it in apps/desktop/package.json and moves CHANGELOG.md's
 #      "Unreleased" notes under it (scripts/release/prepare-release.mjs).
 #      Stops if there are no unreleased notes.
-#   3. Commits that to main as "chore(release): vX.Y.Z", tags the commit,
-#      and pushes both together (if either is refused, neither is pushed).
-#   4. Runs the Release workflow (release.yml) for the tag, which builds the
+#   3. Commits that to a new branch, release/vX.Y.Z, and opens a pull request
+#      for it. main only accepts changes through pull requests, so the
+#      workflow never pushes to main itself.
+#   4. When you merge that pull request, tag-release.yml tags the merge commit
+#      and runs the Release workflow (release.yml), which builds the
 #      installers and creates a DRAFT release. Nothing reaches users until you
 #      review the draft and click "Publish release".
+#
+# Needs the repository setting "Allow GitHub Actions to create and approve
+# pull requests" (Settings > Actions > General > Workflow permissions).
 #
 # Tick "Dry run" to see the version and notes it would use, changing nothing.
 # The full guide is docs/RELEASING.md.
@@ -39,7 +44,8 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write # push the release commit and tag, and create the draft release
+  contents: write # push the release branch
+  pull-requests: write # open the release pull request
 
 jobs:
   prepare:
@@ -71,29 +77,36 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           {
-            if [ "$DRY_RUN" = "true" ]; then echo "## Dry run: would release $TAG"; else echo "## Releasing $TAG"; fi
+            if [ "$DRY_RUN" = "true" ]; then echo "## Dry run: would release $TAG"; else echo "## Preparing $TAG (merge the release pull request to build it)"; fi
             echo
             cat release-notes.md
           } >> "$GITHUB_STEP_SUMMARY"
-      - name: Commit, tag and push
+      - name: Push a release branch and open a pull request
         if: ${{ !inputs.dry_run }}
         env:
           TAG: ${{ steps.prepare.outputs.tag }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          branch="release/$TAG"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
           git add apps/desktop/package.json CHANGELOG.md
           git commit -m "chore(release): $TAG"
-          git tag -a "$TAG" -m "Trellis $TAG"
-          # --atomic: if main moved on since this run started (or the tag
-          # exists), nothing is pushed and the run fails; just run it again.
-          git push --atomic origin HEAD:main "$TAG"
-
-  build:
-    name: Build and draft the release
-    needs: prepare
-    if: ${{ !inputs.dry_run }}
-    uses: ./.github/workflows/release.yml
-    with:
-      tag: ${{ needs.prepare.outputs.tag }}
-    secrets: inherit
+          # Fails if the branch already exists (an earlier release pull
+          # request for this version): merge or close that one first.
+          git push origin "$branch"
+          {
+            echo "Merging this pull request releases **$TAG**: it sets the version in \`apps/desktop/package.json\` and moves the Unreleased notes in \`CHANGELOG.md\` under $TAG."
+            echo
+            echo "When it's merged, the **Tag release** workflow tags the merge commit and builds the installers into a **draft** GitHub release. Nothing reaches users until the draft is published."
+            echo
+            echo "To cancel, close this pull request and delete the branch."
+            echo
+            echo "## Release notes"
+            echo
+            cat release-notes.md
+          } > pr-body.md
+          url=$(gh pr create --base main --head "$branch" --title "chore(release): $TAG" --body-file pr-body.md)
+          echo "Opened $url"
+          echo "Release pull request: $url" >> "$GITHUB_STEP_SUMMARY"

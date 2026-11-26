@@ -16,7 +16,7 @@ Trellis is an open-source (MIT) desktop git client: Electron + React + TypeScrip
 - **Owner's working preferences**:
   - Open a pull request (via `gh api repos/ziggfreed/trellis/pulls`) as soon as a substantial piece of work is finished, without waiting to be asked. Work on a new branch from the latest `main`.
   - Use Conventional Commit messages.
-  - Releases: Actions → **New release** (bumps the version from the latest tag, cuts the changelog, tags, builds a draft release). See `docs/RELEASING.md`.
+  - Releases: Actions → **New release** opens a `chore(release): vX.Y.Z` pull request (version bump + changelog); merging it tags the release and builds a draft release (`tag-release.yml`). `main` only accepts changes through pull requests (the "Branch cleanliness" ruleset). See `docs/RELEASING.md`.
   - Don't delete remote branches (the environment blocks it anyway; tell the owner which ones can go).
 
 ## What's been built (by phase)
