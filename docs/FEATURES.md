@@ -35,7 +35,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | P1  | Compare any two commits/branches                                             | ✅ Compare dialog, Ctrl/Cmd+click                                                                                     |
 | P2  | Minimap / timeline scrubber for long histories                               | 🟨 minimap in the timeline view; not yet in the graph                                                                 |
 | P2  | Keep the checked-out branch in the leftmost graph lane                       | ✅                                                                                                                    |
-| P2  | Highlight a branch's commits when hovering its badge                         | ✅                                                                                                                    |
+| P2  | Highlight a branch's commits when hovering its badge                         | ✅ click a label (or Highlight in a menu) to keep it highlighted while scrolling                                      |
 | 💡  | Alternative "branch timeline" view (horizontal, GitKraken/Gource-style)      | ✅ Timeline view: tracks per branch, zoom, minimap, branch picker, merged branches, stale fading, ahead/behind counts |
 
 ## 3. Working copy, staging & committing

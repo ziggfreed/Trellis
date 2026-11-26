@@ -26,7 +26,7 @@ Click a commit to see its details and the files it changed below the graph. Clic
 ![A commit's details and a side-by-side diff](images/commit-details.png)
 
 - **Unified or side by side**: the two buttons at the top right of the diff. Your choice is remembered (and can be set in Settings).
-- **Hover over a branch label** to highlight that branch's commits and fade the rest.
+- **Hover over a branch label** to highlight that branch's line of commits and fade the rest. **Click the label** (or right-click the commit, or the branch in the sidebar, and choose **Highlight**) to keep it highlighted while you scroll; a bar above the list shows which branch it is. Press `Esc` or click **✕** in the bar to stop. The line starts at the branch's commit and follows each commit's first parent back in time, so commits that came in through merges are faded.
 - **Click a parent's hash** in the details to jump to it.
 
 ### Pictures, Markdown and JSON

@@ -12,11 +12,14 @@
  * Ctrl/Cmd+click a second commit to compare the two.
  * Double-click a commit (or one of its branch labels) to check it out: see
  * checkout-target.ts for which branch is picked.
- * Hover a branch label to highlight that branch's line of commits.
+ * Hover a branch label to highlight that branch's line of commits; click it
+ * (or use "Highlight" in a right-click menu) to keep it highlighted while you
+ * scroll. A bar above the list shows the pinned branch; Esc clears it.
  * The columns after the message can be chosen (columns.ts); right-click the
  * headers to change them.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { GitBranch, X } from 'lucide-react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { Commit } from '@shared/ipc'
 import { cn } from '@/lib/utils'
@@ -31,6 +34,7 @@ import { CommitMenu } from '@/features/repo-actions/menus'
 import { checkoutChoice, openCompare } from '@/features/repo-actions/actions'
 import { checkoutChoiceForCommit, checkoutChoiceForRef } from './checkout-target'
 import { firstParentLine, firstParentMap } from './branch-highlight'
+import { clearPinnedHighlight, togglePinnedHighlight } from './pinned-highlight'
 import { handleRefDrop, isRefDrag } from '@/features/drag-drop/drop-menu'
 import { GraphCell, LANE_WIDTH } from './graph-cell'
 import { visibleColumns, type ColumnDef } from './columns'
@@ -86,10 +90,20 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
   const decorations = useCommitDecorations(repoPath)
   const bisect = useBisect(repoPath).data
   const firstParents = useMemo(() => firstParentMap(commits), [commits])
+  // A pinned branch stays highlighted; hovering another label previews it instead.
+  const pinnedRef = view.highlightRef
+    ? refs?.find((ref) => ref.fullName === view.highlightRef)
+    : undefined
+  const highlightTip = hoveredTip ?? pinnedRef?.sha ?? null
   const highlighted = useMemo(
-    () => (hoveredTip ? firstParentLine(firstParents, hoveredTip) : null),
-    [firstParents, hoveredTip],
+    () => (highlightTip ? firstParentLine(firstParents, highlightTip) : null),
+    [firstParents, highlightTip],
   )
+  // Forget a pinned branch that no longer exists (deleted, renamed).
+  const pinnedGone = view.highlightRef !== null && refs !== undefined && !pinnedRef
+  useEffect(() => {
+    if (pinnedGone) clearPinnedHighlight(repoPath)
+  }, [pinnedGone, repoPath])
   const selectedIndex = commits.findIndex((c) => c.sha === view.selectedSha)
 
   // This rule warns that the React Compiler can't optimise this hook. We don't
@@ -142,6 +156,10 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
     setView({ selectedSha: commit.sha, seekSelected: false, selectedFile: null })
 
   const onKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape' && pinnedRef) {
+      clearPinnedHighlight(repoPath)
+      return
+    }
     const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0
     if (!step) return
     event.preventDefault()
@@ -181,6 +199,31 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
           ))}
         </div>
       </ColumnsContextMenu>
+      {pinnedRef && (
+        <div
+          className="flex h-7 shrink-0 items-center gap-1.5 border-b bg-brand/10 px-2 text-xs"
+          data-testid="pinned-highlight"
+        >
+          <GitBranch className="size-3.5 shrink-0 text-brand" />
+          <span className="min-w-0 truncate">
+            Highlighting <span className="font-semibold">{pinnedRef.name}</span>
+            <span className="text-muted-foreground">
+              {' '}
+              · {highlighted?.size ?? 0} loaded {highlighted?.size === 1 ? 'commit' : 'commits'} on
+              its line
+            </span>
+          </span>
+          <button
+            type="button"
+            aria-label="Stop highlighting"
+            title="Stop highlighting (Esc)"
+            onClick={() => clearPinnedHighlight(repoPath)}
+            className="ml-auto rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      )}
       <div
         ref={scrollRef}
         tabIndex={0}
@@ -274,6 +317,12 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
                         key={ref.fullName}
                         gitRef={ref}
                         onHoverChange={(hovering) => setHoveredTip(hovering ? commit.sha : null)}
+                        pinned={ref.fullName === view.highlightRef}
+                        onClick={
+                          ref.type === 'tag'
+                            ? undefined
+                            : () => togglePinnedHighlight(repoPath, ref)
+                        }
                         onDoubleClick={() =>
                           void checkoutChoice(repoPath, checkoutChoiceForRef(ref, refs ?? []))
                         }

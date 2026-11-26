@@ -8,12 +8,18 @@ export function RefBadge({
   gitRef,
   onHoverChange,
   onDoubleClick,
+  onClick,
+  pinned = false,
 }: {
   gitRef: Ref
   /** Called with true/false as the pointer enters/leaves (to highlight the branch). */
   onHoverChange?: (hovering: boolean) => void
   /** Double-click to check this ref out (the row's own double-click is skipped). */
   onDoubleClick?: () => void
+  /** Click to pin (or unpin) the branch's highlight. */
+  onClick?: () => void
+  /** True while this branch's highlight is pinned. */
+  pinned?: boolean
 }) {
   const Icon = gitRef.type === 'tag' ? Tag : gitRef.type === 'remote-branch' ? Cloud : GitBranch
   return (
@@ -21,9 +27,11 @@ export function RefBadge({
       title={
         gitRef.type === 'tag'
           ? `${gitRef.fullName}\nDouble-click to check out`
-          : `${gitRef.fullName}\nDouble-click to check out. Drag onto another branch or commit to merge, rebase or move it`
+          : `${gitRef.fullName}\nClick to highlight its commits, double-click to check out. Drag onto another branch or commit to merge, rebase or move it`
       }
       data-ref={gitRef.fullName}
+      data-pinned={pinned || undefined}
+      onClick={onClick}
       onMouseEnter={() => onHoverChange?.(true)}
       onMouseLeave={() => onHoverChange?.(false)}
       onDoubleClick={
@@ -40,6 +48,7 @@ export function RefBadge({
         gitRef.isHead
           ? 'border-brand/40 bg-brand/15 font-semibold text-foreground'
           : 'bg-muted text-muted-foreground',
+        pinned && 'ring-2 ring-brand',
       )}
     >
       <Icon className="size-3 shrink-0" />

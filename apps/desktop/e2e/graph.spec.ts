@@ -116,6 +116,45 @@ test('keeps the checked-out branch in the leftmost lane', async () => {
   await app.close()
 })
 
+test('clicking a branch label keeps its commits highlighted until cleared', async () => {
+  const repo = repoWithBranches()
+  const { app, window } = await launch()
+  await openRepo(app, window, repo.path)
+  const rows = window.getByTestId('commit-row')
+  const bar = window.getByTestId('pinned-highlight')
+
+  await rows.locator('[data-ref="refs/heads/side"]').click()
+  await expect(bar).toContainText('Highlighting side')
+  // Moving the pointer away (e.g. to scroll) keeps the highlight.
+  await window.mouse.move(0, 0)
+  await expect(rows.filter({ hasText: 'merge feature' })).toHaveAttribute('data-dimmed', 'true')
+  await expect(rows.filter({ hasText: 'side work' })).not.toHaveAttribute('data-dimmed')
+
+  // Esc in the list clears it; so does clicking the label again.
+  await window.getByRole('listbox', { name: 'Commits' }).press('Escape')
+  await expect(bar).toBeHidden()
+  await expect(rows.filter({ hasText: 'merge feature' })).not.toHaveAttribute('data-dimmed')
+
+  // From the commit's right-click menu, and from the sidebar.
+  await rows.filter({ hasText: 'side work' }).click({ button: 'right' })
+  await window.getByRole('menuitem', { name: 'Highlight side' }).click()
+  await expect(bar).toContainText('Highlighting side')
+  await bar.getByRole('button', { name: 'Stop highlighting' }).click()
+  await expect(bar).toBeHidden()
+
+  await window.getByRole('radio', { name: 'Timeline' }).click()
+  await window
+    .getByRole('navigation', { name: 'Repository' })
+    .getByText('feature', { exact: true })
+    .click({ button: 'right' })
+  await window.getByRole('menuitem', { name: 'Highlight in history' }).click()
+  // Switches back to the graph to show it.
+  await expect(bar).toContainText('Highlighting feature')
+  await expect(rows.filter({ hasText: 'feature work' })).not.toHaveAttribute('data-dimmed')
+  await expect(rows.filter({ hasText: 'side work' })).toHaveAttribute('data-dimmed', 'true')
+  await app.close()
+})
+
 test('hovering a branch label highlights its commits', async () => {
   const repo = repoWithBranches()
   const { app, window } = await launch()
