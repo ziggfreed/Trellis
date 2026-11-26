@@ -1,4 +1,4 @@
-/** Home screen repository management: scanning a folder, and favourites. */
+/** Home screen repository management: scanning a folder, favourites, and the status shown for each repository. */
 import { execFileSync } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
 import { basename, join } from 'node:path'
@@ -48,5 +48,24 @@ test('stars a repository so it shows under Favourites', async () => {
 
   await favourites.getByRole('button', { name: `Remove from favourites: ${name}` }).click()
   await expect(favourites).toBeHidden()
+  await app.close()
+})
+
+test('lists repositories with their branch and changes, and keeps open ones up to date', async () => {
+  const repo = createRepo()
+  repo.write('a.txt', 'a\n')
+  repo.write('new/b.txt', 'b\n')
+  const { app, window } = await launch()
+  await openRepo(app, window, repo.path)
+  await window.getByRole('button', { name: 'Home' }).click()
+
+  const row = window.getByTestId('recent-repos').getByRole('listitem')
+  await expect(row).toContainText('main')
+  await expect(row).toContainText('2 changed')
+
+  // The repository is still open in a tab, so it's watched: a new file
+  // updates the row on the home screen without reopening anything.
+  repo.write('c.txt', 'c\n')
+  await expect(row).toContainText('3 changed')
   await app.close()
 })

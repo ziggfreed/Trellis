@@ -48,6 +48,7 @@ import type {
   ReflogEntry,
   SigningConfig,
   RepoStatus,
+  StatusSummary,
   Stash,
 } from '@trellis/git/types'
 import type { FilePatch } from '@trellis/git/patch'
@@ -122,6 +123,8 @@ export interface Settings {
   pushAfterCommit: boolean
   /** Optional columns shown in the history list, in display order. */
   historyColumns: HistoryColumn[]
+  /** Show a tip card on the home screen (renderer features/tips). */
+  showTips: boolean
 }
 
 /** An optional column of the history list (the graph and message are always shown). */
@@ -352,6 +355,11 @@ export interface IpcContract {
   'repo:setWatched': { args: [paths: string[]]; result: void }
 
   'repo:getStatus': { args: [path: string]; result: RepoStatus }
+  /**
+   * Branch and number of changed files, for the home screen's list of
+   * repositories. Lighter than repo:getStatus, and only a few run at a time.
+   */
+  'repo:getSummary': { args: [path: string]; result: StatusSummary }
   'repo:getLog': {
     args: [path: string, page: { skip: number; limit: number; scope: LogScope }]
     result: LogPage
@@ -756,6 +764,7 @@ const channelMap: Record<IpcChannel, true> = {
   'shell:openEditor': true,
   'repo:setWatched': true,
   'repo:getStatus': true,
+  'repo:getSummary': true,
   'repo:getLog': true,
   'repo:findCommits': true,
   'repo:getRefs': true,

@@ -6,6 +6,20 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Branch folders**: branches named with slashes are grouped into folders in the sidebar (`feature/login` and `feature/search` under **feature**), nested as deep as the names go, for local and remote branches. The folder holding the current branch starts open.
+- The Changes view lists files by folder, then by name, so each folder's changes are together. In Unstaged, new files still come after changes to existing files, sorted the same way.
+
+### Fixed
+
+- Scrolling the home screen no longer stutters with many repositories. Each row now loads a lighter status (branch and number of changes, not the whole file list), and only a few load at a time instead of dozens of git processes starting at once.
+
+### Added
+
+- **Tips on the home screen**: a card shows one useful feature at a time (a different one each day), with arrows to flip through them and a **Learn more** link. Hide it with its **×**, in **Settings > General**, or from the command palette.
+- **Help inside the app**: the **?** button in the status bar opens the [user guide](https://github.com/ziggfreed/Trellis/wiki), and the command palette has **Open the user guide**, **User guide: choose a page…** and **Report a problem or suggest a feature**. Settings > Plugins links to the guide to writing plugins.
+
 ### Fixed
 
 - Double-clicking a branch to check it out now responds straight away: a "Switching to …" message shows while git works (a big repository, or a background fetch that's still running, can make that take a few seconds) and changes to "Switched to …" once the branch list shows it. Double-clicking the branch you're already on says so instead of doing nothing.

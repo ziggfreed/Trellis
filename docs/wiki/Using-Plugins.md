@@ -20,7 +20,7 @@ Click **Settings** under a plugin to change its options.
 
 - **Install from npm…**: type the package name. Trellis picks the newest version that works with your version of Trellis.
 - **Install from folder…**: copies a plugin folder into Trellis's plugins folder.
-- **Load development folder…**: uses a folder in place, for plugins you're writing. See [Writing plugins](Writing-Plugins).
+- **Load development folder…**: uses a folder in place, for plugins you're writing. See [Writing plugins](Writing-Plugins) (also linked at the bottom of the Plugins tab).
 
 Remove an installed plugin with its **Uninstall** button (development folders have **Remove**, which leaves the folder alone).
 

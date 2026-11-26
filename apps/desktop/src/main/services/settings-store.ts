@@ -27,6 +27,7 @@ export const DEFAULT_SETTINGS: Settings = {
   panelLayouts: {},
   pushAfterCommit: false,
   historyColumns: ['author', 'date', 'sha'],
+  showTips: true,
 }
 
 export class SettingsStore {

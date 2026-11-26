@@ -38,6 +38,7 @@ import { SecretStore, safeStorageEncryptor } from '../services/secret-store'
 import { Updater } from '../services/updater'
 import { APP_VERSION } from '../app-version'
 import { scanForRepos } from '../services/scan-repos'
+import { createLimiter } from '../services/limit'
 import {
   assertDiffTarget,
   assertFileInRepo,
@@ -55,6 +56,13 @@ type IpcHandlers = {
 }
 
 /** Send an event to every open window. */
+/**
+ * At most 4 home-screen status summaries at once: the home screen asks for
+ * every listed repository together, and dozens of git processes starting at
+ * the same moment made scrolling stutter (see services/limit.ts).
+ */
+const limitSummaries = createLimiter(4)
+
 export function sendToAllWindows<E extends IpcEvent>(event: E, payload: IpcEvents[E]): void {
   for (const window of BrowserWindow.getAllWindows()) window.webContents.send(event, payload)
 }
@@ -193,6 +201,11 @@ export function createHandlers(
     'repo:getStatus': (path) => {
       assertString(path, 'path')
       return git.getStatus(path)
+    },
+
+    'repo:getSummary': (path) => {
+      assertString(path, 'path')
+      return limitSummaries(() => git.getStatusSummary(path))
     },
 
     'repo:getLog': (path, page) => {

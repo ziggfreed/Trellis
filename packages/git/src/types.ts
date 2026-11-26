@@ -78,6 +78,16 @@ export interface RepoStatus {
   operation: RepoOperation | null
 }
 
+/**
+ * Just enough status for a list of many repositories (the home screen):
+ * the branch and how many files have changed, without the file list.
+ */
+export interface StatusSummary {
+  branch: BranchStatus
+  /** Files with staged, unstaged, untracked or conflicted changes. */
+  changes: number
+}
+
 // ---------------------------------------------------------------------------
 // History (git log)
 // ---------------------------------------------------------------------------

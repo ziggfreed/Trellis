@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { rm } from 'node:fs/promises'
 import { join } from 'node:path'
-import { getStatus, parseStatus } from '../src'
+import { getStatus, getStatusSummary, parseStatus, parseStatusSummary } from '../src'
 import { createRepoWithRemote, createTempRepo, type TempRepo } from './helpers'
 
 const cleanups: TempRepo[] = []
@@ -120,5 +120,44 @@ describe('getStatus', () => {
       ahead: 1,
       behind: 0,
     })
+  })
+})
+
+describe('parseStatusSummary', () => {
+  it('reads the branch and counts each changed file once', () => {
+    const out = [
+      '# branch.oid abc123',
+      '# branch.head main',
+      '# branch.upstream origin/main',
+      '# branch.ab +2 -1',
+      '1 .M N... 100644 100644 100644 aaa bbb src/my file.ts',
+      '2 R. N... 100644 100644 100644 aaa bbb R100 new name.ts',
+      // The rename's original path, even one that looks like an entry, isn't counted.
+      '? looks like an entry.txt',
+      'u UU N... 100644 100644 100644 100644 aaa bbb ccc conflict.txt',
+      '? notes.txt',
+      '',
+    ].join('\0')
+    expect(parseStatusSummary(out)).toEqual({
+      branch: { oid: 'abc123', head: 'main', upstream: 'origin/main', ahead: 2, behind: 1 },
+      changes: 4,
+    })
+  })
+})
+
+describe('getStatusSummary', () => {
+  it('agrees with getStatus on the branch and the number of changed files', async () => {
+    const { repo: r, remote } = await createRepoWithRemote()
+    cleanups.push(r, remote)
+    await r.write('b.txt', 'b')
+    await r.commit('local only')
+    await r.write('b.txt', 'changed')
+    await r.write('new/one.txt', '1')
+    await r.write('new/two.txt', '2')
+    const full = await getStatus(r.path)
+    const summary = await getStatusSummary(r.path)
+    expect(summary.branch).toEqual(full.branch)
+    expect(summary.changes).toBe(full.files.length)
+    expect(summary.changes).toBe(3)
   })
 })

@@ -8,7 +8,7 @@
  */
 import { runGit } from './run-git'
 import { getRepoOperation } from './repo-state'
-import type { ChangeKind, RepoStatus } from './types'
+import type { BranchStatus, ChangeKind, RepoStatus, StatusSummary } from './types'
 
 /**
  * Status letters used by git in the "XY" field. X is the staged (index)
@@ -54,19 +54,7 @@ export function parseStatus(output: string): RepoStatus {
     if (entry === '') continue
 
     if (entry.startsWith('# ')) {
-      const [key, ...rest] = entry.slice(2).split(' ')
-      const value = rest.join(' ')
-      if (key === 'branch.oid') status.branch.oid = value === '(initial)' ? null : value
-      else if (key === 'branch.head') status.branch.head = value === '(detached)' ? null : value
-      else if (key === 'branch.upstream') status.branch.upstream = value
-      else if (key === 'branch.ab') {
-        // Format: "+<ahead> -<behind>"
-        const match = /^\+(\d+) -(\d+)$/.exec(value)
-        if (match) {
-          status.branch.ahead = Number(match[1])
-          status.branch.behind = Number(match[2])
-        }
-      }
+      parseBranchHeader(entry, status.branch)
       continue
     }
 
@@ -99,6 +87,49 @@ export function parseStatus(output: string): RepoStatus {
   return status
 }
 
+/** Read one "# branch.*" header line into `branch`. */
+function parseBranchHeader(entry: string, branch: BranchStatus): void {
+  const [key, ...rest] = entry.slice(2).split(' ')
+  const value = rest.join(' ')
+  if (key === 'branch.oid') branch.oid = value === '(initial)' ? null : value
+  else if (key === 'branch.head') branch.head = value === '(detached)' ? null : value
+  else if (key === 'branch.upstream') branch.upstream = value
+  else if (key === 'branch.ab') {
+    // Format: "+<ahead> -<behind>"
+    const match = /^\+(\d+) -(\d+)$/.exec(value)
+    if (match) {
+      branch.ahead = Number(match[1])
+      branch.behind = Number(match[2])
+    }
+  }
+}
+
+/**
+ * Like parseStatus, but only counts the changed files instead of building
+ * an object for each. Used for the home screen's list of repositories,
+ * where a repository with thousands of untracked files would otherwise
+ * mean thousands of objects parsed and sent to the UI just to show a number.
+ */
+export function parseStatusSummary(output: string): StatusSummary {
+  const summary: StatusSummary = {
+    branch: { head: null, oid: null, upstream: null, ahead: 0, behind: 0 },
+    changes: 0,
+  }
+  const entries = output.split('\0')
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i]!
+    if (entry.startsWith('# ')) parseBranchHeader(entry, summary.branch)
+    else if (entry.startsWith('1 ') || entry.startsWith('u ') || entry.startsWith('? '))
+      summary.changes++
+    else if (entry.startsWith('2 ')) {
+      // A rename or copy: the next entry is its original path, not a file of its own.
+      summary.changes++
+      i++
+    }
+  }
+  return summary
+}
+
 /**
  * Split `text` on spaces into at most `count` fields; the last field keeps
  * any remaining spaces (file paths can contain spaces).
@@ -125,4 +156,17 @@ export async function getStatus(repoPath: string): Promise<RepoStatus> {
   const status = parseStatus(stdout)
   status.operation = await getRepoOperation(repoPath)
   return status
+}
+
+/**
+ * The branch and number of changed files (see parseStatusSummary). Uses
+ * --no-optional-locks so this background check never takes git's index
+ * lock, which could make a command in another tool fail at the same moment.
+ */
+export async function getStatusSummary(repoPath: string): Promise<StatusSummary> {
+  const { stdout } = await runGit(
+    ['--no-optional-locks', 'status', '--porcelain=v2', '--branch', '-z', '--untracked-files=all'],
+    { cwd: repoPath },
+  )
+  return parseStatusSummary(stdout)
 }

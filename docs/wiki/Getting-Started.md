@@ -39,6 +39,8 @@ Each repository opens in its own **tab**, and your tabs come back next time you 
 
 ![The home screen listing a repository](images/home.png)
 
+Below the buttons, a **tip** card shows one useful feature at a time, a different one each day. Flip through them with the arrows, click **Learn more** to read about it here, or click **×** to hide tips (turn them back on in **Settings → General**).
+
 Get back to the home screen with the Trellis logo at the top left. The **+** next to the tabs opens, clones or creates another repository without going back.
 
 ## What next
@@ -46,5 +48,6 @@ Get back to the home screen with the Trellis logo at the top left. The **+** nex
 - Take the [tour of the repository window](The-Repository-Window).
 - Learn the [command palette](Command-Palette): `Ctrl+K`, then type.
 - Make your first commit: [Staging and committing](Staging-and-Committing).
+- Come back to this guide any time with the **?** button in the status bar, or **Open the user guide** in the command palette.
 
 > **On a Mac**, use `Cmd` wherever these pages say `Ctrl`, except for shortcuts that explicitly say `Ctrl` (like `Ctrl+Tab`).

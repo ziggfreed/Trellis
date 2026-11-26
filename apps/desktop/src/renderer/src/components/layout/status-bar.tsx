@@ -1,7 +1,11 @@
-/** The thin bar along the bottom: current branch, git version and theme switcher. */
+/**
+ * The thin bar along the bottom: current branch, running operations, git
+ * version, the git log, the user guide, settings and the theme switcher.
+ */
 import {
   ArrowDown,
   ArrowUp,
+  CircleHelp,
   GitBranch,
   Loader2,
   Monitor,
@@ -23,6 +27,7 @@ import { useStatus } from '@/features/repos/use-repo-data'
 import { shortSha } from '@/lib/format'
 import { useOperationsStore } from '@/features/repo-actions/operations-store'
 import { toggleCommandLog, useCommandLogStore } from '@/features/command-log/command-log-store'
+import { openUserGuide } from '@/lib/help'
 import { openSettings } from '@/features/settings/settings-dialog'
 import { PluginStatusItems } from '@/features/plugins/plugin-status-items'
 import { UpdateStatusItem } from '@/features/updates/updates'
@@ -49,6 +54,15 @@ export function StatusBar({ gitVersion, repoPath }: StatusBarProps) {
       <PluginStatusItems repoPath={repoPath} />
       <span>{gitVersion}</span>
       <CommandLogToggle />
+      <button
+        type="button"
+        onClick={() => openUserGuide()}
+        aria-label="User guide"
+        title="User guide (opens in your browser)"
+        className="flex items-center hover:text-foreground"
+      >
+        <CircleHelp className="size-3.5" />
+      </button>
       <button
         type="button"
         onClick={() => openSettings()}

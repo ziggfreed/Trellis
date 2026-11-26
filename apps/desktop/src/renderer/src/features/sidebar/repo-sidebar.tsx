@@ -6,6 +6,7 @@
  * name for the session. Right-click any item for actions (check out, merge,
  * delete...); double-click a branch (local or remote) to check it out.
  * Local branches that aren't on a remote are marked "local" or "gone".
+ * Branches named with slashes (feature/login) are grouped into folders.
  */
 import { Archive, Broom, Cloud, FolderTree, GitBranch, Tag } from 'lucide-react'
 import type { Ref } from '@shared/ipc'
@@ -30,6 +31,8 @@ import { SubmodulesSection } from '@/features/submodules/submodules'
 import { LfsSection } from '@/features/lfs/lfs'
 import { addRemote } from '@/features/repo-tools/remote-actions'
 import { Item, Section } from './sidebar-parts'
+import { buildBranchTree } from './branch-tree'
+import { BranchTree } from './branch-tree-view'
 import { REMOTE_STATE_TEXT, branchRemoteState } from './branch-remote-state'
 import { groupRemoteBranches, localBranches, remoteBranchShortName, sortedTags } from './group-refs'
 
@@ -63,25 +66,33 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
           onClick: () => openPruneDialog(repoPath),
         }}
       >
-        {branches.map((branch) => (
-          <BranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
-            <Item
-              {...draggableRef(branch)}
-              label={branch.name}
-              selected={view.selectedSha === branch.sha}
-              onClick={() => select(branch.sha)}
-              onDoubleClick={() =>
-                // Say so rather than do nothing, which looks like a missed click.
-                branch.isHead
-                  ? toast.info(`${branch.name} is already checked out`)
-                  : void checkoutBranch(repoPath, branch.name)
-              }
-              strong={branch.isHead}
-              title={`${branchTooltip(branch, refs)} Double-click to check out; right-click for more.`}
-              trailing={<AheadBehind branch={branch} refs={refs} hasRemotes={remotes.length > 0} />}
-            />
-          </BranchMenu>
-        ))}
+        <BranchTree
+          nodes={buildBranchTree(branches, (b) => b.name)}
+          depth={0}
+          stateKey={`${repoPath}:local`}
+          renderBranch={({ ref: branch, name }, depth) => (
+            <BranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
+              <Item
+                {...draggableRef(branch)}
+                label={name}
+                depth={depth}
+                selected={view.selectedSha === branch.sha}
+                onClick={() => select(branch.sha)}
+                onDoubleClick={() =>
+                  // Say so rather than do nothing, which looks like a missed click.
+                  branch.isHead
+                    ? toast.info(`${branch.name} is already checked out`)
+                    : void checkoutBranch(repoPath, branch.name)
+                }
+                strong={branch.isHead}
+                title={`${branchTooltip(branch, refs)} Double-click to check out; right-click for more.`}
+                trailing={
+                  <AheadBehind branch={branch} refs={refs} hasRemotes={remotes.length > 0} />
+                }
+              />
+            </BranchMenu>
+          )}
+        />
       </Section>
 
       <Section
@@ -113,21 +124,26 @@ export function RepoSidebar({ repoPath }: { repoPath: string }) {
                 )
               }
             >
-              {group.branches.map((branch) => (
-                <RemoteBranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
-                  <Item
-                    {...draggableRef(branch)}
-                    label={remoteBranchShortName(branch)}
-                    selected={view.selectedSha === branch.sha}
-                    onClick={() => select(branch.sha)}
-                    onDoubleClick={() =>
-                      void checkoutChoice(repoPath, checkoutChoiceForRef(branch, refs))
-                    }
-                    title={`${branch.name}. Double-click to check out as “${remoteBranchShortName(branch)}”; right-click for more.`}
-                    indent
-                  />
-                </RemoteBranchMenu>
-              ))}
+              <BranchTree
+                nodes={buildBranchTree(group.branches, remoteBranchShortName)}
+                depth={1}
+                stateKey={`${repoPath}:remote:${group.remote}`}
+                renderBranch={({ ref: branch, name }, depth) => (
+                  <RemoteBranchMenu key={branch.fullName} repo={repoPath} branch={branch}>
+                    <Item
+                      {...draggableRef(branch)}
+                      label={name}
+                      depth={depth}
+                      selected={view.selectedSha === branch.sha}
+                      onClick={() => select(branch.sha)}
+                      onDoubleClick={() =>
+                        void checkoutChoice(repoPath, checkoutChoiceForRef(branch, refs))
+                      }
+                      title={`${branch.name}. Double-click to check out as “${remoteBranchShortName(branch)}”; right-click for more.`}
+                    />
+                  </RemoteBranchMenu>
+                )}
+              />
             </Section>
           )
         })}

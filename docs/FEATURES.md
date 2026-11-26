@@ -42,7 +42,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 | Pri | Feature                                                                                  | Status                                                                           |
 | --- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| P0  | File status list (staged / unstaged / untracked / conflicted), tree or flat view         | ✅ (flat list)                                                                   |
+| P0  | File status list (staged / unstaged / untracked / conflicted), tree or flat view         | ✅ (flat list, ordered by folder)                                                |
 | P1  | Staged and unstaged in separate lists; multi-select, drag between them, per-list actions | ✅                                                                               |
 | P1  | Stash only some files (from the Changes view)                                            | ✅                                                                               |
 | P0  | Stage/unstage/discard file                                                               | ✅                                                                               |
@@ -71,7 +71,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 | Pri | Feature                                                                                         | Status                                    |
 | --- | ----------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| P0  | Sidebar: local branches, remotes, tags, stashes                                                 | ✅                                        |
+| P0  | Sidebar: local branches, remotes, tags, stashes; branch folders (feature/x)                     | ✅                                        |
 | P0  | Create / checkout / rename / delete branch (double-click to check out, incl. remote branches)   | ✅                                        |
 | P0  | Fetch / pull (merge or rebase) / push, with progress and ahead/behind counts                    | ✅                                        |
 | P0  | Merge branch (with conflict detection)                                                          | ✅                                        |
@@ -103,23 +103,23 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 
 ## 7. UX & productivity
 
-| Pri | Feature                                                                                | Status                                                     |
-| --- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| P0  | **Command palette** (Ctrl/Cmd+K / Ctrl+Shift+P) for every action                       | ✅                                                         |
-| P0  | Dark/light/system themes (shadcn tokens)                                               | ✅                                                         |
-| P1  | Remember panel sizes between launches; themed (dark) scrollbars                        | ✅                                                         |
-| P1  | **Undo / redo** for git operations (backed by reflog and operation log snapshots)      | ✅                                                         |
-| P1  | **"Show git command"**: every action logs the exact command it ran, in a console panel | ✅                                                         |
-| P1  | Built-in terminal panel (xterm.js) opened at the repo root                             | 🟨 open external terminal done; embedded terminal deferred |
-| P1  | Customisable keyboard shortcuts, keyboard-first navigation (j/k in graph)              | ✅                                                         |
-| P1  | Toast notifications and an activity/operations panel with cancel                       | 🟨 toasts + status bar progress                            |
-| P1  | "Open in…" editor / file manager / terminal integrations                               | ✅                                                         |
-| P2  | Custom themes (and themes as plugins)                                                  | ⬜                                                         |
-| P2  | Onboarding and in-app "git explained" tooltips for beginners                           | 🟨 git name/email setup, user guide; tooltips to do        |
-| P2  | i18n                                                                                   | ⬜                                                         |
-| P1  | Accessibility: keyboard navigation, screen reader labels, WCAG AA contrast             | ✅ checked automatically (axe) on the main screens         |
-| P1  | Automatic updates (GitHub Releases)                                                    | ✅ macOS needs a signed build to install                   |
-| P1  | Signed and notarised installers                                                        | 🟨 release workflow ready; needs certificates              |
+| Pri | Feature                                                                                | Status                                                                                                |
+| --- | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| P0  | **Command palette** (Ctrl/Cmd+K / Ctrl+Shift+P) for every action                       | ✅                                                                                                    |
+| P0  | Dark/light/system themes (shadcn tokens)                                               | ✅                                                                                                    |
+| P1  | Remember panel sizes between launches; themed (dark) scrollbars                        | ✅                                                                                                    |
+| P1  | **Undo / redo** for git operations (backed by reflog and operation log snapshots)      | ✅                                                                                                    |
+| P1  | **"Show git command"**: every action logs the exact command it ran, in a console panel | ✅                                                                                                    |
+| P1  | Built-in terminal panel (xterm.js) opened at the repo root                             | 🟨 open external terminal done; embedded terminal deferred                                            |
+| P1  | Customisable keyboard shortcuts, keyboard-first navigation (j/k in graph)              | ✅                                                                                                    |
+| P1  | Toast notifications and an activity/operations panel with cancel                       | 🟨 toasts + status bar progress                                                                       |
+| P1  | "Open in…" editor / file manager / terminal integrations                               | ✅                                                                                                    |
+| P2  | Custom themes (and themes as plugins)                                                  | ⬜                                                                                                    |
+| P2  | Onboarding and in-app "git explained" tooltips for beginners                           | 🟨 git name/email setup, tips on the home screen, user guide (wiki) linked in the app; tooltips to do |
+| P2  | i18n                                                                                   | ⬜                                                                                                    |
+| P1  | Accessibility: keyboard navigation, screen reader labels, WCAG AA contrast             | ✅ checked automatically (axe) on the main screens                                                    |
+| P1  | Automatic updates (GitHub Releases)                                                    | ✅ macOS needs a signed build to install                                                              |
+| P1  | Signed and notarised installers                                                        | 🟨 release workflow ready; needs certificates                                                         |
 
 ## 8. Plugin system
 

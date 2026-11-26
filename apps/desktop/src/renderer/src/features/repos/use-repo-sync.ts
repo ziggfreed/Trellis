@@ -25,6 +25,8 @@ export function useRepoSync() {
       api.on('repo:changed', ({ path, scope }) => {
         if (scope === 'status') {
           void queryClient.invalidateQueries({ queryKey: repoKeys.status(path) })
+          // The home screen's row for it (only refetched while it's shown).
+          void queryClient.invalidateQueries({ queryKey: repoKeys.summary(path) })
           // Working-tree diffs may have changed too.
           void queryClient.invalidateQueries({ queryKey: [...repoKeys.all(path), 'diff'] })
         } else {
