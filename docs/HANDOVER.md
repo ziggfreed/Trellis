@@ -12,7 +12,7 @@ Trellis is an open-source (MIT) desktop git client: Electron + React + TypeScrip
 ## State right now
 
 - **All work up to PR #14 is merged into `main`.**
-- **CI is turned off on purpose**: the "CI" GitHub Actions workflow (`.github/workflows/ci.yml`) was disabled by the owner because the account's Actions minutes are nearly used up (the repo was private then, and macOS minutes count 10×, Windows 2×). Don't re-enable it without asking. Verify changes locally instead (commands below). The repository is now **public** (Actions minutes are free), so CI could be turned back on; ask the owner first. The "Release" workflow builds Windows, macOS and Linux.
+- **CI** (`.github/workflows/ci.yml`) runs on every pull request (Windows, macOS and Linux) and by hand from the Actions tab; not on push to `main`, since `main` only changes through pull requests and the pull request run already tests the merge result. CI isn't a required check, so the owner may merge before it finishes. Still verify changes locally (commands below). The "Release" workflow builds Windows, macOS and Linux.
 - **Owner's working preferences**:
   - Open a pull request (via `gh api repos/ziggfreed/trellis/pulls`) as soon as a substantial piece of work is finished, without waiting to be asked. Work on a new branch from the latest `main`.
   - Use Conventional Commit messages.
@@ -70,7 +70,7 @@ The roadmap is `docs/PLAN.md` (sections 8–15 record what each phase delivered)
 | `apps/desktop/src/renderer/src/features/` | UI, one folder per feature                                                                            |
 | `apps/desktop/e2e/`                       | End-to-end tests; good executable examples of each feature                                            |
 
-## Checking changes locally (CI is off)
+## Checking changes locally
 
 ```bash
 pnpm install
