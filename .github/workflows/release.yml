@@ -5,14 +5,16 @@
 # The full guide (signing, auto-update) is docs/RELEASING.md.
 #
 # To make a release, the easy way: Actions > "New release" > Run workflow.
-# It bumps the version, updates CHANGELOG.md, tags, and calls this workflow
-# (see new-release.yml).
+# It opens a pull request that bumps the version and updates CHANGELOG.md;
+# merging it tags the release and calls this workflow (see new-release.yml
+# and tag-release.yml).
 #
 # By hand:
 #   1. Set "version" in apps/desktop/package.json, and in CHANGELOG.md rename
 #      "## [Unreleased]" to "## [x.y.z] - <date>" (add a new empty Unreleased
 #      section above it). The release notes are taken from that section.
-#   2. Merge to main, then tag that commit and push the tag:
+#   2. Merge that to main (through a pull request), then tag the merge commit
+#      and push the tag:
 #        git tag v0.1.0
 #        git push origin v0.1.0
 #      The tag must match the version exactly, or the build stops.
@@ -31,7 +33,7 @@ name: Release
 on:
   push:
     tags: ['v*']
-  # Called by new-release.yml. A tag pushed by a workflow (with the built-in
+  # Called by tag-release.yml. A tag pushed by a workflow (with the built-in
   # GITHUB_TOKEN) doesn't start other workflows, so it calls this one directly.
   workflow_call:
     inputs:
@@ -41,7 +43,7 @@ on:
         type: string
 
 env:
-  # The tag being released: the pushed tag, or the one new-release.yml passed in.
+  # The tag being released: the pushed tag, or the one tag-release.yml passed in.
   RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 permissions:

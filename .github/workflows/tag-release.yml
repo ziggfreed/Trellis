@@ -1,0 +1,78 @@
+# Second half of a one-click release (the first half is new-release.yml).
+#
+# When a release pull request (branch release/vX.Y.Z, opened by the
+# "New release" workflow) is merged into main, this:
+#   1. checks the merged package.json version matches the branch name,
+#   2. tags the merge commit vX.Y.Z,
+#   3. runs the Release workflow (release.yml) for that tag, which builds the
+#      installers and creates a DRAFT release for you to review and publish.
+#
+# Tags aren't covered by the "changes through a pull request" rule on main,
+# so the built-in GITHUB_TOKEN can push them. A tag pushed with that token
+# doesn't start other workflows, which is why release.yml is called directly
+# here rather than through its "push: tags" trigger.
+name: Tag release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+concurrency:
+  group: tag-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write # push the tag and create the draft release
+
+jobs:
+  tag:
+    name: Tag the release
+    # Only merged pull requests from this repository's own release/v* branches
+    # (a fork could name a branch the same way).
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/v') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0 # existing tags, to spot a re-run
+      - name: Tag the merge commit
+        id: tag
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          tag="${BRANCH#release/}"
+          version=$(node -p "require('./apps/desktop/package.json').version")
+          if [ "v$version" != "$tag" ]; then
+            echo "::error::Branch $BRANCH doesn't match the merged app version ($version). Tag the release by hand (see docs/RELEASING.md)."
+            exit 1
+          fi
+          if existing=$(git rev-parse -q --verify "refs/tags/$tag^{commit}"); then
+            # Re-running this workflow: fine if the tag is already on this commit.
+            if [ "$existing" != "$SHA" ]; then
+              echo "::error::Tag $tag already exists on another commit ($existing)."
+              exit 1
+            fi
+            echo "Tag $tag already exists on $SHA."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$tag" -m "Trellis $tag" "$SHA"
+            git push origin "$tag"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build and draft the release
+    needs: tag
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
+    secrets: inherit

@@ -11,19 +11,23 @@ The easy way is a workflow you run from GitHub:
    - **patch** for fixes only (0.3.0 → 0.3.1), **minor** for new features (0.3.0 → 0.4.0), or **major** for breaking changes (0.3.0 → 1.0.0). The bump is from the latest `v*` tag.
    - Or type an **exact version** instead, such as `1.0.0-beta.1`.
    - Tick **Dry run** first if you want to see the version and notes without changing anything (they're shown on the run's summary page).
-3. The workflow (`.github/workflows/new-release.yml`):
-   - sets the version in `apps/desktop/package.json` and moves the Unreleased notes under `## [x.y.z] - <date>`, with a fresh empty Unreleased section above;
-   - commits that to `main` as `chore(release): vx.y.z`, tags it, and pushes both together;
-   - runs the **Release** workflow for the tag, which builds the installers and creates a **draft** GitHub release.
-4. Check the draft, then click **Publish release**.
+3. The workflow (`.github/workflows/new-release.yml`) sets the version in `apps/desktop/package.json`, moves the Unreleased notes under `## [x.y.z] - <date>` (with a fresh empty Unreleased section above), commits that to a new `release/vx.y.z` branch and opens a pull request called `chore(release): vx.y.z`. The link is on the run's summary page.
+4. Review and merge that pull request. Merging it runs **Tag release** (`.github/workflows/tag-release.yml`), which tags the merge commit `vx.y.z` and runs the **Release** workflow for the tag. That builds the installers and creates a **draft** GitHub release.
+5. Check the draft, then click **Publish release**.
 
-It refuses to run if the Unreleased section is empty, if the version wouldn't be newer than the latest release (or older than the version already in `package.json`), or if `main` changed while it ran (run it again). The version logic is in `scripts/release/` and tested with `pnpm test:scripts`; you can try it locally without changing git with `node scripts/release/prepare-release.mjs minor --dry-run`.
+To cancel a release before it's built, close the pull request and delete its branch.
+
+It goes through a pull request because `main` only accepts changes that way (a repository rule), and a workflow can't skip that rule even when you start it yourself: its pushes are made by `github-actions[bot]`, not by you.
+
+**One-time setup:** in **Settings → Actions → General → Workflow permissions**, tick **Allow GitHub Actions to create and approve pull requests**, or the workflow can't open the pull request. Pull requests opened by a workflow don't start the CI workflow; that's a GitHub rule, and fine here since the pull request only changes the version and changelog.
+
+It refuses to run if the Unreleased section is empty, if the version wouldn't be newer than the latest release (or older than the version already in `package.json`), or if a `release/vx.y.z` branch already exists (merge or close that release first). The version logic is in `scripts/release/` and tested with `pnpm test:scripts`; you can try it locally without changing git with `node scripts/release/prepare-release.mjs minor --dry-run`.
 
 **By hand** (the old way, still supported):
 
 1. In `apps/desktop/package.json`, set `"version"` to the new version (e.g. `0.4.0`).
 2. In `CHANGELOG.md`, rename `## [Unreleased]` to `## [0.4.0] - <date>` and add a new, empty `## [Unreleased]` section above it.
-3. Merge that to `main`, then tag the merge commit and push the tag:
+3. Merge that to `main` through a pull request, then tag the merge commit and push the tag:
 
    ```bash
    git tag v0.4.0

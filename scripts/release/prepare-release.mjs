@@ -2,7 +2,8 @@
  * Prepares a release: picks the next version, sets it in
  * apps/desktop/package.json, and moves CHANGELOG.md's "Unreleased" notes
  * under it. Run by the "New release" workflow (.github/workflows/new-release.yml),
- * which then commits, tags and builds. It only edits files; it never runs git
+ * which then opens a release pull request (tagging and building follow when
+ * it is merged). It only edits files; it never runs git
  * commands that change anything, so it's safe to try locally:
  *
  *   node scripts/release/prepare-release.mjs minor --dry-run
