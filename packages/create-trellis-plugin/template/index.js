@@ -5,7 +5,8 @@
  * the code for the commands declared in package.json. Anything pushed to
  * context.subscriptions is cleaned up when the plugin stops.
  *
- * The full API is described in docs/PLUGINS.md in the Trellis repository.
+ * Getting started: https://github.com/ziggfreed/Trellis/wiki/Writing-Plugins
+ * The full API: docs/PLUGINS.md in the Trellis repository.
  */
 
 /** @typedef {import('@trellis/plugin-api').TrellisApi} TrellisApi */

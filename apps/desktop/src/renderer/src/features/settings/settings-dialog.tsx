@@ -151,6 +151,17 @@ export function SettingsDialog() {
             <Field id="setting-signing" label="Commit signing">
               <SigningSettings />
             </Field>
+            <Field id="setting-tips" label="Tips">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  id="setting-tips"
+                  type="checkbox"
+                  checked={settings.showTips}
+                  onChange={(e) => update({ showTips: e.target.checked })}
+                />
+                Show tips on the home screen
+              </label>
+            </Field>
             <Field id="setting-updates" label="Updates">
               <UpdateSettings />
             </Field>

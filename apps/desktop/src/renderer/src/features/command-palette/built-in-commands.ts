@@ -29,6 +29,8 @@ import { openLfsLocks } from '@/features/lfs/lfs'
 import { openStack } from '@/features/stacks/stack-dialog'
 import { openPruneDialog } from '@/features/repo-tools/prune-dialog'
 import * as remoteActions from '@/features/repo-tools/remote-actions'
+import { toast } from 'sonner'
+import { GUIDE_PAGES, openIssueTracker, openUserGuide } from '@/lib/help'
 
 /** Focus an element after the palette has closed and the view has updated. */
 function focusLater(selector: string) {
@@ -128,6 +130,52 @@ export function builtInCommands(context: CommandContext): Command[] {
       keywords: ['appearance', 'colour', 'color'],
       run: () => useSettingsStore.getState().update({ theme }),
     })),
+    {
+      id: 'help.guide',
+      title: 'Open the user guide',
+      group: 'Help',
+      keywords: ['help', 'docs', 'documentation', 'manual', 'wiki', 'how'],
+      run: () => openUserGuide(),
+    },
+    {
+      id: 'help.page',
+      title: 'User guide: choose a page…',
+      group: 'Help',
+      keywords: ['help', 'docs', 'documentation', 'manual', 'wiki', 'how'],
+      run: () => ({
+        placeholder: 'Choose a page of the user guide',
+        items: GUIDE_PAGES.map(({ page, title }) => ({
+          id: page,
+          label: title,
+          run: () => openUserGuide(page),
+        })),
+      }),
+    },
+    {
+      id: 'help.issue',
+      title: 'Report a problem or suggest a feature',
+      group: 'Help',
+      keywords: ['bug', 'issue', 'feedback', 'idea'],
+      run: openIssueTracker,
+    },
+    useSettingsStore.getState().settings.showTips
+      ? {
+          id: 'help.hideTips',
+          title: 'Hide tips on the home screen',
+          group: 'Help',
+          keywords: ['hints'],
+          run: () => useSettingsStore.getState().update({ showTips: false }),
+        }
+      : {
+          id: 'help.showTips',
+          title: 'Show tips on the home screen',
+          group: 'Help',
+          keywords: ['hints'],
+          run: () => {
+            useSettingsStore.getState().update({ showTips: true })
+            toast.info('Tips will show on the home screen')
+          },
+        },
   ]
 
   if (context.openTabs.length > 1) {

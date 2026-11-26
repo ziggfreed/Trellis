@@ -122,6 +122,8 @@ export interface Settings {
   pushAfterCommit: boolean
   /** Optional columns shown in the history list, in display order. */
   historyColumns: HistoryColumn[]
+  /** Show a tip card on the home screen (renderer features/tips). */
+  showTips: boolean
 }
 
 /** An optional column of the history list (the graph and message are always shown). */

@@ -2,7 +2,7 @@
 
 Open Settings with **`Ctrl+,`** (or the gear in the status bar). Changes are saved straight away.
 
-- **General**: theme, diff layout, the editor used by **Open in editor**, how often to fetch in the background, your git name and email, commit signing, and updates.
+- **General**: theme, diff layout, the editor used by **Open in editor**, how often to fetch in the background, your git name and email, commit signing, whether to show tips on the home screen, and updates.
 - **Keyboard shortcuts**: change any shortcut.
 - **AI**: see [AI features](AI-Features).
 - **Plugins**: see [Using plugins](Using-Plugins).

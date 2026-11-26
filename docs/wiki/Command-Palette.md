@@ -43,5 +43,8 @@ Type to filter the list, then press Enter. To go back to the commands, press **B
 | `theme`          | Switch between light, dark and system themes.                            |
 | `name and email` | Change the name and email on your commits.                               |
 | `reload plugins` | Restart plugins after changing one.                                      |
+| `guide`          | Open this user guide, or go straight to one of its pages.                |
+| `tips`           | Hide or show the tips on the home screen.                                |
+| `report`         | Report a problem or suggest a feature.                                   |
 
 You can change the palette's shortcut, and any other, in **Settings → Keyboard shortcuts**. See [Settings and keyboard shortcuts](Settings-and-Keyboard-Shortcuts).

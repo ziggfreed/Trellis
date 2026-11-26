@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils'
 import { useSettingsStore } from '@/features/settings/settings-store'
 import { usePluginStore } from './plugin-store'
 import * as actions from './plugin-actions'
+import { openUserGuide } from '@/lib/help'
 
 const SOURCE_LABELS: Record<PluginInfo['source'], string> = {
   builtin: 'Built-in',
@@ -58,7 +59,15 @@ export function PluginsPanel() {
       )}
       <p className="text-xs text-muted-foreground">
         Plugins can run any code on your computer. Only install plugins you trust. Want to write
-        one? See docs/PLUGINS.md in the Trellis repository.
+        one?{' '}
+        <button
+          type="button"
+          className="text-brand underline-offset-2 hover:underline"
+          onClick={() => openUserGuide('Writing-Plugins')}
+        >
+          Read the guide to writing plugins
+        </button>
+        .
       </p>
     </div>
   )

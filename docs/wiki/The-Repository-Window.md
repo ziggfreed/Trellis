@@ -10,7 +10,7 @@ When you open a repository, its tab looks like this:
 4. **History.** Every commit as a graph, newest first, with branch and tag labels. See [History and diffs](History-and-Diffs).
 5. **Commit details.** The selected commit's message, author, date, parents and changed files.
 6. **Diff.** What changed in the selected file. Switch between unified and side-by-side with the buttons at the top right.
-7. **Status bar.** The current branch and how many commits it's ahead (↑) and behind (↓) its remote branch, any running operation (such as a fetch, with progress), items from plugins, the **Git log**, Settings, and the theme (System, Light or Dark).
+7. **Status bar.** The current branch and how many commits it's ahead (↑) and behind (↓) its remote branch, any running operation (such as a fetch, with progress), items from plugins, the **Git log**, the **?** button (opens this user guide), Settings, and the theme (System, Light or Dark).
 
 Drag the dividers between panels to resize them; Trellis remembers the sizes.
 

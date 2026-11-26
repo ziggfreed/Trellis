@@ -30,4 +30,4 @@ Trellis is a free, open-source desktop app for working with git repositories on 
 
 ## Getting help
 
-If something doesn't work or isn't clear, please [open an issue](https://github.com/ziggfreed/Trellis/issues). These pages live in the [Trellis repository](https://github.com/ziggfreed/Trellis/tree/main/docs/wiki), so you can suggest improvements with a pull request.
+Inside Trellis, the **?** button in the status bar opens this guide, and the command palette has **User guide: choose a page…** and **Report a problem or suggest a feature**. If something doesn't work or isn't clear, please [open an issue](https://github.com/ziggfreed/Trellis/issues). These pages live in the [Trellis repository](https://github.com/ziggfreed/Trellis/tree/main/docs/wiki), so you can suggest improvements with a pull request.
