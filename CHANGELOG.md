@@ -6,6 +6,8 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-26
+
 ### Added
 
 - **Timeline view** of the history: switch between **Graph** and **Timeline** above the history (remembered). Each branch is a horizontal track with its commits placed by date, so you can see when branches started, how long they lived, where they merged and what's happening in parallel.
