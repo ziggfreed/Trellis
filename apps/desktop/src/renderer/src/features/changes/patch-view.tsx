@@ -208,7 +208,10 @@ export function PatchView({ repoPath, file, area }: PatchViewProps) {
         })
         if (!ok) return
       }
-      await runAction(repoPath, () => api.invoke('repo:applyPatch', repoPath, text, action))
+      // Only the index and this file change, so refresh just the status and diffs.
+      await runAction(repoPath, () => api.invoke('repo:applyPatch', repoPath, text, action), {
+        refresh: 'working-tree',
+      })
     }
 
     const actionsFor = (ids: string[]) =>

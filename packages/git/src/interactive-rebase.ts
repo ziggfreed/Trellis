@@ -22,6 +22,7 @@
  */
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { gitPath } from './git-paths'
 import { runGit } from './run-git'
 import { LOG_FORMAT_ARGS, parseCommits } from './log'
 import type { Commit, MergeResult, RebasePlanItem } from './types'
@@ -95,13 +96,7 @@ export async function interactiveRebase(
 
   // Files live in the .git folder so they still exist if the rebase stops
   // for conflicts and is continued later.
-  const { stdout } = await runGit(
-    ['rev-parse', '--path-format=absolute', '--git-path', 'trellis/rebase'],
-    {
-      cwd: repoPath,
-    },
-  )
-  const dir = stdout.trim()
+  const dir = await gitPath(repoPath, 'trellis/rebase')
   await rm(dir, { recursive: true, force: true })
   await mkdir(dir, { recursive: true })
 

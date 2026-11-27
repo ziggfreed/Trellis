@@ -24,7 +24,8 @@
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { GitError, runGit } from './run-git'
+import { GitError } from './run-git'
+import { gitPath } from './git-paths'
 import { getRepoOperation } from './repo-state'
 import { createSnapshot, restoreSnapshot } from './snapshot'
 import type { Snapshot, SnapshotHead, UndoState } from './types'
@@ -53,14 +54,8 @@ interface OplogFile {
   position: number
 }
 
-async function logPath(repoPath: string): Promise<string> {
-  const { stdout } = await runGit(
-    ['rev-parse', '--path-format=absolute', '--git-path', 'trellis/oplog.json'],
-    {
-      cwd: repoPath,
-    },
-  )
-  return stdout.trim()
+function logPath(repoPath: string): Promise<string> {
+  return gitPath(repoPath, 'trellis/oplog.json')
 }
 
 async function load(repoPath: string): Promise<OplogFile> {
@@ -115,17 +110,23 @@ export function planRefChanges(
  * `worktree`: true if the operation may change files (checkout, discard,
  * merge...), so the files are snapshotted too. Not needed for operations
  * that only change the index or refs (stage, commit, create branch...).
+ * `indexOnly`: true if the operation can only change the index (staging),
+ * which saves re-reading HEAD and the branches afterwards.
  */
 export async function recordOperation<T>(
   repoPath: string,
   label: string,
-  options: { worktree: boolean },
+  options: { worktree: boolean; indexOnly?: boolean },
   operation: () => Promise<T>,
 ): Promise<T> {
   if ((await getRepoOperation(repoPath)) !== null) return operation()
-  const before = await createSnapshot(repoPath, options)
+  const before = await createSnapshot(repoPath, { worktree: options.worktree })
   const result = await operation()
-  const after = await createSnapshot(repoPath, { worktree: false })
+  // Afterwards only HEAD and the branches are recorded (to check nothing
+  // else moved them before an undo). An operation that only changes the
+  // index (staging, unstaging) can't move them, so skip reading them again:
+  // four fewer git commands each time you stage a file.
+  const after = options.indexOnly ? before : await createSnapshot(repoPath, { worktree: false })
   const log = await load(repoPath)
   log.entries = log.entries.slice(0, log.position) // a new operation discards the redo history
   log.entries.push({

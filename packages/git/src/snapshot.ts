@@ -24,23 +24,14 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { GitError, runGit } from './run-git'
+import { gitDir, gitPath } from './git-paths'
 import type { Snapshot, SnapshotHead } from './types'
 
 /** Refs that undo restores: local branches and tags. */
 const RESTORED_REFS = ['refs/heads', 'refs/tags']
 
-async function gitDir(repoPath: string): Promise<string> {
-  const { stdout } = await runGit(['rev-parse', '--absolute-git-dir'], { cwd: repoPath })
-  return stdout.trim()
-}
-
 /** Where git keeps the index file (can differ for worktrees). */
-async function indexPath(repoPath: string): Promise<string> {
-  const { stdout } = await runGit(['rev-parse', '--path-format=absolute', '--git-path', 'index'], {
-    cwd: repoPath,
-  })
-  return stdout.trim()
-}
+const indexPath = (repoPath: string) => gitPath(repoPath, 'index')
 
 async function readHead(repoPath: string): Promise<SnapshotHead> {
   const branch = await runGit(['symbolic-ref', '-q', 'HEAD'], {

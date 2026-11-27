@@ -40,15 +40,18 @@ type Handlers = {
 
 /**
  * Run a write operation through the queue AND record it for undo.
- * `worktree`: whether the operation can change files (then they are snapshotted too).
+ * `changes`: true if the operation can change files (then they are
+ * snapshotted too), false if it changes refs or the index, or 'index' if it
+ * can only change the index (staging), which records it more cheaply.
  */
 function recorded<T>(
   path: string,
   label: string,
-  worktree: boolean,
+  changes: boolean | 'index',
   task: () => Promise<T>,
 ): Promise<T> {
-  return runExclusive(path, () => git.recordOperation(path, label, { worktree }, task))
+  const options = { worktree: changes === true, indexOnly: changes === 'index' }
+  return runExclusive(path, () => git.recordOperation(path, label, options, task))
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
@@ -81,7 +84,7 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
     'repo:stage': (path, files) => {
       assertString(path, 'path')
       assertStringArray(files, 'files')
-      return recorded(path, `Stage ${plural(files.length, 'file')}`, false, () =>
+      return recorded(path, `Stage ${plural(files.length, 'file')}`, 'index', () =>
         git.stageFiles(path, files),
       )
     },
@@ -89,7 +92,7 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
     'repo:unstage': (path, files) => {
       assertString(path, 'path')
       assertStringArray(files, 'files')
-      return recorded(path, `Unstage ${plural(files.length, 'file')}`, false, () =>
+      return recorded(path, `Unstage ${plural(files.length, 'file')}`, 'index', () =>
         git.unstageFiles(path, files),
       )
     },
@@ -127,7 +130,7 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       assertString(patch, 'patch')
       assertOneOf(action, ['stage', 'unstage', 'discard'] as const, 'action')
       const labels = { stage: 'Stage lines', unstage: 'Unstage lines', discard: 'Discard lines' }
-      return recorded(path, labels[action], action === 'discard', () =>
+      return recorded(path, labels[action], action === 'discard' ? true : 'index', () =>
         git.applyPatch(path, patch, action),
       )
     },

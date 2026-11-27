@@ -8,6 +8,24 @@ import { runAction } from '@/lib/run-action'
 import { confirmDialog, textDialog } from '@/features/dialogs/dialog-store'
 import { useRepoViewStore } from '@/features/repo-view/repo-view-store'
 import type { ChangeEntry } from './group-changes'
+import type { RepoStatus } from '@shared/ipc'
+import { queryClient, repoKeys } from '@/lib/query-client'
+import { afterDiscard, afterStage, afterUnstage } from './optimistic-status'
+
+/**
+ * Show the expected result in the changes lists straight away (see
+ * optimistic-status.ts). Git's real status replaces it when the action
+ * finishes; a status refresh already under way is cancelled so it can't
+ * briefly bring back the old lists.
+ */
+async function predictStatus(repoPath: string, next: (status: RepoStatus) => RepoStatus) {
+  const key = repoKeys.status(repoPath)
+  await queryClient.cancelQueries({ queryKey: key, exact: true })
+  queryClient.setQueryData<RepoStatus>(key, (status) => (status ? next(status) : status))
+}
+
+/** runAction options for actions that only change working-tree files and the index. */
+const WORKING_TREE = { refresh: 'working-tree' } as const
 
 /** If `entry` is the selected file, follow it to the other list after staging/unstaging. */
 function followSelection(repoPath: string, paths: string[], to: 'staged' | 'unstaged') {
@@ -25,16 +43,18 @@ function followSelection(repoPath: string, paths: string[], to: 'staged' | 'unst
 export async function stageEntries(repoPath: string, entries: ChangeEntry[]) {
   const paths = entries.map((e) => e.path)
   if (!paths.length) return
-  await runAction(repoPath, () => api.invoke('repo:stage', repoPath, paths))
+  await predictStatus(repoPath, (status) => afterStage(status, paths))
   followSelection(repoPath, paths, 'staged')
+  await runAction(repoPath, () => api.invoke('repo:stage', repoPath, paths), WORKING_TREE)
 }
 
 export async function unstageEntries(repoPath: string, entries: ChangeEntry[]) {
   // A rename involves both the old and new path; unstage both.
   const paths = entries.flatMap((e) => (e.origPath ? [e.path, e.origPath] : [e.path]))
   if (!paths.length) return
-  await runAction(repoPath, () => api.invoke('repo:unstage', repoPath, paths))
+  await predictStatus(repoPath, (status) => afterUnstage(status, paths))
   followSelection(repoPath, paths, 'unstaged')
+  await runAction(repoPath, () => api.invoke('repo:unstage', repoPath, paths), WORKING_TREE)
 }
 
 /** Discard changes after asking for confirmation (this can't be undone). */
@@ -53,13 +73,9 @@ export async function discardEntries(repoPath: string, entries: ChangeEntry[]) {
     destructive: true,
   })
   if (!ok) return
-  await runAction(repoPath, () =>
-    api.invoke(
-      'repo:discard',
-      repoPath,
-      entries.map((e) => ({ path: e.path, untracked: e.change === 'untracked' })),
-    ),
-  )
+  const files = entries.map((e) => ({ path: e.path, untracked: e.change === 'untracked' }))
+  await predictStatus(repoPath, (status) => afterDiscard(status, files))
+  await runAction(repoPath, () => api.invoke('repo:discard', repoPath, files), WORKING_TREE)
 }
 
 /** Every path git needs for these entries (a rename has an old path too). */
@@ -86,7 +102,11 @@ export async function discardStagedEntries(repoPath: string, entries: ChangeEntr
     destructive: true,
   })
   if (!ok) return
-  await runAction(repoPath, () => api.invoke('repo:discardAll', repoPath, allPaths(entries)))
+  await runAction(
+    repoPath,
+    () => api.invoke('repo:discardAll', repoPath, allPaths(entries)),
+    WORKING_TREE,
+  )
 }
 
 /**
