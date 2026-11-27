@@ -51,7 +51,8 @@ test('brings back discarded files', async () => {
   await window.getByRole('button', { name: 'Discard all' }).click()
   await window.getByRole('button', { name: 'Discard', exact: true }).click()
   await expect(window.getByText('Your working tree is clean')).toBeVisible()
-  expect(existsSync(join(repo.path, 'draft.txt'))).toBe(false)
+  // The list updates before git finishes, so wait for the file itself.
+  await expect.poll(() => existsSync(join(repo.path, 'draft.txt'))).toBe(false)
 
   await window.getByRole('button', { name: 'Undo', exact: true }).click()
   await expect(window.getByRole('region', { name: 'Unstaged', exact: true })).toContainText(

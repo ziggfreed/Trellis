@@ -87,7 +87,8 @@ test('discards changes after confirming', async () => {
   await expect(window.getByRole('dialog')).toContainText('can’t be undone')
   await window.getByRole('button', { name: 'Discard', exact: true }).click()
   await expect(window.getByText('Your working tree is clean')).toBeVisible()
-  expect(readFileSync(join(repo.path, 'README.md'), 'utf8')).toBe('# test\n')
+  // The list updates before git finishes, so wait for the file itself.
+  await expect.poll(() => readFileSync(join(repo.path, 'README.md'), 'utf8')).toBe('# test\n')
   await app.close()
 })
 

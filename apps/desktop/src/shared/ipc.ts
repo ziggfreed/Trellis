@@ -733,6 +733,11 @@ export interface IpcEvents {
   /** A git command finished (for the command log panel). */
   'git:command': GitCommandEntry
   /**
+   * A write operation is taking a while (label set), or has finished (label
+   * null). See main/services/repo-queue.ts.
+   */
+  'repo:busy': { id: number; repoPath: string; label: string | null }
+  /**
    * Git needs the user to type something (username, password, passphrase,
    * or to confirm an SSH host key). Reply with 'auth:respond'.
    */
@@ -912,6 +917,7 @@ const eventMap: Record<IpcEvent, true> = {
   'repo:changed': true,
   'operation:progress': true,
   'git:command': true,
+  'repo:busy': true,
   'auth:prompt': true,
   'plugins:changed': true,
   'plugins:statusItems': true,

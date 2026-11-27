@@ -6,6 +6,13 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- **Faster staging, unstaging and discarding**: files move between the lists the moment you click, and each action runs a third as many git commands as before (8 instead of 24 for staging a file), which matters most on Windows.
+- **Opening a repository is quicker**: it no longer reloads everything a second time once the file watcher is ready (only when branches changed in the meantime).
+- **Slow operations say what's happening**: a commit, merge, rebase, checkout, stash, undo and other changes still running after a moment show a "…" notice (for example while a pre-commit hook runs) until they finish. Quick ones show nothing.
+- Views that wait for git show a loading message instead of staying blank: history, changes, diffs, blame, file history and compare. History search shows "Searching…" while a slow search runs.
+
 ## [0.7.0] - 2026-11-27
 
 ### Added

@@ -3,6 +3,7 @@
  * like a pull request. Shows the commits, the files changed since the two
  * split, and each file's diff.
  */
+import { LoadingState } from '@/components/loading-state'
 import { ArrowLeftRight, X } from 'lucide-react'
 import type { CompareState } from '@/features/repo-view/repo-view-store'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
@@ -58,7 +59,9 @@ export function CompareView({ repoPath, compare }: { repoPath: string; compare: 
 
       {error ? (
         <p className="p-4 text-sm text-destructive">{error.message}</p>
-      ) : !data ? null : (
+      ) : !data ? (
+        <LoadingState label="Comparing…" />
+      ) : (
         <ResizablePanelGroup orientation="horizontal" {...layout} className="min-h-0 flex-1">
           <ResizablePanel id="list" defaultSize="35%" minSize="20%">
             <div className="h-full overflow-y-auto py-1">

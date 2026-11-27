@@ -8,6 +8,10 @@
  * - Merge-like results with conflicts show a warning explaining what to do.
  * - All cached data for the repository is refreshed afterwards. (The file
  *   watcher would do this too, but doing it immediately feels snappier.)
+ *   Actions that only touch working-tree files and the index (staging,
+ *   discarding) pass `refresh: 'working-tree'` to refresh just the status,
+ *   diffs and undo state: far fewer git commands than reloading branches,
+ *   stashes, remotes and the rest.
  * - With `pending`, a loading toast shows straight away and turns into the
  *   success or error message when the action ends.
  */
@@ -27,6 +31,19 @@ export interface ActionOptions {
    * looks like it didn't register.
    */
   pending?: string
+  /** What to refresh afterwards: everything (default), or only what staging/discarding can change. */
+  refresh?: 'all' | 'working-tree'
+}
+
+/** Repositories with a runAction `pending` notice on screen, and how many. */
+const pendingNotices = new Map<string, number>()
+
+/**
+ * True while an action on this repository is showing its own "…" notice, so
+ * the generic busy notice (features/repos/use-busy-notices.ts) stays away.
+ */
+export function hasPendingNotice(repoPath: string): boolean {
+  return pendingNotices.has(repoPath)
 }
 
 function isMergeResult(value: unknown): value is MergeResult {
@@ -40,6 +57,7 @@ export async function runAction<T>(
 ): Promise<T | undefined> {
   // Reusing the loading toast's id makes the result replace it in place.
   const toastId = options.pending ? toast.loading(options.pending) : undefined
+  if (toastId !== undefined) pendingNotices.set(repoPath, (pendingNotices.get(repoPath) ?? 0) + 1)
   const sameToast = toastId === undefined ? {} : { id: toastId }
   let refreshed = false
   try {
@@ -65,8 +83,22 @@ export async function runAction<T>(
     toast.error(errorMessage(error), { ...sameToast, duration: 10_000 })
     return undefined
   } finally {
-    if (!refreshed) void refresh(repoPath, false)
+    if (toastId !== undefined) {
+      const count = (pendingNotices.get(repoPath) ?? 1) - 1
+      if (count > 0) pendingNotices.set(repoPath, count)
+      else pendingNotices.delete(repoPath)
+    }
+    if (options.refresh === 'working-tree') refreshWorkingTree(repoPath)
+    else if (!refreshed) void refresh(repoPath, false)
   }
+}
+
+/** Refresh what changes when files are staged, unstaged or discarded. */
+function refreshWorkingTree(repoPath: string): void {
+  void queryClient.invalidateQueries({ queryKey: repoKeys.status(repoPath), exact: true })
+  void queryClient.invalidateQueries({ queryKey: repoKeys.summary(repoPath), exact: true })
+  void queryClient.invalidateQueries({ queryKey: [...repoKeys.all(repoPath), 'diff'] })
+  void queryClient.invalidateQueries({ queryKey: [...repoKeys.all(repoPath), 'undo'], exact: true })
 }
 
 /**

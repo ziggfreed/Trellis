@@ -75,7 +75,7 @@ export function createContentHandlers(sendProgress: ProgressSender): ContentHand
     },
     'repo:syncSubmodules': (path) => {
       assertString(path, 'path')
-      return runExclusive(path, () => git.syncSubmodules(path))
+      return runExclusive(path, () => git.syncSubmodules(path), 'Sync submodules')
     },
 
     // --- Git LFS ---------------------------------------------------------------
@@ -104,12 +104,12 @@ export function createContentHandlers(sendProgress: ProgressSender): ContentHand
     'repo:lfsLock': (path, file) => {
       assertString(path, 'path')
       assertFileInRepo(path, file)
-      return runExclusive(path, () => git.lfsLock(path, file))
+      return runExclusive(path, () => git.lfsLock(path, file), `Lock ${file}`)
     },
     'repo:lfsUnlock': (path, file, force) => {
       assertString(path, 'path')
       assertFileInRepo(path, file)
-      return runExclusive(path, () => git.lfsUnlock(path, file, force === true))
+      return runExclusive(path, () => git.lfsUnlock(path, file, force === true), `Unlock ${file}`)
     },
 
     // --- Image diff ------------------------------------------------------------
@@ -128,17 +128,21 @@ export function createContentHandlers(sendProgress: ProgressSender): ContentHand
       assertString(path, 'path')
       assertRefArg(bad, 'bad')
       if (good !== null) assertRefArg(good, 'good')
-      return runExclusive(path, () => git.bisectStart(path, bad, good ?? undefined))
+      return runExclusive(path, () => git.bisectStart(path, bad, good ?? undefined), 'Start bisect')
     },
     'repo:bisectMark': (path, verdict, sha) => {
       assertString(path, 'path')
       assertOneOf(verdict, ['good', 'bad', 'skip'] as const, 'verdict')
       if (sha !== null) assertRefArg(sha, 'sha')
-      return runExclusive(path, () => git.bisectMark(path, verdict, sha ?? undefined))
+      return runExclusive(
+        path,
+        () => git.bisectMark(path, verdict, sha ?? undefined),
+        `Mark ${verdict}`,
+      )
     },
     'repo:bisectReset': (path) => {
       assertString(path, 'path')
-      return runExclusive(path, () => git.bisectReset(path))
+      return runExclusive(path, () => git.bisectReset(path), 'End bisect')
     },
 
     // --- Stacked branches --------------------------------------------------------

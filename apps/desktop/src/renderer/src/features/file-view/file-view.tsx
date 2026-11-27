@@ -9,6 +9,7 @@
  *
  * Opened from the right-click menu on files (commit details, Changes view).
  */
+import { LoadingState } from '@/components/loading-state'
 import { useMemo } from 'react'
 import { ArrowLeft, History, ScanText, Undo2, X } from 'lucide-react'
 import type { FileViewState } from '@/features/repo-view/repo-view-store'
@@ -100,7 +101,7 @@ function BlameView(props: {
   )
 
   if (error) return <p className="p-4 text-sm text-destructive">{error.message}</p>
-  if (!data) return null
+  if (!data) return <LoadingState label="Loading blame…" />
 
   const showCommit = (sha: string) =>
     setView({ view: 'history', selectedSha: sha, seekSelected: true, selectedFile: null })
@@ -209,7 +210,7 @@ function FileHistoryView({ repoPath, file }: { repoPath: string; file: string })
   const layout = usePanelLayout('file-history-layout', ['list', 'diff'])
 
   if (error) return <p className="p-4 text-sm text-destructive">{error.message}</p>
-  if (!data) return null
+  if (!data) return <LoadingState label="Loading file history…" />
   if (data.length === 0) {
     return (
       <p className="p-6 text-center text-sm text-muted-foreground">

@@ -16,6 +16,7 @@ import { StatusBar } from '@/components/layout/status-bar'
 import { ThemeProvider } from '@/features/theme/theme-provider'
 import { useSettingsStore } from '@/features/settings/settings-store'
 import { useRepos } from '@/features/repos/use-repos'
+import { useBusyNotices } from '@/features/repos/use-busy-notices'
 import { useRepoSync } from '@/features/repos/use-repo-sync'
 import { usePluginSync } from '@/features/plugins/use-plugin-sync'
 import { QuickPickDialog } from '@/features/plugins/quick-pick-dialog'
@@ -79,6 +80,7 @@ function MainLayout({ gitVersion }: { gitVersion: string }) {
   const { activeRepo } = useRepos()
   useKeyboardShortcuts()
   useRepoSync()
+  useBusyNotices()
   usePluginSync()
   useUpdateSync()
   const connectCommandLog = useCommandLogStore((s) => s.connect)

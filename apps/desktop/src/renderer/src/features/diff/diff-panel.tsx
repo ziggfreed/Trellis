@@ -2,6 +2,7 @@
  * The diff area: a header with the file name and layout switch, and the
  * diff itself (or a message for binary, too-large or unchanged files).
  */
+import { LoadingState } from '@/components/loading-state'
 import { lazy, Suspense, useState } from 'react'
 import { parseLfsPointer } from '@trellis/git/lfs-pointer'
 import type { DiffTarget, FileContent } from '@shared/ipc'
@@ -46,7 +47,7 @@ export function DiffPanel({ repoPath, target }: { repoPath: string; target: Diff
     body = <ImageDiffView repoPath={repoPath} target={target} />
   } else if (mode === 'image') body = <ImageDiffView repoPath={repoPath} target={target} />
   else if (error) body = <Message className="text-destructive">{error.message}</Message>
-  else if (isPending) body = null
+  else if (isPending) body = <LoadingState label="Loading diff…" />
   else {
     const reason = describeNonText(data.new) ?? describeNonText(data.old)
     const oldText = textOf(data.old)

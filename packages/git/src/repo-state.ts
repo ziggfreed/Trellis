@@ -10,12 +10,12 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { runGit } from './run-git'
+import { gitDir } from './git-paths'
 import type { RepoOperation } from './types'
 
 export async function getRepoOperation(repoPath: string): Promise<RepoOperation | null> {
-  const { stdout } = await runGit(['rev-parse', '--absolute-git-dir'], { cwd: repoPath })
-  const gitDir = stdout.trim()
-  const has = (name: string) => existsSync(join(gitDir, name))
+  const dir = await gitDir(repoPath)
+  const has = (name: string) => existsSync(join(dir, name))
   // Check rebase first: a rebase can stop on a commit and leave other files too.
   if (has('rebase-merge') || has('rebase-apply')) return 'rebase'
   if (has('MERGE_HEAD')) return 'merge'
