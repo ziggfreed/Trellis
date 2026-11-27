@@ -10,6 +10,8 @@ All notable changes to Trellis are listed here. The format follows
 
 - **Faster staging, unstaging and discarding**: files move between the lists the moment you click, and each action runs a third as many git commands as before (8 instead of 24 for staging a file), which matters most on Windows.
 
+## [0.7.0] - 2026-11-27
+
 ### Added
 
 - **Order the commit graph by date**: the **Branches shown** menu above the history has **Order: Branches together** (the default, each branch's commits in one run) or **By date** (commits from all branches mixed in the order they were made). Remembered between launches; search results follow the same order.
