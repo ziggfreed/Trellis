@@ -231,6 +231,13 @@ export function builtInCommands(context: CommandContext): Command[] {
       },
     },
     {
+      id: 'sidebar.search',
+      title: 'Find branches, tags and stashes',
+      group: 'View',
+      shortcut: shortcutLabel('sidebar.search'),
+      run: () => focusLater('[aria-label="Find branches, tags and stashes"]'),
+    },
+    {
       id: 'git.undo',
       title: 'Undo last operation',
       group: 'Git',

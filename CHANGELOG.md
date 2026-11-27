@@ -6,6 +6,10 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Search the sidebar**: a box at the top of the sidebar (`Ctrl/Cmd+Shift+F`, or **Find branches, tags and stashes** in the command palette) filters branches, remote branches, tags, stashes and worktrees as you type, opening folders to show matches and highlighting the matched text. `Enter` shows the first match in the history; `Esc` clears it.
+
 ## [0.6.0] - 2026-11-26
 
 ### Added

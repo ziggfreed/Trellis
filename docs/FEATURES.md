@@ -72,6 +72,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | Pri | Feature                                                                                         | Status                                    |
 | --- | ----------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | P0  | Sidebar: local branches, remotes, tags, stashes; branch folders (feature/x)                     | ✅                                        |
+| P1  | Search the sidebar (branches, remote branches, tags, stashes, worktrees)                        | ✅                                        |
 | P0  | Create / checkout / rename / delete branch (double-click to check out, incl. remote branches)   | ✅                                        |
 | P0  | Fetch / pull (merge or rebase) / push, with progress and ahead/behind counts                    | ✅                                        |
 | P0  | Merge branch (with conflict detection)                                                          | ✅                                        |

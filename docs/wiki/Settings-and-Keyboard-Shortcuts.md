@@ -11,20 +11,21 @@ Open Settings with **`Ctrl+,`** (or the gear in the status bar). Changes are sav
 
 On a Mac, use `Cmd` instead of `Ctrl`, except for `Ctrl+Tab`, `Ctrl+Shift+Tab` and `` Ctrl+` ``.
 
-| Action                    | Shortcut                             |
-| ------------------------- | ------------------------------------ |
-| Command palette           | `Ctrl+K` (or `Ctrl+Shift+P`)         |
-| Open / clone / new        | `Ctrl+O` / `Ctrl+Shift+O` / `Ctrl+N` |
-| Close tab                 | `Ctrl+W`                             |
-| Next / previous tab       | `Ctrl+Tab` / `Ctrl+Shift+Tab`        |
-| Undo / redo               | `Ctrl+Z` / `Ctrl+Shift+Z`            |
-| Search commits            | `Ctrl+F`                             |
-| History / Changes         | `Ctrl+Shift+H` / `Ctrl+Shift+G`      |
-| Commit                    | `Ctrl+Enter` in the commit box       |
-| Save a file being edited  | `Ctrl+S`                             |
-| Open in terminal / editor | `Ctrl+Shift+T` / `Ctrl+Shift+E`      |
-| Git log                   | `` Ctrl+` ``                         |
-| Settings                  | `Ctrl+,`                             |
+| Action                          | Shortcut                             |
+| ------------------------------- | ------------------------------------ |
+| Command palette                 | `Ctrl+K` (or `Ctrl+Shift+P`)         |
+| Open / clone / new              | `Ctrl+O` / `Ctrl+Shift+O` / `Ctrl+N` |
+| Close tab                       | `Ctrl+W`                             |
+| Next / previous tab             | `Ctrl+Tab` / `Ctrl+Shift+Tab`        |
+| Undo / redo                     | `Ctrl+Z` / `Ctrl+Shift+Z`            |
+| Search commits                  | `Ctrl+F`                             |
+| Find branches, tags and stashes | `Ctrl+Shift+F`                       |
+| History / Changes               | `Ctrl+Shift+H` / `Ctrl+Shift+G`      |
+| Commit                          | `Ctrl+Enter` in the commit box       |
+| Save a file being edited        | `Ctrl+S`                             |
+| Open in terminal / editor       | `Ctrl+Shift+T` / `Ctrl+Shift+E`      |
+| Git log                         | `` Ctrl+` ``                         |
+| Settings                        | `Ctrl+,`                             |
 
 In the history, the up and down arrow keys move between commits. In the tab bar, the arrow keys move between tabs and `Delete` closes the focused one.
 

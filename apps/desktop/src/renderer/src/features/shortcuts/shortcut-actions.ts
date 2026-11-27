@@ -28,6 +28,11 @@ export const SHORTCUT_ACTIONS: ShortcutAction[] = [
   { id: 'undo', label: 'Undo last operation', defaultShortcut: 'Mod+Z' },
   { id: 'redo', label: 'Redo', defaultShortcut: 'Mod+Shift+Z' },
   { id: 'history.search', label: 'Search commits', defaultShortcut: 'Mod+F' },
+  {
+    id: 'sidebar.search',
+    label: 'Find branches, tags and stashes',
+    defaultShortcut: 'Mod+Shift+F',
+  },
   { id: 'view.history', label: 'Show history', defaultShortcut: 'Mod+Shift+H' },
   { id: 'view.changes', label: 'Show changes', defaultShortcut: 'Mod+Shift+G' },
   { id: 'git.fetch', label: 'Fetch', defaultShortcut: '' },
