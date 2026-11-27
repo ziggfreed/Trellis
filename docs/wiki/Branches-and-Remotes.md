@@ -60,7 +60,7 @@ Trellis asks what you meant:
 
 ## Tags
 
-Right-click a commit and choose **Create tag here…** to mark a release (annotated, with a message, or lightweight). Tags are listed in the sidebar; right-click one to push or delete it.
+Right-click a commit and choose **Create tag here…** to mark a release (annotated, with a message, or lightweight). Tags are listed in the sidebar; right-click one to push or delete it. When deleting, tick **Also delete it on origin** to remove it from the remote too (for everyone; this can't be undone).
 
 ## Cleaning up old branches
 

@@ -27,6 +27,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | --- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | P0  | **Commit graph** with coloured lanes, merges, branch/tag/HEAD/remote badges  | ✅                                                                                                                    |
 | P0  | Virtualised list that stays smooth at 100k+ commits (lazy loading)           | ✅ 60 fps at 100k commits                                                                                             |
+| P1  | Commit order: branches together (topological) or by date, remembered         | ✅                                                                                                                    |
 | P0  | Commit details panel: message, author, date, parents, changed files, diff    | ✅                                                                                                                    |
 | P1  | Choose history columns (changes, author, dates, committer, hash), remembered | ✅                                                                                                                    |
 | P1  | Filter graph: by branch, author, path, date range; "current branch only"     | ✅                                                                                                                    |
@@ -72,6 +73,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | Pri | Feature                                                                                         | Status                                    |
 | --- | ----------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | P0  | Sidebar: local branches, remotes, tags, stashes; branch folders (feature/x)                     | ✅                                        |
+| P1  | Search the sidebar (branches, remote branches, tags, stashes, worktrees)                        | ✅                                        |
 | P0  | Create / checkout / rename / delete branch (double-click to check out, incl. remote branches)   | ✅                                        |
 | P0  | Fetch / pull (merge or rebase) / push, with progress and ahead/behind counts                    | ✅                                        |
 | P0  | Merge branch (with conflict detection)                                                          | ✅                                        |

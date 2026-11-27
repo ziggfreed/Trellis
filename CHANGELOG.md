@@ -6,6 +6,12 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Order the commit graph by date**: the **Branches shown** menu above the history has **Order: Branches together** (the default, each branch's commits in one run) or **By date** (commits from all branches mixed in the order they were made). Remembered between launches; search results follow the same order.
+- **Delete a tag on the remote too**: the tag's **Delete…** dialog has **Also delete it on origin**. If the remote didn't have the tag, Trellis says so and deletes it locally.
+- **Search the sidebar**: a box at the top of the sidebar (`Ctrl/Cmd+Shift+F`, or **Find branches, tags and stashes** in the command palette) filters branches, remote branches, tags, stashes and worktrees as you type, opening folders to show matches and highlighting the matched text. `Enter` shows the first match in the history; `Esc` clears it.
+
 ## [0.6.0] - 2026-11-26
 
 ### Added

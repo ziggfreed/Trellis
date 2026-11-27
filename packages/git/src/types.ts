@@ -100,6 +100,16 @@ export interface StatusSummary {
  */
 export type LogScope = 'all' | 'local' | 'head'
 
+/**
+ * How history is ordered. Both list newest first and never a parent before
+ * its child:
+ * - "topo": each line of work is kept together (`git log --topo-order`),
+ *   which keeps graph lines short and untangled;
+ * - "date": commits from all branches mixed by commit date
+ *   (`git log --date-order`), as some other git clients show it.
+ */
+export type LogOrder = 'topo' | 'date'
+
 export interface Commit {
   /** Full 40-character commit hash. */
   sha: string

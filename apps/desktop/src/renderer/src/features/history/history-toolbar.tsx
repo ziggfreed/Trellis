@@ -17,13 +17,15 @@ import {
   SquareChartGantt,
   X,
 } from 'lucide-react'
-import type { HistoryView, LogScope } from '@shared/ipc'
+import type { HistoryView, LogOrder, LogScope } from '@shared/ipc'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useRepoView } from '@/features/repo-view/repo-view-store'
@@ -40,6 +42,24 @@ export const SCOPE_LABELS: Record<LogScope, string> = {
   local: 'Local branches',
   head: 'Current branch',
 }
+
+/**
+ * The commit graph's two orders (see LogOrder in packages/git). Both keep
+ * parents below their children; they differ in whether branches' commits
+ * are kept together or mixed by date.
+ */
+const ORDER_OPTIONS: { id: LogOrder; label: string; hint: string }[] = [
+  {
+    id: 'topo',
+    label: 'Branches together',
+    hint: "Each branch's commits in one run: fewer crossing lines",
+  },
+  {
+    id: 'date',
+    label: 'By date',
+    hint: 'Commits from all branches mixed in the order they were made',
+  },
+]
 
 interface HistoryToolbarProps {
   repoPath: string
@@ -66,6 +86,8 @@ export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
   }
 
   const historyView = useSettingsStore((s) => s.settings.historyView)
+  const order = useSettingsStore((s) => s.settings.historyOrder)
+  const updateSettings = useSettingsStore((s) => s.update)
   const timeline = historyView === 'timeline'
 
   return (
@@ -81,8 +103,10 @@ export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
               size="sm"
               className="text-muted-foreground"
               aria-label="Branches shown"
+              title="Which branches to show, and the order of commits"
             >
               {SCOPE_LABELS[view.scope]}
+              {order === 'date' && <span className="hidden @3xl:inline">· by date</span>}
               <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
@@ -94,6 +118,19 @@ export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
               {(Object.keys(SCOPE_LABELS) as LogScope[]).map((scope) => (
                 <DropdownMenuRadioItem key={scope} value={scope}>
                   {SCOPE_LABELS[scope]}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs text-muted-foreground">Order</DropdownMenuLabel>
+            {/* Remembered between launches, for every repository. */}
+            <DropdownMenuRadioGroup
+              value={order}
+              onValueChange={(value) => updateSettings({ historyOrder: value as LogOrder })}
+            >
+              {ORDER_OPTIONS.map((option) => (
+                <DropdownMenuRadioItem key={option.id} value={option.id} title={option.hint}>
+                  {option.label}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>

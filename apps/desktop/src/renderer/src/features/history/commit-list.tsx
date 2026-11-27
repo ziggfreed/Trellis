@@ -69,7 +69,11 @@ interface CommitListProps {
 
 export function CommitList({ repoPath, matches }: CommitListProps) {
   const [view, setView] = useRepoView(repoPath)
-  const log = useLog(repoPath, view.scope)
+  const log = useLog(
+    repoPath,
+    view.scope,
+    useSettingsStore((s) => s.settings.historyOrder),
+  )
   const refs = useRefs(repoPath).data
   const headSha = useStatus(repoPath).data?.branch.oid ?? null
   const scrollRef = useRef<HTMLDivElement>(null)

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { getLog, parseCommits } from '../src'
+import { getLog, parseCommits, runGit } from '../src'
 import { createTempRepo, type TempRepo } from './helpers'
 
 let r: TempRepo | undefined
@@ -96,5 +96,41 @@ describe('getLog', () => {
     await r.commit('main work')
     await r.git('merge', '--no-edit', 'feature')
     expect((await getLog(r.path))[0]?.parents).toHaveLength(2)
+  })
+})
+
+describe('getLog order', () => {
+  /** Commit with both dates set to `hour` hours after a fixed start. */
+  async function commitAt(repo: TempRepo, message: string, hour: number) {
+    const date = new Date(Date.UTC(2026, 0, 1, hour)).toISOString()
+    await repo.write(`${message}.txt`, message)
+    await repo.git('add', '-A')
+    await runGit(['commit', '-qm', message], {
+      cwd: repo.path,
+      env: { GIT_AUTHOR_DATE: date, GIT_COMMITTER_DATE: date },
+    })
+  }
+
+  it('keeps branches together by default, or mixes them by date', async () => {
+    r = await createTempRepo()
+    await commitAt(r, 'base', 0)
+    await r.git('branch', 'dev')
+    await commitAt(r, 'main 1', 2)
+    await r.git('switch', '-q', 'dev')
+    await commitAt(r, 'dev 1', 1)
+    await commitAt(r, 'dev 2', 3)
+    await r.git('switch', '-q', 'main')
+    await commitAt(r, 'main 2', 4)
+
+    const subjects = async (order?: 'topo' | 'date') =>
+      (await getLog(r!.path, order ? { order } : {})).map((c) => c.subject)
+    expect(await subjects('date')).toEqual(['main 2', 'dev 2', 'main 1', 'dev 1', 'base'])
+    // Topological: each branch's commits in one run (which branch comes
+    // first is git's choice), parents always after their children.
+    const topo = await subjects()
+    expect(topo).toEqual(await subjects('topo'))
+    expect(topo.at(-1)).toBe('base')
+    const runs = topo.slice(0, 4).map((s) => s.split(' ')[0])
+    expect(runs.filter((name, i) => name !== runs[i - 1])).toHaveLength(2)
   })
 })

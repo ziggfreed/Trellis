@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import { ChevronRight, Plus, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { highlightParts } from './sidebar-search'
 
 export function Section(props: {
   title: string
@@ -19,16 +20,19 @@ export function Section(props: {
   wrapHeader?: (header: React.ReactElement) => React.ReactNode
   /** Hover text for the header. */
   tooltip?: string
+  /** Show the contents whatever the open state (while searching the sidebar). */
+  forceOpen?: boolean
   children: React.ReactNode
 }) {
-  const [open, setOpen] = useState(props.defaultOpen ?? true)
+  const [userOpen, setOpen] = useState(props.defaultOpen ?? true)
+  const open = userOpen || props.forceOpen === true
   const Icon = props.icon
   const ActionIcon = props.action?.icon ?? Plus
   const header = (
     <button
       title={props.tooltip}
       type="button"
-      onClick={() => setOpen(!open)}
+      onClick={() => setOpen(!userOpen)}
       aria-expanded={open}
       className={cn(
         'flex w-full items-center gap-1.5 px-2 py-1 text-left hover:bg-sidebar-accent',
@@ -83,6 +87,8 @@ export interface ItemProps extends React.ComponentProps<'button'> {
   /** Shown before the label (e.g. a status icon). */
   leading?: React.ReactNode
   trailing?: React.ReactNode
+  /** Search words to highlight in the label (see sidebar-search.ts). */
+  highlight?: readonly string[]
 }
 
 /**
@@ -97,6 +103,7 @@ export function Item({
   depth,
   leading,
   trailing,
+  highlight,
   title,
   className,
   style,
@@ -119,7 +126,19 @@ export function Item({
         <span className="size-1.5 shrink-0 rounded-full bg-brand" aria-label="Current branch" />
       )}
       {leading}
-      <span className={cn('truncate', strong && 'font-semibold')}>{label}</span>
+      <span className={cn('truncate', strong && 'font-semibold')}>
+        {highlight?.length
+          ? highlightParts(label, highlight).map((part, i) =>
+              part.match ? (
+                <mark key={i} className="rounded-sm bg-brand/25 text-foreground">
+                  {part.text}
+                </mark>
+              ) : (
+                part.text
+              ),
+            )
+          : label}
+      </span>
       {trailing}
     </button>
   )

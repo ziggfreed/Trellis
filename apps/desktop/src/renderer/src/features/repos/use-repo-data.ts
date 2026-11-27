@@ -4,7 +4,7 @@
  * repository and refreshed automatically when files change.
  */
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import type { CommitFilter, DiffTarget, LogScope } from '@shared/ipc'
+import type { CommitFilter, DiffTarget, LogOrder, LogScope } from '@shared/ipc'
 import { api } from '@/lib/api'
 import { repoKeys } from '@/lib/query-client'
 
@@ -40,12 +40,12 @@ export function useStashes(path: string) {
 }
 
 /** Commit history, loaded one page at a time as the user scrolls. */
-export function useLog(path: string, scope: LogScope) {
+export function useLog(path: string, scope: LogScope, order: LogOrder = 'topo') {
   return useInfiniteQuery({
-    queryKey: [...repoKeys.log(path), scope],
+    queryKey: [...repoKeys.log(path), scope, order],
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
-      api.invoke('repo:getLog', path, { skip: pageParam, limit: LOG_PAGE_SIZE, scope }),
+      api.invoke('repo:getLog', path, { skip: pageParam, limit: LOG_PAGE_SIZE, scope, order }),
     getNextPageParam: (lastPage, pages) =>
       lastPage.hasMore ? pages.length * LOG_PAGE_SIZE : undefined,
   })
@@ -70,10 +70,15 @@ export function useFileDiff(path: string, target: DiffTarget | null) {
 }
 
 /** Hashes of commits matching a search/filter, newest first (disabled when `filter` is null). */
-export function useCommitSearch(path: string, filter: CommitFilter | null, scope: LogScope) {
+export function useCommitSearch(
+  path: string,
+  filter: CommitFilter | null,
+  scope: LogScope,
+  order: LogOrder = 'topo',
+) {
   return useQuery({
-    queryKey: [...repoKeys.all(path), 'search', scope, filter],
-    queryFn: () => api.invoke('repo:findCommits', path, filter!, scope),
+    queryKey: [...repoKeys.all(path), 'search', scope, order, filter],
+    queryFn: () => api.invoke('repo:findCommits', path, filter!, scope, order),
     enabled: filter !== null,
     placeholderData: keepPreviousData,
   })

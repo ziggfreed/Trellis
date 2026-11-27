@@ -32,6 +32,8 @@ export function BranchTree(props: {
   stateKey: string
   /** Render one branch row; give the row `depth` for its indentation. */
   renderBranch: (leaf: BranchLeafNode, depth: number) => React.ReactNode
+  /** Open every folder (while searching, so matches inside folders show). */
+  forceOpen?: boolean
 }) {
   const openFolders = useFolderStore((s) => s.open)
   const setOpen = useFolderStore((s) => s.setOpen)
@@ -40,7 +42,7 @@ export function BranchTree(props: {
       {props.nodes.map((node) => {
         if (node.kind === 'branch') return props.renderBranch(node, props.depth)
         const key = `${props.stateKey}:${node.path}`
-        const open = openFolders[key] ?? node.containsHead
+        const open = props.forceOpen || (openFolders[key] ?? node.containsHead)
         const Icon = open ? FolderOpen : Folder
         return (
           <div key={key} role="group" aria-label={`${node.path} folder`}>
@@ -67,6 +69,7 @@ export function BranchTree(props: {
                 depth={props.depth + 1}
                 stateKey={props.stateKey}
                 renderBranch={props.renderBranch}
+                forceOpen={props.forceOpen}
               />
             )}
           </div>

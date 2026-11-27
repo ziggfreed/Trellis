@@ -12,6 +12,7 @@ import {
   createTag,
   deleteBranch,
   deleteRemoteBranch,
+  deleteRemoteTag,
   deleteTag,
   fetch,
   getHead,
@@ -343,5 +344,21 @@ describe('fetch, pull and push', () => {
       head: 'shared',
       upstream: 'origin/shared',
     })
+  })
+})
+
+describe('deleteRemoteTag', () => {
+  it('deletes a pushed tag on the remote, and says when there was none', async () => {
+    const { repo, remote } = await createRepoWithRemote()
+    cleanups.push(repo, remote)
+    const sha = (await repo.git('rev-parse', 'HEAD')).trim()
+    await createTag(repo.path, 'v1', sha)
+    await pushTag(repo.path, 'origin', 'v1')
+    expect(await remote.git('tag', '--list')).toContain('v1')
+
+    expect(await deleteRemoteTag(repo.path, 'origin', 'v1')).toBe(true)
+    expect((await remote.git('tag', '--list')).trim()).toBe('')
+    // Already gone: no error, just false.
+    expect(await deleteRemoteTag(repo.path, 'origin', 'v1')).toBe(false)
   })
 })

@@ -46,6 +46,7 @@ import {
   assertAbsolutePath,
   assertCommitFilter,
   assertScope,
+  assertOrder,
   assertSha,
   assertString,
   assertStringArray,
@@ -214,14 +215,16 @@ export function createHandlers(
       assertString(path, 'path')
       assertPage(page)
       assertScope(page.scope)
-      return getLogPage(path, page.scope, page.skip, page.limit)
+      assertOrder(page.order)
+      return getLogPage(path, page.scope, page.skip, page.limit, page.order)
     },
 
-    'repo:findCommits': (path, filter, scope) => {
+    'repo:findCommits': (path, filter, scope, order) => {
       assertString(path, 'path')
       assertCommitFilter(filter)
       assertScope(scope)
-      return git.findCommits(path, filter, { scope })
+      assertOrder(order)
+      return git.findCommits(path, filter, { scope, ...(order ? { order } : {}) })
     },
 
     'repo:getRefs': (path) => {

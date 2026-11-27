@@ -35,6 +35,9 @@ extraResources:
       - '!**/node_modules/**'
       - '!**/*.test.js'
       - '!**/tsconfig.json'
+  # The app icon as a PNG, for the window icon on Linux (main/index.ts).
+  - from: build/icon.png
+    to: icon.png
 win:
   target: [nsis]
   artifactName: ${productName}-${version}-setup-${arch}.${ext}

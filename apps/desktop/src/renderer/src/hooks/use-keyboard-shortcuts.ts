@@ -62,6 +62,7 @@ export function useKeyboardShortcuts() {
         setView({ view: 'history' })
         focusSoon('[aria-label="Search commits"]')
       },
+      'sidebar.search': () => focusSoon('[aria-label="Find branches, tags and stashes"]'),
       'view.history': () => setView({ view: 'history' }),
       'view.changes': () => setView({ view: 'changes' }),
       'git.fetch': () => repo && void actions.fetchAll(repo),

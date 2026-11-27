@@ -116,6 +116,52 @@ test('keeps the checked-out branch in the leftmost lane', async () => {
   await app.close()
 })
 
+test('orders the graph by branch (default) or by date, remembered', async () => {
+  // main and dev both get commits over the same period, alternating.
+  const repo = createRepo()
+  const at = (hour: number) => new Date(Date.UTC(2026, 0, 1, hour)).toISOString()
+  const commitAt = (message: string, hour: number) => {
+    repo.write(`${message}.txt`, message)
+    repo.git('add', '-A')
+    execFileSync('git', ['commit', '-qm', message], {
+      cwd: repo.path,
+      env: { ...process.env, GIT_AUTHOR_DATE: at(hour), GIT_COMMITTER_DATE: at(hour) },
+    })
+  }
+  repo.git('branch', 'dev')
+  commitAt('main 1', 2)
+  repo.git('switch', '-q', 'dev')
+  commitAt('dev 1', 1)
+  commitAt('dev 2', 3)
+  repo.git('switch', '-q', 'main')
+  commitAt('main 2', 4)
+
+  const userData = tempDir()
+  let { app, window } = await launch(userData)
+  await openRepo(app, window, repo.path)
+  const subjects = () =>
+    window
+      .getByTestId('commit-row')
+      .evaluateAll((rows) => rows.slice(0, 4).map((r) => r.textContent ?? ''))
+  const branchOf = (texts: string[]) => texts.map((t) => (t.includes('dev ') ? 'dev' : 'main'))
+
+  // By default each branch's commits are together: main, main, dev, dev (or dev first).
+  await expect(window.getByTestId('commit-row')).toHaveCount(5)
+  const together = branchOf(await subjects())
+  expect(together.filter((b, i) => b !== together[i - 1])).toHaveLength(2)
+
+  await window.getByRole('button', { name: 'Branches shown' }).click()
+  await window.getByRole('menuitemradio', { name: 'By date' }).click()
+  await expect.poll(async () => branchOf(await subjects())).toEqual(['main', 'dev', 'main', 'dev'])
+  await expect(window.getByRole('button', { name: 'Branches shown' })).toContainText('by date')
+  await app.close()
+
+  // Still by date after a restart (the repository's tab reopens by itself).
+  ;({ app, window } = await launch(userData))
+  await expect.poll(async () => branchOf(await subjects())).toEqual(['main', 'dev', 'main', 'dev'])
+  await app.close()
+})
+
 test('clicking a branch label keeps its commits highlighted until cleared', async () => {
   const repo = repoWithBranches()
   const { app, window } = await launch()

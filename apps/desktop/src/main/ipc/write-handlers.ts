@@ -354,6 +354,14 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       )
     },
 
+    'repo:deleteRemoteTag': (operationId, path, remote, tag) => {
+      assertRefArg(remote, 'remote')
+      assertRefArg(tag, 'tag')
+      return remoteOperation(operationId, path, sendProgress, (o) =>
+        git.deleteRemoteTag(path, remote, tag, o),
+      )
+    },
+
     // --- File history, blame and compare (read-only) ---------------------------
     'repo:getFileHistory': (path, file) => {
       assertString(path, 'path')

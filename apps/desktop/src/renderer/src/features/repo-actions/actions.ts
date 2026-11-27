@@ -420,14 +420,46 @@ export async function createTag(repo: string, sha: string) {
   })
 }
 
+/**
+ * Delete a tag, optionally on the remote too (origin, or the only remote).
+ * The remote copy goes first: if that fails (offline, no permission) the
+ * local tag is kept, so trying again does both.
+ */
 export async function deleteTag(repo: string, name: string) {
-  const ok = await confirmDialog({
+  const remotes = await getRemotes(repo)
+  const remote = remotes.find((r) => r.name === 'origin') ?? remotes[0]
+  const answer = await confirmWithOptions({
     title: `Delete tag ${name}?`,
-    description: 'Only the local tag is deleted.',
+    description: remote
+      ? 'Deleting it on the remote removes it for everyone, and can’t be undone.'
+      : undefined,
     confirmLabel: 'Delete',
     destructive: true,
+    ...(remote ? { checkbox: { label: `Also delete it on ${remote.name}` } } : {}),
   })
-  if (ok) await runAction(repo, () => api.invoke('repo:deleteTag', repo, name))
+  if (!answer) return
+  if (remote && answer.checked) {
+    const deleted = await runAction(repo, () =>
+      trackOperation(repo, `Deleting tag ${name} on ${remote.name}`, (id) =>
+        api.invoke('repo:deleteRemoteTag', id, repo, remote.name, name),
+      ),
+    )
+    if (deleted === undefined) return // failed; the error is already shown
+    // runAction gives undefined on failure, so return something on success.
+    const done = await runAction(repo, async () => {
+      await api.invoke('repo:deleteTag', repo, name)
+      return true
+    })
+    if (done) {
+      toast.success(
+        deleted
+          ? `Deleted tag ${name} here and on ${remote.name}`
+          : `Deleted tag ${name} (${remote.name} didn’t have it)`,
+      )
+    }
+    return
+  }
+  await runAction(repo, () => api.invoke('repo:deleteTag', repo, name))
 }
 
 export async function pushTag(repo: string, name: string) {

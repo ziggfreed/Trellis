@@ -38,6 +38,8 @@ export interface RepoViewState {
   selectedFile: DiffTarget | null
   /** Which branches the history shows. */
   scope: LogScope
+  /** Text in the sidebar's search box (branches, tags, stashes...). */
+  sidebarSearch: string
   /** Text in the history search box. */
   search: string
   /** History filter: author, path, dates, code changes (see history-filter.ts). */
@@ -71,6 +73,7 @@ const DEFAULT_VIEW: RepoViewState = {
   seekSelected: false,
   selectedFile: null,
   scope: 'all',
+  sidebarSearch: '',
   search: '',
   filter: {},
   highlightRef: null,
