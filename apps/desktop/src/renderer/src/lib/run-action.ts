@@ -35,6 +35,17 @@ export interface ActionOptions {
   refresh?: 'all' | 'working-tree'
 }
 
+/** Repositories with a runAction `pending` notice on screen, and how many. */
+const pendingNotices = new Map<string, number>()
+
+/**
+ * True while an action on this repository is showing its own "…" notice, so
+ * the generic busy notice (features/repos/use-busy-notices.ts) stays away.
+ */
+export function hasPendingNotice(repoPath: string): boolean {
+  return pendingNotices.has(repoPath)
+}
+
 function isMergeResult(value: unknown): value is MergeResult {
   return typeof value === 'object' && value !== null && 'status' in value
 }
@@ -46,6 +57,7 @@ export async function runAction<T>(
 ): Promise<T | undefined> {
   // Reusing the loading toast's id makes the result replace it in place.
   const toastId = options.pending ? toast.loading(options.pending) : undefined
+  if (toastId !== undefined) pendingNotices.set(repoPath, (pendingNotices.get(repoPath) ?? 0) + 1)
   const sameToast = toastId === undefined ? {} : { id: toastId }
   let refreshed = false
   try {
@@ -71,6 +83,11 @@ export async function runAction<T>(
     toast.error(errorMessage(error), { ...sameToast, duration: 10_000 })
     return undefined
   } finally {
+    if (toastId !== undefined) {
+      const count = (pendingNotices.get(repoPath) ?? 1) - 1
+      if (count > 0) pendingNotices.set(repoPath, count)
+      else pendingNotices.delete(repoPath)
+    }
     if (options.refresh === 'working-tree') refreshWorkingTree(repoPath)
     else if (!refreshed) void refresh(repoPath, false)
   }

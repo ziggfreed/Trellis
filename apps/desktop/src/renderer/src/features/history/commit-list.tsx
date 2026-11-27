@@ -18,6 +18,7 @@
  * The columns after the message can be chosen (columns.ts); right-click the
  * headers to change them.
  */
+import { LoadingState } from '@/components/loading-state'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { GitBranch, X } from 'lucide-react'
 import { useVirtualizer } from '@tanstack/react-virtual'
@@ -174,6 +175,7 @@ export function CommitList({ repoPath, matches }: CommitListProps) {
   if (log.error) {
     return <p className="p-4 text-sm text-destructive">{log.error.message}</p>
   }
+  if (log.isPending) return <LoadingState label="Loading history…" />
   if (log.isSuccess && commits.length === 0) {
     return (
       <p className="flex h-full items-center justify-center text-sm text-muted-foreground">

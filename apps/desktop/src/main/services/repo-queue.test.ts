@@ -1,39 +1,48 @@
-import { describe, expect, it } from 'vitest'
-import { runExclusive } from './repo-queue'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { BUSY_DELAY_MS, onBusy, runExclusive, type BusyNotice } from './repo-queue'
 
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
+let notices: BusyNotice[]
+beforeEach(() => {
+  vi.useFakeTimers()
+  notices = []
+  onBusy((notice) => notices.push(notice))
+})
+afterEach(() => vi.useRealTimers())
+
+/** A task that finishes after `ms` (fake) milliseconds. */
+const taking = (ms: number) => () =>
+  new Promise<string>((resolve) => setTimeout(() => resolve('done'), ms))
 
 describe('runExclusive', () => {
-  it('runs tasks for the same repository one after another', async () => {
-    const order: string[] = []
-    const task = (name: string, ms: number) => async () => {
-      order.push(`start ${name}`)
-      await delay(ms)
-      order.push(`end ${name}`)
-    }
-    await Promise.all([runExclusive('/a', task('1', 20)), runExclusive('/a', task('2', 1))])
-    expect(order).toEqual(['start 1', 'end 1', 'start 2', 'end 2'])
+  it('reports a labelled task that takes a while, then reports it finished', async () => {
+    const result = runExclusive('/repo', taking(BUSY_DELAY_MS * 3), 'Merge feature')
+    await vi.advanceTimersByTimeAsync(BUSY_DELAY_MS)
+    expect(notices).toEqual([{ id: expect.any(Number), repoPath: '/repo', label: 'Merge feature' }])
+    await vi.advanceTimersByTimeAsync(BUSY_DELAY_MS * 2)
+    expect(await result).toBe('done')
+    expect(notices[1]).toEqual({ id: notices[0]!.id, repoPath: '/repo', label: null })
   })
 
-  it('keeps going after a task fails', async () => {
-    const failed = runExclusive('/b', async () => {
-      throw new Error('boom')
-    })
-    await expect(failed).rejects.toThrow('boom')
-    await expect(runExclusive('/b', async () => 'ok')).resolves.toBe('ok')
+  it('says nothing about quick tasks or unlabelled ones', async () => {
+    const quick = runExclusive('/repo', taking(BUSY_DELAY_MS / 2), 'Stage 1 file')
+    const unlabelled = runExclusive('/repo', taking(BUSY_DELAY_MS * 3))
+    await vi.advanceTimersByTimeAsync(BUSY_DELAY_MS * 5)
+    await Promise.all([quick, unlabelled])
+    expect(notices).toEqual([])
   })
 
-  it('does not make different repositories wait for each other', async () => {
-    const order: string[] = []
-    await Promise.all([
-      runExclusive('/c', async () => {
-        await delay(20)
-        order.push('slow')
-      }),
-      runExclusive('/d', async () => {
-        order.push('fast')
-      }),
-    ])
-    expect(order).toEqual(['fast', 'slow'])
+  it('reports a failed task as finished too', async () => {
+    const failing = runExclusive(
+      '/repo',
+      () =>
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('conflict')), BUSY_DELAY_MS * 2),
+        ),
+      'Rebase',
+    )
+    const caught = failing.catch((error: Error) => error.message)
+    await vi.advanceTimersByTimeAsync(BUSY_DELAY_MS * 3)
+    expect(await caught).toBe('conflict')
+    expect(notices.map((n) => n.label)).toEqual(['Rebase', null])
   })
 })

@@ -32,7 +32,13 @@ export function HistoryPanel({ repoPath }: { repoPath: string }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <HistoryToolbar repoPath={repoPath} matches={matches} />
+      <HistoryToolbar
+        repoPath={repoPath}
+        matches={matches}
+        // Still typing (debounce) or git still searching: say so, as a code
+        // search can take seconds in a big repository.
+        searching={wanted !== null && (wanted !== filter || search.isFetching)}
+      />
       <div className="min-h-0 flex-1">
         {timeline ? (
           <TimelineView repoPath={repoPath} matches={matchSet} />

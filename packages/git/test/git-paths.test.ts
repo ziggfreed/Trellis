@@ -4,7 +4,7 @@
 import { realpathSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { gitDir, gitPath } from '../src'
+import { gitDir, gitPath, gitPathsOf } from '../src'
 import { createTempRepo, type TempRepo } from './helpers'
 
 let r: TempRepo | undefined
@@ -20,5 +20,15 @@ describe('gitDir / gitPath', () => {
     r = await createTempRepo()
     expect(real(await gitDir(r.path))).toBe(real(join(r.path, '.git')))
     expect(await gitPath(r.path, 'index')).toBe(join(await gitDir(r.path), 'index'))
+  })
+
+  it('looks up several paths at once, in order', async () => {
+    r = await createTempRepo()
+    const dir = await gitDir(r.path)
+    expect(await gitPathsOf(r.path, ['HEAD', 'index', 'refs'])).toEqual([
+      join(dir, 'HEAD'),
+      join(dir, 'index'),
+      join(dir, 'refs'),
+    ])
   })
 })

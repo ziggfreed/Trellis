@@ -13,6 +13,7 @@
  * - Drag files (one, or the selection) from one list to the other.
  * - Right-click a file for the same actions plus blame, history, ignore...
  */
+import { LoadingState } from '@/components/loading-state'
 import { useState } from 'react'
 import { Archive, Check, ExternalLink, Minus, Plus, Undo2 } from 'lucide-react'
 import type { DiffTarget } from '@shared/ipc'
@@ -71,7 +72,7 @@ export function ChangesList({ repoPath }: { repoPath: string }) {
   const layout = usePanelLayout('changes-files-layout', ['staged', 'unstaged'])
 
   if (error) return <p className="p-4 text-sm text-destructive">{error.message}</p>
-  if (!data) return null
+  if (!data) return <LoadingState label="Loading changes…" />
 
   const groups = groupChanges(data.files)
   const focused = view.selectedFile

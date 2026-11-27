@@ -41,3 +41,21 @@ export async function gitPath(repoPath: string, name: string): Promise<string> {
   gitPaths.set(key, path)
   return path
 }
+
+/**
+ * Several paths at once (one git command for all those not cached yet), in
+ * the same order as `names`.
+ */
+export async function gitPathsOf(repoPath: string, names: readonly string[]): Promise<string[]> {
+  const dirExists = existsSync(await gitDir(repoPath))
+  const missing = names.filter((name) => !dirExists || !gitPaths.has(`${repoPath}\0${name}`))
+  if (missing.length > 0) {
+    const { stdout } = await runGit(
+      ['rev-parse', '--path-format=absolute', ...missing.flatMap((name) => ['--git-path', name])],
+      { cwd: repoPath },
+    )
+    const lines = stdout.split('\n')
+    missing.forEach((name, i) => gitPaths.set(`${repoPath}\0${name}`, lines[i]!.trim()))
+  }
+  return names.map((name) => gitPaths.get(`${repoPath}\0${name}`)!)
+}

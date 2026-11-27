@@ -47,6 +47,10 @@ The UI tells main which repos to watch (`repo:setWatched`) whenever the open tab
 
 After an action, `runAction` (`renderer/src/lib/run-action.ts`) refreshes straight away rather than waiting for the watcher. Most actions refresh everything; staging, unstaging and discarding pass `refresh: 'working-tree'` to refresh only the status, diffs and undo state. Those three also update the cached status **optimistically** before git runs (`features/changes/optimistic-status.ts`), so the file moves between the lists immediately; git's real status replaces the guess a moment later. On the main side, git folder paths are cached (`packages/git/src/git-paths.ts`) and index-only operations skip the second undo snapshot, because each git process costs noticeable time on Windows.
 
+When the watcher becomes ready on a repository, it compares a fingerprint of the refs and HEAD (file modification times, `main/services/repo-fingerprint.ts`) with one taken when watching started, and only asks for a full refresh if they differ; otherwise just the status.
+
+**Feedback for slow work.** Every write goes through the per-repository queue (`main/services/repo-queue.ts`). A labelled task (all recorded operations, plus stash, undo, worktrees, bisect, LFS locks) still running after 400 ms is reported with the `repo:busy` event, and `features/repos/use-busy-notices.ts` shows it as a loading toast until it ends, unless the action already shows its own message (`runAction`'s `pending`). Network operations report progress in the status bar instead. Views waiting for data use `components/loading-state.tsx`, which appears after 200 ms so quick loads don't flicker.
+
 ## 3. Packages
 
 | Package                                           | Purpose                                                                                                                                                                                          | Depends on                                                     |

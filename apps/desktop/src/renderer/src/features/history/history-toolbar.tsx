@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronUp,
   GitCompareArrows,
+  Loader2,
   GitCommitVertical,
   Search,
   SquareChartGantt,
@@ -65,9 +66,11 @@ interface HistoryToolbarProps {
   repoPath: string
   /** Hashes of matching commits, newest first (null while no search is active). */
   matches: string[] | null
+  /** True while a search is under way (results may be out of date). */
+  searching?: boolean
 }
 
-export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
+export function HistoryToolbar({ repoPath, matches, searching = false }: HistoryToolbarProps) {
   const [view, setView] = useRepoView(repoPath)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -178,17 +181,28 @@ export function HistoryToolbar({ repoPath, matches }: HistoryToolbarProps) {
             </button>
           )}
         </div>
+        {searching && !matches && (
+          <span
+            className="flex w-20 items-center justify-end gap-1 text-xs text-muted-foreground"
+            data-testid="search-count"
+          >
+            <Loader2 className="size-3 animate-spin" />
+            Searching…
+          </span>
+        )}
         {matches && (
           <>
             <span
               className="w-20 text-right text-xs text-muted-foreground"
               data-testid="search-count"
             >
-              {matches.length === 0
-                ? 'No results'
-                : position === -1
-                  ? `${matches.length} found`
-                  : `${position + 1} of ${matches.length}`}
+              {searching
+                ? 'Searching…'
+                : matches.length === 0
+                  ? 'No results'
+                  : position === -1
+                    ? `${matches.length} found`
+                    : `${position + 1} of ${matches.length}`}
             </span>
             <Button
               variant="ghost"

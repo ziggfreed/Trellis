@@ -25,6 +25,7 @@ import { RepoWatcher } from '../services/repo-watcher'
 import { cancelOperation, endOperation, startOperation } from '../services/operations'
 import { getLogPage, keepLogReaders } from '../services/log-cache'
 import { CommandLog } from '../services/command-log'
+import { onBusy } from '../services/repo-queue'
 import { AutoFetcher } from '../services/auto-fetch'
 import { openEditor, openTerminal } from '../services/external-apps'
 import { AskpassServer } from '../services/askpass'
@@ -347,6 +348,7 @@ export async function registerIpcHandlers(settings: SettingsStore): Promise<IpcS
     plugins.manager.repoChanged(path)
   })
   const commandLog = new CommandLog((entry) => sendToAllWindows('git:command', entry))
+  onBusy((notice) => sendToAllWindows('repo:busy', notice))
 
   // The helper scripts must be real files git can run, so they live in the
   // user data folder rather than inside the app package.

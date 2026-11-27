@@ -51,7 +51,7 @@ function recorded<T>(
   task: () => Promise<T>,
 ): Promise<T> {
   const options = { worktree: changes === true, indexOnly: changes === 'index' }
-  return runExclusive(path, () => git.recordOperation(path, label, options, task))
+  return runExclusive(path, () => git.recordOperation(path, label, options, task), label)
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
@@ -267,20 +267,25 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
         assertStringArray(paths, 'options.paths')
         for (const file of paths) assertFileInRepo(path, file)
       }
-      return runExclusive(path, () =>
-        git.stashPush(path, {
-          includeUntracked: options?.includeUntracked === true,
-          ...(message ? { message } : {}),
-          ...(paths?.length ? { paths } : {}),
-        }),
+      return runExclusive(
+        path,
+        () =>
+          git.stashPush(path, {
+            includeUntracked: options?.includeUntracked === true,
+            ...(message ? { message } : {}),
+            ...(paths?.length ? { paths } : {}),
+          }),
+        'Stash changes',
       )
     },
 
     'repo:stashApply': (path, index, pop) => {
       assertString(path, 'path')
       assertIndex(index, 'index')
-      return runExclusive(path, () =>
-        pop ? git.stashPop(path, index) : git.stashApply(path, index),
+      return runExclusive(
+        path,
+        () => (pop ? git.stashPop(path, index) : git.stashApply(path, index)),
+        pop ? 'Pop stash' : 'Apply stash',
       )
     },
 
@@ -409,11 +414,14 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
       assertAbsolutePath(folder, 'folder')
       if (options?.branch !== undefined) assertRefArg(options.branch, 'branch')
       if (options?.newBranch !== undefined) assertRefArg(options.newBranch, 'newBranch')
-      await runExclusive(path, () =>
-        git.addWorktree(path, folder, {
-          ...(options?.branch ? { branch: options.branch } : {}),
-          ...(options?.newBranch ? { newBranch: options.newBranch } : {}),
-        }),
+      await runExclusive(
+        path,
+        () =>
+          git.addWorktree(path, folder, {
+            ...(options?.branch ? { branch: options.branch } : {}),
+            ...(options?.newBranch ? { newBranch: options.newBranch } : {}),
+          }),
+        'Create worktree',
       )
       const root = await git.getRepoRoot(folder)
       return root
@@ -424,7 +432,11 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
     'repo:removeWorktree': (path, folder, force) => {
       assertString(path, 'path')
       assertAbsolutePath(folder, 'folder')
-      return runExclusive(path, () => git.removeWorktree(path, folder, force === true))
+      return runExclusive(
+        path,
+        () => git.removeWorktree(path, folder, force === true),
+        'Remove worktree',
+      )
     },
 
     'repo:pruneWorktrees': (path) => {
@@ -479,12 +491,12 @@ export function createWriteHandlers(commandLog: CommandLog, sendProgress: Progre
 
     'repo:undo': (path) => {
       assertString(path, 'path')
-      return runExclusive(path, () => git.undo(path))
+      return runExclusive(path, () => git.undo(path), 'Undo')
     },
 
     'repo:redo': (path) => {
       assertString(path, 'path')
-      return runExclusive(path, () => git.redo(path))
+      return runExclusive(path, () => git.redo(path), 'Redo')
     },
 
     // --- Command log and credentials -------------------------------------------
