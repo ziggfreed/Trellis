@@ -6,6 +6,8 @@ All notable changes to Trellis are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-27
+
 ### Added
 
 - **Order the commit graph by date**: the **Branches shown** menu above the history has **Order: Branches together** (the default, each branch's commits in one run) or **By date** (commits from all branches mixed in the order they were made). Remembered between launches; search results follow the same order.
