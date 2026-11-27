@@ -27,6 +27,7 @@ Status key: ⬜ not started · 🟨 in progress · ✅ done
 | --- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | P0  | **Commit graph** with coloured lanes, merges, branch/tag/HEAD/remote badges  | ✅                                                                                                                    |
 | P0  | Virtualised list that stays smooth at 100k+ commits (lazy loading)           | ✅ 60 fps at 100k commits                                                                                             |
+| P1  | Commit order: branches together (topological) or by date, remembered         | ✅                                                                                                                    |
 | P0  | Commit details panel: message, author, date, parents, changed files, diff    | ✅                                                                                                                    |
 | P1  | Choose history columns (changes, author, dates, committer, hash), remembered | ✅                                                                                                                    |
 | P1  | Filter graph: by branch, author, path, date range; "current branch only"     | ✅                                                                                                                    |

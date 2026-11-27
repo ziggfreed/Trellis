@@ -48,6 +48,13 @@ The menu at the top left of the history (**All branches**) switches between:
 - **Local branches**: hides remote-only branches, which tidies up a busy graph.
 - **Current branch**: only the commits on the branch you're on.
 
+The same menu sets the **Order** of the commits, remembered between launches:
+
+- **Branches together** (the default): each branch's commits are shown in one run, newest first, so the graph's lines stay short and don't cross much. If two branches both got commits this week, you'll see one branch's block, then the other's.
+- **By date**: commits from all branches are mixed in the order they were made, the way some other git clients (such as Sourcetree) show them. Lines cross more when several branches are active.
+
+Either way, a commit always appears above the commits it was built on.
+
 **Columns**: the columns button (or right-click a column heading) chooses what's shown next to the message: **Changes** (files and lines changed), **Author**, **Date**, **Committer**, **Commit date** and the **Commit** hash.
 
 ## Searching and filtering

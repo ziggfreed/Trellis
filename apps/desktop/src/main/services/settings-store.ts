@@ -28,6 +28,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pushAfterCommit: false,
   historyColumns: ['author', 'date', 'sha'],
   historyView: 'graph',
+  historyOrder: 'topo',
   showTips: true,
 }
 

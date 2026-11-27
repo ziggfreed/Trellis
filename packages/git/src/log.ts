@@ -7,7 +7,7 @@
  * them is always safe, unlike newlines or spaces.
  */
 import { runGit } from './run-git'
-import type { Commit, CommitFilter, LogScope } from './types'
+import type { Commit, CommitFilter, LogOrder, LogScope } from './types'
 
 const FIELD = '\x1f'
 
@@ -78,13 +78,20 @@ export async function logRevisions(repoPath: string, scope: LogScope): Promise<s
   return refs.stdout.trim() ? SCOPE_REVISIONS[scope].filter((r) => r !== 'HEAD') : null
 }
 
+/** The `git log` option for an order (see LogOrder). */
+export const orderArg = (order: LogOrder) => (order === 'date' ? '--date-order' : '--topo-order')
+
 /**
- * Arguments for `git log` that list commits newest first in topological
- * order (a parent never appears before its children), which the commit
- * graph needs.
+ * Arguments for `git log` that list commits newest first with a parent
+ * never before its children (which the commit graph needs), either keeping
+ * each line of work together (the default) or mixed by date.
  */
-export function logArgs(revisions: string[], extra: string[] = []): string[] {
-  return ['log', ...LOG_FORMAT_ARGS, '--topo-order', ...extra, ...revisions, '--']
+export function logArgs(
+  revisions: string[],
+  extra: string[] = [],
+  order: LogOrder = 'topo',
+): string[] {
+  return ['log', ...LOG_FORMAT_ARGS, orderArg(order), ...extra, ...revisions, '--']
 }
 
 export interface LogOptions {
@@ -93,6 +100,8 @@ export interface LogOptions {
   /** Skip this many commits first. */
   skip?: number
   scope?: LogScope
+  /** Default "topo". */
+  order?: LogOrder
 }
 
 /**
@@ -101,10 +110,11 @@ export interface LogOptions {
  * Returns an empty list for a repository with no commits yet.
  */
 export async function getLog(repoPath: string, options: LogOptions = {}): Promise<Commit[]> {
-  const { limit = 500, skip = 0, scope = 'all' } = options
+  const { limit = 500, skip = 0, scope = 'all', order = 'topo' } = options
   const revisions = await logRevisions(repoPath, scope)
   if (!revisions) return []
-  const { stdout } = await runGit(logArgs(revisions, [`--max-count=${limit}`, `--skip=${skip}`]), {
+  const extra = [`--max-count=${limit}`, `--skip=${skip}`]
+  const { stdout } = await runGit(logArgs(revisions, extra, order), {
     cwd: repoPath,
   })
   return parseCommits(stdout)
@@ -123,10 +133,10 @@ export function isEmptyFilter(filter: CommitFilter): boolean {
 export async function findCommits(
   repoPath: string,
   filter: CommitFilter,
-  options: { scope?: LogScope; limit?: number } = {},
+  options: { scope?: LogScope; limit?: number; order?: LogOrder } = {},
 ): Promise<string[]> {
   if (isEmptyFilter(filter)) return []
-  const { scope = 'all', limit = 1000 } = options
+  const { scope = 'all', limit = 1000, order = 'topo' } = options
   const revisions = await logRevisions(repoPath, scope)
   if (!revisions) return []
 
@@ -147,7 +157,8 @@ export async function findCommits(
       [
         'log',
         '--format=%H',
-        '--topo-order',
+        // Same order as the history list, so jumping between results goes down it.
+        orderArg(order),
         '--regexp-ignore-case',
         '--fixed-strings',
         ...common,

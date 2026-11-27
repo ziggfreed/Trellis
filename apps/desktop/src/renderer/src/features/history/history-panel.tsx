@@ -22,7 +22,8 @@ export function HistoryPanel({ repoPath }: { repoPath: string }) {
     [view.search, view.filter],
   )
   const filter = useDebouncedValue(wanted, 250)
-  const search = useCommitSearch(repoPath, filter, view.scope)
+  const order = useSettingsStore((s) => s.settings.historyOrder)
+  const search = useCommitSearch(repoPath, filter, view.scope, order)
 
   // Highlight results only while a search is still wanted (clearing it is instant).
   const active = wanted !== null && filter !== null && search.data !== undefined

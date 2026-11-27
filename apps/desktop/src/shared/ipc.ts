@@ -19,6 +19,7 @@
 import type {
   Commit,
   LogScope,
+  LogOrder,
   CommitFilter,
   CommitDetails,
   DiffTarget,
@@ -128,6 +129,8 @@ export interface Settings {
   historyColumns: HistoryColumn[]
   /** How the history is drawn: the vertical commit graph or the horizontal timeline. */
   historyView: HistoryView
+  /** Order of the commit graph: each branch's commits together, or by date (see LogOrder). */
+  historyOrder: LogOrder
   /** Show a tip card on the home screen (renderer features/tips). */
   showTips: boolean
 }
@@ -369,13 +372,13 @@ export interface IpcContract {
    */
   'repo:getSummary': { args: [path: string]; result: StatusSummary }
   'repo:getLog': {
-    args: [path: string, page: { skip: number; limit: number; scope: LogScope }]
+    args: [path: string, page: { skip: number; limit: number; scope: LogScope; order?: LogOrder }]
     result: LogPage
   }
   /** Hashes of commits matching `query` (message, author or hash), newest first. */
   /** Hashes of commits matching a filter (text, author, path, dates, code), newest first. */
   'repo:findCommits': {
-    args: [path: string, filter: CommitFilter, scope: LogScope]
+    args: [path: string, filter: CommitFilter, scope: LogScope, order?: LogOrder]
     result: string[]
   }
   'repo:getRefs': { args: [path: string]; result: Ref[] }

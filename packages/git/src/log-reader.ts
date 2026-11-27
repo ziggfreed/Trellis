@@ -21,7 +21,7 @@
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
 import { spawnGit } from './run-git'
 import { logArgs, logRevisions, parseCommits } from './log'
-import type { Commit, LogScope } from './types'
+import type { Commit, LogOrder, LogScope } from './types'
 
 /** How many commits to read beyond the furthest page requested. */
 const READ_AHEAD = 2000
@@ -54,6 +54,7 @@ export class LogReader {
   constructor(
     private readonly repoPath: string,
     readonly scope: LogScope = 'all',
+    readonly order: LogOrder = 'topo',
   ) {
     this.started = this.start().catch((error: unknown) => {
       this.fail(error instanceof Error ? error : new Error(String(error)))
@@ -93,7 +94,7 @@ export class LogReader {
       return
     }
 
-    const child = spawnGit(logArgs(revisions), { cwd: this.repoPath })
+    const child = spawnGit(logArgs(revisions, [], this.order), { cwd: this.repoPath })
     this.child = child
     const stderr: Buffer[] = []
 

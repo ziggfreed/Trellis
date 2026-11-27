@@ -9,6 +9,7 @@ import type {
   CommitFilter,
   DiffTarget,
   LogScope,
+  LogOrder,
   PushRequest,
   RebasePlanItem,
   TimelineRange,
@@ -84,6 +85,13 @@ export function assertCommitFilter(value: unknown): asserts value is CommitFilte
     if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date as string)) {
       throw new TypeError(`filter.${key} must be a date like 2026-01-31`)
     }
+  }
+}
+
+/** A history order: "topo" or "date", or left out (topo). */
+export function assertOrder(value: unknown): asserts value is LogOrder | undefined {
+  if (value !== undefined && value !== 'topo' && value !== 'date') {
+    throw new TypeError('order must be topo or date')
   }
 }
 

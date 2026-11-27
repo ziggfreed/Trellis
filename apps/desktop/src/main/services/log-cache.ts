@@ -4,9 +4,9 @@
  *
  * A request for the first page (skip = 0) always starts a fresh reader:
  * that's what the UI asks for when history may have changed (after a
- * commit, fetch, checkout, or when the branch filter changes).
+ * commit, fetch, checkout, or when the branch filter or order changes).
  */
-import { LogReader, type LogPageResult, type LogScope } from '@trellis/git'
+import { LogReader, type LogOrder, type LogPageResult, type LogScope } from '@trellis/git'
 
 const readers = new Map<string, LogReader>()
 
@@ -15,11 +15,12 @@ export function getLogPage(
   scope: LogScope,
   skip: number,
   limit: number,
+  order: LogOrder = 'topo',
 ): Promise<LogPageResult> {
   let reader = readers.get(repoPath)
-  if (!reader || skip === 0 || reader.scope !== scope) {
+  if (!reader || skip === 0 || reader.scope !== scope || reader.order !== order) {
     reader?.dispose()
-    reader = new LogReader(repoPath, scope)
+    reader = new LogReader(repoPath, scope, order)
     readers.set(repoPath, reader)
   }
   return reader.getPage(skip, limit)
