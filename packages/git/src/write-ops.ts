@@ -365,6 +365,26 @@ export async function deleteRemoteBranches(
   )
 }
 
+/**
+ * Delete a tag on a remote. Returns false if the remote didn't have it
+ * (nothing to delete), so callers can say so instead of reporting an error.
+ */
+export async function deleteRemoteTag(
+  repoPath: string,
+  remote: string,
+  tag: string,
+  options: RemoteOptions = {},
+): Promise<boolean> {
+  const args = ['push', '--progress', remote, '--delete', `refs/tags/${tag}`]
+  const result = await runGit(args, { ...remoteRunOptions(repoPath, options), okExitCodes: [0, 1] })
+  // The tag wasn't on the remote (never pushed, or already deleted). Servers
+  // differ: GitHub refuses ("remote ref does not exist"), while a plain git
+  // remote accepts it with a warning ("deleting a non-existent ref").
+  if (/remote ref does not exist|deleting a non-existent ref/i.test(result.stderr)) return false
+  if (result.exitCode === 0) return true
+  throw new GitError(result.stderr.trim() || 'git push --delete failed', args, result)
+}
+
 /** Push one tag to a remote. */
 export async function pushTag(
   repoPath: string,

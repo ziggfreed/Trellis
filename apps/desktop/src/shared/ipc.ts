@@ -612,6 +612,11 @@ export interface IpcContract {
     args: [operationId: string, path: string, remote: string, tag: string]
     result: void
   }
+  /** Delete a tag on a remote (can't be undone). False if the remote didn't have it. */
+  'repo:deleteRemoteTag': {
+    args: [operationId: string, path: string, remote: string, tag: string]
+    result: boolean
+  }
 
   // --- File history, blame and compare -----------------------------------------
   /** Commits that changed a file, newest first, following renames. */
@@ -860,6 +865,7 @@ const channelMap: Record<IpcChannel, true> = {
   'repo:deleteRemoteBranch': true,
   'repo:deleteRemoteBranches': true,
   'repo:pushTag': true,
+  'repo:deleteRemoteTag': true,
   'repo:getFileHistory': true,
   'repo:getBlame': true,
   'repo:getComparison': true,
